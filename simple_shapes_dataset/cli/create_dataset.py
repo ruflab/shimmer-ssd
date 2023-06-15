@@ -16,52 +16,72 @@ from .utils import (
 
 
 @click.command("create")
-@click.option("--seed", default=0, help="Random seed")
-@click.option("--img_size", default=32, help="Size of the images")
-@click.option("--output_path", default="./", help="Where to save the dataset")
+@click.option("--seed", default=0, type=int, help="Random seed")
+@click.option("--img_size", default=32, type=int, help="Size of the images")
 @click.option(
-    "--num_train_examples", default=500_000, help="Number of training examples"
+    "--output_path", default="./", type=str, help="Where to save the dataset"
 )
 @click.option(
-    "--num_val_examples", default=1_000, help="Number of validation examples"
+    "--num_train_examples",
+    default=500_000,
+    type=int,
+    help="Number of training examples",
 )
 @click.option(
-    "--num_test_examples", default=1_000, help="Number of test examples"
+    "--num_val_examples",
+    default=1_000,
+    type=int,
+    help="Number of validation examples",
 )
 @click.option(
-    "--min_scale", default=7, help="Minimum size of the shapes (in pixels)"
+    "--num_test_examples",
+    default=1_000,
+    type=int,
+    help="Number of test examples",
 )
 @click.option(
-    "--max_scale", default=14, help="Maximum size of the shapes (in pixels)"
+    "--min_scale",
+    default=7,
+    type=int,
+    help="Minimum size of the shapes (in pixels)",
+)
+@click.option(
+    "--max_scale",
+    default=14,
+    type=int,
+    help="Maximum size of the shapes (in pixels)",
 )
 @click.option(
     "--min_lightness",
     default=46,
+    type=int,
     help="Minimum lightness for the shapes' HSL color. Higher values are lighter.",
 )
 @click.option(
     "--max_lightness",
     default=256,
+    type=int,
     help="Maximum lightness for the shapes' HSL color. Higher values are lighter.",
 )
 @click.option(
     "--bert_path",
     default="bert-base-uncased",
+    type=str,
     help="Pretrained BERT model to use",
 )
 def create_dataset(
-    seed,
-    img_size,
-    output_path,
-    num_train_examples,
-    num_val_examples,
-    num_test_examples,
-    min_scale,
-    max_scale,
-    min_lightness,
-    max_lightness,
-    bert_path,
-):
+    seed: int,
+    img_size: int,
+    output_path: str,
+    num_train_examples: int,
+    num_val_examples: int,
+    num_test_examples: int,
+    min_scale: int,
+    max_scale: int,
+    min_lightness: int,
+    max_lightness: int,
+    bert_path: str,
+) -> None:
     dataset_location = Path(output_path)
     dataset_location.mkdir(exist_ok=True)
 
