@@ -18,7 +18,6 @@ class Dataset:
     locations: np.ndarray
     sizes: np.ndarray
     rotations: np.ndarray
-    sizes: np.ndarray
     colors: np.ndarray
     colors_hls: np.ndarray
     unpaired: np.ndarray
@@ -303,11 +302,11 @@ def save_bert_latents(
         tokens = tokenizer(batch, return_tensors="pt", padding=True).to(device)
         z = transformer(**tokens)["last_hidden_state"][:, 0]  # type: ignore
         latents.append(z.cpu().numpy())
-    latents = np.concatenate(latents, axis=0)
+    all_latents = np.concatenate(latents, axis=0)
     np.save(output_path, latents)
 
     if compute_statistics:
-        mean = latents.mean(axis=0)
-        std = latents.std(axis=0)
+        mean = all_latents.mean(axis=0)
+        std = all_latents.std(axis=0)
         np.save(output_path.with_stem(output_path.name + "_mean"), mean)
         np.save(output_path.with_stem(output_path.name + "_std"), std)
