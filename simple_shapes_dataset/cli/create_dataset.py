@@ -18,7 +18,7 @@ from .utils import (
 )
 
 
-@click.command("create")
+@click.command("create", help="Create a Simple Shapes dataset")
 @click.option("--seed", "-s", default=0, type=int, help="Random seed")
 @click.option(
     "--img_size", "--is", default=32, type=int, help="Size of the images"
@@ -108,18 +108,6 @@ def create_dataset(
 
     np.random.seed(seed)
 
-    domain_sets = {}
-    for domain, prop in domain_alignment:
-        domain_set = frozenset(domain.split(","))
-        if domain_set in domain_sets:
-            logging.warning(
-                f"Domain set {domain_set} is defined multiple times. "
-                f"The value will be overwritten by {prop}."
-            )
-        domain_sets[domain_set] = prop
-
-    split_name = get_deterministic_name(domain_alignment, seed)
-
     train_labels = generate_dataset(
         num_train_examples,
         min_scale,
@@ -149,6 +137,8 @@ def create_dataset(
     save_labels(dataset_location / "train_labels.npy", train_labels)
     save_labels(dataset_location / "val_labels.npy", val_labels)
     save_labels(dataset_location / "test_labels.npy", test_labels)
+
+    create_domain_split(seed, dataset_location, domain_alignment)
 
     print("Saving training set...")
     (dataset_location / "train").mkdir(exist_ok=True)
@@ -190,12 +180,61 @@ def create_dataset(
             compute_statistics=(split == "train"),
         )
 
+
+def create_domain_split(
+    seed: int,
+    dataset_path: Path,
+    domain_alignment: list[tuple[str, float]],
+):
+    np.random.seed(seed)
+
+    domain_sets = {}
+    for domain, prop in domain_alignment:
+        domain_set = frozenset(domain.split(","))
+        if domain_set in domain_sets:
+            logging.warning(
+                f"Domain set {domain_set} is defined multiple times. "
+                f"The value will be overwritten by {prop}."
+            )
+        domain_sets[domain_set] = prop
+
+    split_name = get_deterministic_name(domain_alignment, seed)
+
+    for split in ["train", "val", "test"]:
+        labels = np.load(str(dataset_path / f"{split}_labels.npy"))
         domain_split = get_domain_split(
             labels.shape[0],
             domain_sets,
         )
 
         np.save(
-            dataset_location / f"{split}_{split_name}_domain_split.npy",
+            dataset_path / f"{split}_{split_name}_domain_split.npy",
             domain_split,  # type: ignore
         )
+
+
+@click.command("split", help="Create a dataset domain split")
+@click.option("--seed", "-s", default=0, type=int, help="Random seed")
+@click.option(
+    "--dataset_path",
+    "-p",
+    default="./",
+    type=str,
+    help="Path to the dataset",
+)
+@click.option(
+    "--domain_alignment",
+    "-a",
+    multiple=True,
+    type=click.Tuple([str, float]),
+    help="Domain alignment proportions. Format: 'domain1,domain2,...,domainN prop'.",
+)
+def add_split(
+    seed: int,
+    dataset_path: str,
+    domain_alignment: list[tuple[str, float]],
+) -> None:
+    dataset_location = Path(dataset_path)
+    assert dataset_location.exists()
+
+    create_domain_split(seed, dataset_location, domain_alignment)
