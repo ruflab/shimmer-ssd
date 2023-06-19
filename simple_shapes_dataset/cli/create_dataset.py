@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import click
@@ -9,6 +10,8 @@ from simple_shapes_dataset.text import composer
 
 from .utils import (
     generate_dataset,
+    get_deterministic_name,
+    get_domain_split,
     save_bert_latents,
     save_dataset,
     save_labels,
@@ -16,25 +19,34 @@ from .utils import (
 
 
 @click.command("create")
-@click.option("--seed", default=0, type=int, help="Random seed")
-@click.option("--img_size", default=32, type=int, help="Size of the images")
+@click.option("--seed", "-s", default=0, type=int, help="Random seed")
 @click.option(
-    "--output_path", default="./", type=str, help="Where to save the dataset"
+    "--img_size", "--is", default=32, type=int, help="Size of the images"
+)
+@click.option(
+    "--output_path",
+    "-o",
+    default="./",
+    type=str,
+    help="Where to save the dataset",
 )
 @click.option(
     "--num_train_examples",
+    "--ntrain",
     default=500_000,
     type=int,
     help="Number of training examples",
 )
 @click.option(
     "--num_val_examples",
+    "--nval",
     default=1_000,
     type=int,
     help="Number of validation examples",
 )
 @click.option(
     "--num_test_examples",
+    "--ntest",
     default=1_000,
     type=int,
     help="Number of test examples",
@@ -65,9 +77,17 @@ from .utils import (
 )
 @click.option(
     "--bert_path",
+    "-b",
     default="bert-base-uncased",
     type=str,
     help="Pretrained BERT model to use",
+)
+@click.option(
+    "--domain_alignment",
+    "-a",
+    multiple=True,
+    type=click.Tuple([str, float]),
+    help="Domain alignment proportions. Format: 'domain1,domain2,...,domainN prop'.",
 )
 def create_dataset(
     seed: int,
@@ -81,11 +101,24 @@ def create_dataset(
     min_lightness: int,
     max_lightness: int,
     bert_path: str,
+    domain_alignment: list[tuple[str, float]],
 ) -> None:
     dataset_location = Path(output_path)
     dataset_location.mkdir(exist_ok=True)
 
     np.random.seed(seed)
+
+    domain_sets = {}
+    for domain, prop in domain_alignment:
+        domain_set = frozenset(domain.split(","))
+        if domain_set in domain_sets:
+            logging.warning(
+                f"Domain set {domain_set} is defined multiple times. "
+                f"The value will be overwritten by {prop}."
+            )
+        domain_sets[domain_set] = prop
+
+    split_name = get_deterministic_name(domain_alignment, seed)
 
     train_labels = generate_dataset(
         num_train_examples,
@@ -155,4 +188,14 @@ def create_dataset(
             dataset_location / f"{split}_latent.npy",
             torch.device("cuda"),
             compute_statistics=(split == "train"),
+        )
+
+        domain_split = get_domain_split(
+            labels.shape[0],
+            domain_sets,
+        )
+
+        np.save(
+            dataset_location / f"{split}_{split_name}_domain_split.npy",
+            domain_split,  # type: ignore
         )

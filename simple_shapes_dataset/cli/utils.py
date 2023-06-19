@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import Dict, Mapping, cast
 
 import matplotlib.path as mpath
 import numpy as np
@@ -310,3 +310,34 @@ def save_bert_latents(
         std = all_latents.std(axis=0)
         np.save(output_path.with_stem(output_path.name + "_mean"), mean)
         np.save(output_path.with_stem(output_path.name + "_std"), std)
+
+
+def get_domain_split(
+    dataset_size: int,
+    aligned_domains_proportion: Mapping[frozenset, float],
+) -> Dict[frozenset, np.ndarray]:
+    print(aligned_domains_proportion)
+    selection = {}
+    for domains, proportion in aligned_domains_proportion.items():
+        assert 0 <= proportion <= 1
+        selection[domains] = np.random.rand(dataset_size) < proportion
+    return selection
+
+
+def get_deterministic_name(
+    domain_alignment: list[tuple[str, float]], seed: int
+) -> str:
+    domain_names = {
+        ",".join(sorted(domain.split(","))): prop
+        for domain, prop in domain_alignment
+    }
+    sorted_domain_names = sorted(
+        list(domain_names.items()),
+        key=lambda x: x[0],
+    )
+
+    split_name = (
+        "_".join([f"{domain}:{prop}" for domain, prop in sorted_domain_names])
+        + f"_seed:{seed}"
+    )
+    return split_name
