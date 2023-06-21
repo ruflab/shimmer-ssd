@@ -20,7 +20,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest
-          pip install -e .
+          pip install .
+      - name: Create fake dataset
+        run: |
+            shapesd create -o "./sample_dataset" --ntrain 4 --nval 2 --ntest 2 -a v,t 0.01
       - name: Test with pytest
         run: |
           pytest tests/

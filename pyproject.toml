@@ -17,6 +17,7 @@ opencv-python = "^4.7.0.72"
 torch = "^2.0.1"
 attributes-to-language = {git = "https://github.com/bdvllrs/attributes-to-language.git", rev = "v0.3.0"}
 torchdata = "^0.6.1"
+pillow = "^9.5.0"
 
 [tool.poetry.group.dev.dependencies]
 types-tqdm = "^4.65.0.1"

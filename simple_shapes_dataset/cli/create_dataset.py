@@ -11,7 +11,7 @@ from simple_shapes_dataset.text import composer
 from .utils import (
     generate_dataset,
     get_deterministic_name,
-    get_domain_split,
+    get_modality_split,
     save_bert_latents,
     save_dataset,
     save_labels,
@@ -83,11 +83,14 @@ from .utils import (
     help="Pretrained BERT model to use",
 )
 @click.option(
-    "--domain_alignment",
+    "--modality_alignment",
     "-a",
     multiple=True,
     type=click.Tuple([str, float]),
-    help="Domain alignment proportions. Format: 'domain1,domain2,...,domainN prop'.",
+    help=(
+        "Modality alignment proportions. "
+        "Format: 'modality1,modality2,...,modalityN prop'."
+    ),
 )
 def create_dataset(
     seed: int,
@@ -101,7 +104,7 @@ def create_dataset(
     min_lightness: int,
     max_lightness: int,
     bert_path: str,
-    domain_alignment: list[tuple[str, float]],
+    modality_alignment: list[tuple[str, float]],
 ) -> None:
     dataset_location = Path(output_path)
     dataset_location.mkdir(exist_ok=True)
@@ -138,7 +141,7 @@ def create_dataset(
     save_labels(dataset_location / "val_labels.npy", val_labels)
     save_labels(dataset_location / "test_labels.npy", test_labels)
 
-    create_domain_split(seed, dataset_location, domain_alignment)
+    create_modality_split(seed, dataset_location, modality_alignment)
 
     print("Saving training set...")
     (dataset_location / "train").mkdir(exist_ok=True)
@@ -175,45 +178,46 @@ def create_dataset(
         save_bert_latents(
             captions,
             bert_path,
-            dataset_location / f"{split}_latent.npy",
+            dataset_location,
+            split,
             torch.device("cuda"),
             compute_statistics=(split == "train"),
         )
 
 
-def create_domain_split(
+def create_modality_split(
     seed: int,
     dataset_path: Path,
-    domain_alignment: list[tuple[str, float]],
+    modality_alignment: list[tuple[str, float]],
 ):
     np.random.seed(seed)
 
-    domain_sets = {}
-    for domain, prop in domain_alignment:
-        domain_set = frozenset(domain.split(","))
-        if domain_set in domain_sets:
+    modality_sets = {}
+    for modality, prop in modality_alignment:
+        modality_set = frozenset(modality.split(","))
+        if modality_set in modality_sets:
             logging.warning(
-                f"Domain set {domain_set} is defined multiple times. "
+                f"Domain set {modality_set} is defined multiple times. "
                 f"The value will be overwritten by {prop}."
             )
-        domain_sets[domain_set] = prop
+        modality_sets[modality_set] = prop
 
-    split_name = get_deterministic_name(domain_alignment, seed)
+    split_name = get_deterministic_name(modality_sets, seed)
 
     for split in ["train", "val", "test"]:
         labels = np.load(str(dataset_path / f"{split}_labels.npy"))
-        domain_split = get_domain_split(
+        modality_split = get_modality_split(
             labels.shape[0],
-            domain_sets,
+            modality_sets,
         )
 
         np.save(
-            dataset_path / f"{split}_{split_name}_domain_split.npy",
-            domain_split,  # type: ignore
+            dataset_path / f"{split}_{split_name}_modality_split.npy",
+            modality_split,  # type: ignore
         )
 
 
-@click.command("split", help="Create a dataset domain split")
+@click.command("split", help="Create a dataset modality split")
 @click.option("--seed", "-s", default=0, type=int, help="Random seed")
 @click.option(
     "--dataset_path",
@@ -223,18 +227,21 @@ def create_domain_split(
     help="Path to the dataset",
 )
 @click.option(
-    "--domain_alignment",
+    "--modality_alignment",
     "-a",
     multiple=True,
     type=click.Tuple([str, float]),
-    help="Domain alignment proportions. Format: 'domain1,domain2,...,domainN prop'.",
+    help=(
+        "Domain alignment proportions. "
+        "Format: 'modality1,modality2,...,modalityN prop'."
+    ),
 )
 def add_split(
     seed: int,
     dataset_path: str,
-    domain_alignment: list[tuple[str, float]],
+    modality_alignment: list[tuple[str, float]],
 ) -> None:
     dataset_location = Path(dataset_path)
     assert dataset_location.exists()
 
-    create_domain_split(seed, dataset_location, domain_alignment)
+    create_modality_split(seed, dataset_location, modality_alignment)

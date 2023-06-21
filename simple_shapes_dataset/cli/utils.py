@@ -285,6 +285,7 @@ def save_bert_latents(
     sentences: list[str],
     bert_path: str,
     output_path: Path,
+    split: str,
     device: torch.device,
     compute_statistics: bool = False,
 ) -> None:
@@ -303,16 +304,16 @@ def save_bert_latents(
         z = transformer(**tokens)["last_hidden_state"][:, 0]  # type: ignore
         latents.append(z.cpu().numpy())
     all_latents = np.concatenate(latents, axis=0)
-    np.save(output_path, latents)
+    np.save(output_path / f"{split}_latent.npy", latents)
 
     if compute_statistics:
         mean = all_latents.mean(axis=0)
         std = all_latents.std(axis=0)
-        np.save(output_path.with_stem(output_path.name + "_mean"), mean)
-        np.save(output_path.with_stem(output_path.name + "_std"), std)
+        np.save(output_path / "latent_mean.npy", mean)
+        np.save(output_path / "latent_std.npy", std)
 
 
-def get_domain_split(
+def get_modality_split(
     dataset_size: int,
     aligned_domains_proportion: Mapping[frozenset, float],
 ) -> Dict[frozenset, np.ndarray]:
@@ -325,11 +326,11 @@ def get_domain_split(
 
 
 def get_deterministic_name(
-    domain_alignment: list[tuple[str, float]], seed: int
+    domain_alignment: Mapping[frozenset[str], float], seed: int
 ) -> str:
     domain_names = {
-        ",".join(sorted(domain.split(","))): prop
-        for domain, prop in domain_alignment
+        ",".join(sorted(list(domain))): prop
+        for domain, prop in domain_alignment.items()
     }
     sorted_domain_names = sorted(
         list(domain_names.items()),
