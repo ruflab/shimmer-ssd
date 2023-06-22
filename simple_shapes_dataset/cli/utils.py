@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Mapping, cast
+from typing import Mapping, cast
 
 import matplotlib.path as mpath
 import numpy as np
@@ -10,6 +10,8 @@ from matplotlib import pyplot as plt
 from torchdata.datapipes.iter import IterableWrapper
 from tqdm import tqdm
 from transformers import BertModel, BertTokenizer
+
+from simple_shapes_dataset.cli.graph import build_dependency_graph
 
 
 @dataclass
@@ -314,15 +316,78 @@ def save_bert_latents(
 
 
 def get_domain_split(
+    seed: int,
     dataset_size: int,
-    aligned_domains_proportion: Mapping[frozenset, float],
-) -> Dict[frozenset, np.ndarray]:
-    print(aligned_domains_proportion)
-    selection = {}
-    for domains, proportion in aligned_domains_proportion.items():
-        assert 0 <= proportion <= 1
-        selection[domains] = np.random.rand(dataset_size) < proportion
-    return selection
+    aligned_domain_groups_proportion: dict[frozenset[str], float],
+) -> dict[frozenset[str], np.ndarray]:
+    aligned_domain_groups_amount = {
+        domain_group: int(
+            dataset_size * aligned_domain_groups_proportion[domain_group]
+        )
+        for domain_group in aligned_domain_groups_proportion
+    }
+
+    rng = np.random.default_rng(seed)
+    rng_streams = {
+        domain_group: stream
+        for domain_group, stream in zip(
+            aligned_domain_groups_proportion.keys(),
+            rng.spawn(len(aligned_domain_groups_proportion)),
+        )
+    }
+
+    selection = {
+        domain_group: (
+            np.array([], dtype=np.int64),
+            rng_stream.permutation(dataset_size),
+        )
+        for domain_group, rng_stream in rng_streams.items()
+    }
+
+    dependency_graph = build_dependency_graph(
+        list(aligned_domain_groups_proportion)
+    )
+
+    while len(dependency_graph.nodes):
+        roots = dependency_graph.get_roots()
+        for root in roots:
+            define_domain_split(
+                selection,
+                aligned_domain_groups_amount,
+                root,
+            )
+        dependency_graph.remove_nodes(roots)
+
+    return {
+        domain_group: np.sort(selected)
+        for domain_group, (selected, _) in selection.items()
+    }
+
+
+def define_domain_split(
+    selection: dict[frozenset[str], tuple[np.ndarray, np.ndarray]],
+    aligned_domain_groups_amounts: dict[frozenset[str], int],
+    domain_group: frozenset[str],
+) -> None:
+    nb_selected = aligned_domain_groups_amounts[domain_group]
+    assert 0 <= nb_selected
+    _, selected = selection[domain_group]
+    selected = selected[:nb_selected]
+
+    for target_domain_group in selection.keys():
+        if target_domain_group <= domain_group:
+            target_selected, target_remaining = selection[target_domain_group]
+            new_selected = np.unique(
+                np.concatenate([target_selected, selected])
+            )
+            nb_added = len(new_selected) - len(target_selected)
+            new_remaining = np.setdiff1d(
+                target_remaining, selected, assume_unique=True
+            )
+            selection[target_domain_group] = (new_selected, new_remaining)
+
+            aligned_domain_groups_amounts[target_domain_group] -= nb_added
+            assert aligned_domain_groups_amounts[target_domain_group] >= 0
 
 
 def get_deterministic_name(

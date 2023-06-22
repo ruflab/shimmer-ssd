@@ -1,4 +1,9 @@
-from simple_shapes_dataset.cli.utils import get_deterministic_name
+import numpy as np
+
+from simple_shapes_dataset.cli.utils import (
+    get_deterministic_name,
+    get_domain_split,
+)
 
 
 def test_get_deterministic_name():
@@ -22,3 +27,36 @@ def test_get_deterministic_name_mutiple_domain_different_order():
     seed = 3
     name = get_deterministic_name(domain_alignment, seed)
     assert name == "t,v:0.3_v:0.2_seed:3"
+
+
+def test_get_domain_split():
+    dataset_size = 100
+    domain_groups = get_domain_split(
+        seed=0,
+        dataset_size=dataset_size,
+        aligned_domain_groups_proportion={
+            frozenset(["v"]): 0.8,
+            frozenset(["t"]): 0.9,
+            frozenset(["a"]): 1.0,
+            frozenset(["v", "t"]): 0.4,
+            frozenset(["t", "a"]): 0.2,
+        },
+    )
+
+    for domain_group in domain_groups:
+        assert domain_group in [
+            frozenset(["v"]),
+            frozenset(["t"]),
+            frozenset(["a"]),
+            frozenset(["v", "t"]),
+            frozenset(["t", "a"]),
+        ]
+    assert domain_groups[frozenset(["v"])].shape[0] == 80
+    assert (
+        np.intersect1d(
+            domain_groups[frozenset(["v", "t"])],
+            domain_groups[frozenset(["v"])],
+            assume_unique=True,
+        ).shape[0]
+        == 40
+    )
