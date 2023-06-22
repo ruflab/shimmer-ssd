@@ -1,12 +1,41 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Callable, NamedTuple
+from typing import Any, Callable, NamedTuple, overload
 
 import numpy as np
 import torch
 from PIL import Image
 
 
-class SimpleShapesImages:
+class SimpleShapesDomain(Sequence):
+    def __init__(
+        self,
+        dataset_path: str | Path,
+        split: str,
+        transform: Callable[[Any], Any] | None = None,
+    ) -> None:
+        assert split in ("train", "val", "test"), "Invalid split"
+
+        self.dataset_path = Path(dataset_path)
+        self.split = split
+        self.transform = transform
+
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+    @overload
+    def __getitem__(self, index: int) -> Any:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence:
+        ...
+
+    def __getitem__(self, index):
+        raise NotImplementedError
+
+
+class SimpleShapesImages(SimpleShapesDomain):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -23,7 +52,19 @@ class SimpleShapesImages:
     def __len__(self) -> int:
         return len(list(self.image_path.iterdir()))
 
+    @overload
     def __getitem__(self, index: int) -> Image.Image:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[Image.Image]:
+        ...
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            determined_slice_indices = index.indices(len(self))
+            return [self[i] for i in range(*determined_slice_indices)]
+
         path = self.image_path / f"{index}.png"
         with open(path, "rb") as f:
             image = Image.open(f)
@@ -48,7 +89,7 @@ class Attribute(NamedTuple):
     color_v: torch.Tensor
 
 
-class SimpleShapesAttributes:
+class SimpleShapesAttributes(SimpleShapesDomain):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -67,7 +108,19 @@ class SimpleShapesAttributes:
     def __len__(self) -> int:
         return self.labels.size(0)
 
+    @overload
     def __getitem__(self, index: int) -> Attribute:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[Attribute]:
+        ...
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            determined_slice_indices = index.indices(len(self))
+            return [self[i] for i in range(*determined_slice_indices)]
+
         label = self.labels[index]
         item = Attribute(
             category=label[0],
@@ -106,7 +159,7 @@ class Text(NamedTuple):
     choice: Choice
 
 
-class SimpleShapesRawText:
+class SimpleShapesRawText(SimpleShapesDomain):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -128,7 +181,19 @@ class SimpleShapesRawText:
     def __len__(self) -> int:
         return len(self.captions)
 
+    @overload
     def __getitem__(self, index: int) -> RawText:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[RawText]:
+        ...
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            determined_slice_indices = index.indices(len(self))
+            return [self[i] for i in range(*determined_slice_indices)]
+
         item = RawText(
             caption=self.captions[index], choice=Choice(**self.choices[index])
         )
@@ -138,7 +203,7 @@ class SimpleShapesRawText:
         return item
 
 
-class SimpleShapesText:
+class SimpleShapesText(SimpleShapesDomain):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -168,7 +233,19 @@ class SimpleShapesText:
     def __len__(self) -> int:
         return self.bert_data.size(0)
 
+    @overload
     def __getitem__(self, index: int) -> Text:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[Text]:
+        ...
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            determined_slice_indices = index.indices(len(self))
+            return [self[i] for i in range(*determined_slice_indices)]
+
         item = Text(
             caption=self.raw_text[index].caption,
             bert=self.bert_data[index],
@@ -180,7 +257,7 @@ class SimpleShapesText:
         return item
 
 
-AVAILABLE_DOMAINS = {
+AVAILABLE_DOMAINS: dict[str, type[SimpleShapesDomain]] = {
     "v": SimpleShapesImages,
     "attr": SimpleShapesAttributes,
     "raw_text": SimpleShapesRawText,

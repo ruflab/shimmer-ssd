@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, Callable
 
@@ -23,7 +24,7 @@ class SimpleShapesDataset(torchdata.Dataset):
         self.domain_proportions = domain_proportions
 
         self.selected_domains = selected_domains
-        self.domains = {}
+        self.domains: dict[str, Sequence] = {}
 
         for domain in self.selected_domains:
             transform = None
