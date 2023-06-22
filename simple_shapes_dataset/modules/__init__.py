@@ -1,4 +1,4 @@
-from simple_shapes_dataset.modules.modality import (
+from simple_shapes_dataset.modules.domain import (
     SimpleShapesAttributes,
     SimpleShapesImages,
 )

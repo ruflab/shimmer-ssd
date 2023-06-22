@@ -24,9 +24,9 @@ For more configurations, use
 shapesd create --help
 ```
 
-## Add a modality split
+## Add a domain split
 ```
-shapesd split --dataset_path "/path/to/dataset" --seed 0 --modality_alignement t,v 0.01
+shapesd split --dataset_path "/path/to/dataset" --seed 0 --domain_alignement t,v 0.01
 ```
-will create a modality split where 0.01% of the example between modalities "t" and "v" will
+will create a domain split where 0.01% of the example between domains "t" and "v" will
 be aligned.

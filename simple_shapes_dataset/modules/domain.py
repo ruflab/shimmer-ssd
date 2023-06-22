@@ -180,7 +180,7 @@ class SimpleShapesText:
         return item
 
 
-AVAILABLE_MODALITIES = {
+AVAILABLE_DOMAINS = {
     "v": SimpleShapesImages,
     "attr": SimpleShapesAttributes,
     "raw_text": SimpleShapesRawText,

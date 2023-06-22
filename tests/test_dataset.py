@@ -9,20 +9,20 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
 def test_dataset():
-    selected_modalities = ["v", "attr"]
+    selected_domains = ["v", "attr"]
     dataset = SimpleShapesDataset(
         PROJECT_DIR / "sample_dataset",
         split="train",
-        selected_modalities=selected_modalities,
-        modality_proportions={frozenset(["v", "t"]): 0.01},
+        selected_domains=selected_domains,
+        domain_proportions={frozenset(["v", "t"]): 0.01},
         seed=0,
     )
 
     assert len(dataset) == 4
 
     item = dataset[0]
-    for modality in ["v", "attr"]:
-        assert modality in item
+    for domain in ["v", "attr"]:
+        assert domain in item
 
 
 def test_dataloader():
@@ -32,13 +32,13 @@ def test_dataloader():
     dataset = SimpleShapesDataset(
         PROJECT_DIR / "sample_dataset",
         split="train",
-        selected_modalities=["v", "attr"],
-        modality_proportions={frozenset(["v", "t"]): 0.01},
+        selected_domains=["v", "attr"],
+        domain_proportions={frozenset(["v", "t"]): 0.01},
         seed=0,
         transforms=transform,
     )
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
     item = next(iter(dataloader))
-    for modality in ["v", "attr"]:
-        assert modality in item
+    for domain in ["v", "attr"]:
+        assert domain in item

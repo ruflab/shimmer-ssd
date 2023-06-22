@@ -313,7 +313,7 @@ def save_bert_latents(
         np.save(output_path / "latent_std.npy", std)
 
 
-def get_modality_split(
+def get_domain_split(
     dataset_size: int,
     aligned_domains_proportion: Mapping[frozenset, float],
 ) -> Dict[frozenset, np.ndarray]:

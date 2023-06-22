@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from simple_shapes_dataset.modules.modality import (
+from simple_shapes_dataset.modules.domain import (
     Attribute,
     RawText,
     SimpleShapesAttributes,
@@ -13,7 +13,7 @@ from simple_shapes_dataset.modules.modality import (
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
-def test_image_modality():
+def test_image_domain():
     train_images = SimpleShapesImages(PROJECT_DIR / "sample_dataset", "train")
 
     assert len(train_images) == 4
@@ -22,7 +22,7 @@ def test_image_modality():
     assert image.size == (32, 32)
 
 
-def test_attribute_modality():
+def test_attribute_domain():
     train_attributes = SimpleShapesAttributes(
         PROJECT_DIR / "sample_dataset", "train"
     )
@@ -33,7 +33,7 @@ def test_attribute_modality():
     assert isinstance(attr, Attribute)
 
 
-def test_raw_text_modality():
+def test_raw_text_domain():
     train_text = SimpleShapesRawText(PROJECT_DIR / "sample_dataset", "train")
 
     assert len(train_text) == 4
@@ -42,7 +42,7 @@ def test_raw_text_modality():
     assert isinstance(text, RawText)
 
 
-def test_text_modality():
+def test_text_domain():
     train_text = SimpleShapesText(PROJECT_DIR / "sample_dataset", "train")
 
     assert len(train_text) == 4
