@@ -18,7 +18,7 @@ attributes-to-language = {git = "https://github.com/bdvllrs/attributes-to-langua
 torchdata = "^0.6.1"
 pillow = "^9.5.0"
 numpy = ">=1.25,<2.0"
-torch = "^2.0.2"
+torch = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 types-tqdm = "^4.65.0.1"
