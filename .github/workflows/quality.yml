@@ -19,7 +19,7 @@ jobs:
 
       - name: Analysing the code with flake8
         run: |
-          flake8 .
+          python -m flake8 .
       - name: Analysing the code with mypy
         run: |
-          mypy .
+          python -m mypy .
