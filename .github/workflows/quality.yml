@@ -15,8 +15,7 @@ jobs:
         uses: snok/install-poetry@v1
       - name: Install dependencies
         run: |
-            poetry install --with dev,cputorch
-
+            poetry install --with dev
       - name: Analysing the code with flake8
         run: |
           poetry run flake8 .
