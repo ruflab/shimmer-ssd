@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import torch.utils.data
-import torchvision
 
 from simple_shapes_dataset.modules.dataset import SimpleShapesDataset
 from simple_shapes_dataset.modules.domain_alignment import get_aligned_datasets
@@ -25,14 +24,10 @@ def test_dataset():
 
 
 def test_dataloader():
-    transform = {
-        "v": torchvision.transforms.ToTensor(),
-    }
     dataset = SimpleShapesDataset(
         PROJECT_DIR / "sample_dataset",
         split="train",
         selected_domains=["v", "attr"],
-        transforms=transform,
     )
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
