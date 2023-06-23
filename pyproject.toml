@@ -21,7 +21,7 @@ numpy = ">=1.25,<2.0"
 torch = "^2.0.1"
 
 [tool.poetry.group.cputorch.dependencies]
-torch = {url = "https://download.pytorch.org/whl/cpu", version = "^2.0.1"}
+torch = {url = "https://download.pytorch.org/whl/cpu"}
 
 [tool.poetry.group.dev.dependencies]
 types-tqdm = "^4.65.0.1"
