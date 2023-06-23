@@ -2,7 +2,7 @@ import numpy as np
 
 from simple_shapes_dataset.cli.utils import (
     get_deterministic_name,
-    get_domain_split,
+    get_domain_alignment,
 )
 
 
@@ -29,12 +29,12 @@ def test_get_deterministic_name_mutiple_domain_different_order():
     assert name == "t,v:0.3_v:0.2_seed:3"
 
 
-def test_get_domain_split():
+def test_get_domain_alignment_split():
     dataset_size = 100
-    domain_groups = get_domain_split(
+    domain_groups = get_domain_alignment(
         seed=0,
         dataset_size=dataset_size,
-        aligned_domain_groups_proportion={
+        alignement_groups_props={
             frozenset(["v"]): 0.8,
             frozenset(["t"]): 0.9,
             frozenset(["a"]): 1.0,
