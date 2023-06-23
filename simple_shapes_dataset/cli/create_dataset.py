@@ -20,9 +20,7 @@ from .utils import (
 
 @click.command("create", help="Create a Simple Shapes dataset")
 @click.option("--seed", "-s", default=0, type=int, help="Random seed")
-@click.option(
-    "--img_size", "--is", default=32, type=int, help="Size of the images"
-)
+@click.option("--img_size", default=32, type=int, help="Size of the images")
 @click.option(
     "--output_path",
     "-o",
@@ -84,6 +82,7 @@ from .utils import (
 )
 @click.option(
     "--domain_alignment",
+    "--da",
     "-a",
     multiple=True,
     type=click.Tuple([str, float]),
@@ -218,7 +217,7 @@ def create_domain_split(
         )
 
 
-@click.command("split", help="Create a dataset domain split")
+@click.command("alignment", help="Create a dataset alignment split")
 @click.option("--seed", "-s", default=0, type=int, help="Random seed")
 @click.option(
     "--dataset_path",
@@ -229,6 +228,7 @@ def create_domain_split(
 )
 @click.option(
     "--domain_alignment",
+    "--da",
     "-a",
     multiple=True,
     type=click.Tuple([str, float]),
@@ -237,7 +237,7 @@ def create_domain_split(
         "Format: 'domain1,domain2,...,domainN prop'."
     ),
 )
-def add_split(
+def add_alignment_split(
     seed: int,
     dataset_path: str,
     domain_alignment: list[tuple[str, float]],

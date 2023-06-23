@@ -32,7 +32,7 @@ def get_aligned_datasets(
         ]
         raise ValueError(
             "Domain split not found. "
-            "To create it, use `shapesd split "
+            "To create it, use `shapesd alignment "
             f'--dataset_path "{str(dataset_path.resolve())}" '
             f"--seed {seed} {' '.join(domain_alignment)}`"
         )
