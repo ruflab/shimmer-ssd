@@ -315,24 +315,22 @@ def save_bert_latents(
         np.save(output_path / "latent_std.npy", std)
 
 
-def get_domain_split(
+def get_domain_alignment(
     seed: int,
     dataset_size: int,
-    aligned_domain_groups_proportion: dict[frozenset[str], float],
+    alignement_groups_props: dict[frozenset[str], float],
 ) -> dict[frozenset[str], np.ndarray]:
-    aligned_domain_groups_amount = {
-        domain_group: int(
-            dataset_size * aligned_domain_groups_proportion[domain_group]
-        )
-        for domain_group in aligned_domain_groups_proportion
+    alignement_groups_amounts = {
+        domain_group: int(dataset_size * alignement_groups_props[domain_group])
+        for domain_group in alignement_groups_props
     }
 
     rng = np.random.default_rng(seed)
     rng_streams = {
         domain_group: stream
         for domain_group, stream in zip(
-            aligned_domain_groups_proportion.keys(),
-            rng.spawn(len(aligned_domain_groups_proportion)),
+            alignement_groups_props.keys(),
+            rng.spawn(len(alignement_groups_props)),
         )
     }
 
@@ -344,16 +342,14 @@ def get_domain_split(
         for domain_group, rng_stream in rng_streams.items()
     }
 
-    dependency_graph = build_dependency_graph(
-        list(aligned_domain_groups_proportion)
-    )
+    dependency_graph = build_dependency_graph(list(alignement_groups_props))
 
     while len(dependency_graph.nodes):
         roots = dependency_graph.get_roots()
         for root in roots:
             define_domain_split(
                 selection,
-                aligned_domain_groups_amount,
+                alignement_groups_amounts,
                 root,
             )
         dependency_graph.remove_nodes(roots)
@@ -366,10 +362,10 @@ def get_domain_split(
 
 def define_domain_split(
     selection: dict[frozenset[str], tuple[np.ndarray, np.ndarray]],
-    aligned_domain_groups_amounts: dict[frozenset[str], int],
+    alignement_groups_amounts: dict[frozenset[str], int],
     domain_group: frozenset[str],
 ) -> None:
-    nb_selected = aligned_domain_groups_amounts[domain_group]
+    nb_selected = alignement_groups_amounts[domain_group]
     assert 0 <= nb_selected
     _, selected = selection[domain_group]
     selected = selected[:nb_selected]
@@ -386,8 +382,8 @@ def define_domain_split(
             )
             selection[target_domain_group] = (new_selected, new_remaining)
 
-            aligned_domain_groups_amounts[target_domain_group] -= nb_added
-            assert aligned_domain_groups_amounts[target_domain_group] >= 0
+            alignement_groups_amounts[target_domain_group] -= nb_added
+            assert alignement_groups_amounts[target_domain_group] >= 0
 
 
 def get_deterministic_name(
@@ -402,8 +398,8 @@ def get_deterministic_name(
         key=lambda x: x[0],
     )
 
-    split_name = (
+    alignment_split_name = (
         "_".join([f"{domain}:{prop}" for domain, prop in sorted_domain_names])
         + f"_seed:{seed}"
     )
-    return split_name
+    return alignment_split_name

@@ -11,7 +11,7 @@ from simple_shapes_dataset.text import composer
 from .utils import (
     generate_dataset,
     get_deterministic_name,
-    get_domain_split,
+    get_domain_alignment,
     save_bert_latents,
     save_dataset,
     save_labels,
@@ -206,7 +206,8 @@ def create_domain_split(
 
     for split in ["train", "val", "test"]:
         labels = np.load(str(dataset_path / f"{split}_labels.npy"))
-        domain_split = get_domain_split(
+        domain_split = get_domain_alignment(
+            seed,
             labels.shape[0],
             domain_sets,
         )

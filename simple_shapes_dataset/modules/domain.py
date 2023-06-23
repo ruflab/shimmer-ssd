@@ -1,10 +1,14 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Callable, NamedTuple, overload
+from typing import Any, NamedTuple, overload
 
 import numpy as np
 import torch
 from PIL import Image
+
+# TODO: Consider handling CPU usage
+# with a workaround in:
+# https://github.com/pytorch/pytorch/issues/13246#issuecomment-905703662
 
 
 class SimpleShapesDomain(Sequence):

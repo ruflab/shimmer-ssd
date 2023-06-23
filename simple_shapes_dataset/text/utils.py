@@ -1,6 +1,6 @@
 import math
 import re
-from typing import Any, Dict
+from typing import Any
 
 from attributes_to_language.composer import Composer
 
@@ -19,7 +19,7 @@ def inspect_writers(composer):
     return choices
 
 
-def inspect_all_choices(composer: Composer) -> Dict[str, Any]:
+def inspect_all_choices(composer: Composer) -> dict[str, Any]:
     num_structures = 0
     choices = dict()
     for structure in composer.script_structures:

@@ -59,7 +59,7 @@ class Graph(Generic[T]):
 
 
 def add_domain_group_in_dependency_graph(
-    graph: Graph[frozenset], domain_group: frozenset
+    graph: Graph[frozenset[str]], domain_group: frozenset[str]
 ) -> None:
     if domain_group in graph.nodes:
         return
@@ -72,8 +72,10 @@ def add_domain_group_in_dependency_graph(
             graph.add_edge((domain_group, existing_group))
 
 
-def build_dependency_graph(domain_groups: list[frozenset]) -> Graph[frozenset]:
-    graph: Graph[frozenset] = Graph()
+def build_dependency_graph(
+    domain_groups: list[frozenset[str]],
+) -> Graph[frozenset[str]]:
+    graph: Graph[frozenset[str]] = Graph()
     for domain_group in domain_groups:
         add_domain_group_in_dependency_graph(graph, domain_group)
     return graph
