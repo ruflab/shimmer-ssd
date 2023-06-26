@@ -17,12 +17,9 @@ class SimpleShapesDomain(Sequence):
         dataset_path: str | Path,
         split: str,
         transform: Callable[[Any], Any] | None = None,
+        additional_args: dict[str, Any] | None = None,
     ) -> None:
-        assert split in ("train", "val", "test"), "Invalid split"
-
-        self.dataset_path = Path(dataset_path)
-        self.split = split
-        self.transform = transform
+        raise NotImplementedError
 
     def __len__(self) -> int:
         raise NotImplementedError
@@ -45,6 +42,7 @@ class SimpleShapesImages(SimpleShapesDomain):
         dataset_path: str | Path,
         split: str,
         transform: Callable[[Any], Any] | None = None,
+        additional_args: dict[str, Any] | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
 
@@ -52,6 +50,7 @@ class SimpleShapesImages(SimpleShapesDomain):
         self.split = split
         self.image_path = self.dataset_path / self.split
         self.transform = transform
+        self.additional_args = additional_args
 
     def __len__(self) -> int:
         return len(list(self.image_path.iterdir()))
@@ -99,6 +98,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         dataset_path: str | Path,
         split: str,
         transform: Callable[[Any], Any] | None = None,
+        additional_args: dict[str, Any] | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
 
@@ -108,6 +108,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
             np.load(self.dataset_path / f"{split}_labels.npy")
         )
         self.transform = transform
+        self.additional_args = additional_args
 
     def __len__(self) -> int:
         return self.labels.size(0)
@@ -169,6 +170,7 @@ class SimpleShapesRawText(SimpleShapesDomain):
         dataset_path: str | Path,
         split: str,
         transform: Callable[[Any], Any] | None = None,
+        additional_args: dict[str, Any] | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
 
@@ -181,6 +183,7 @@ class SimpleShapesRawText(SimpleShapesDomain):
             allow_pickle=True,
         )
         self.transform = transform
+        self.additional_args = additional_args or {}
 
     def __len__(self) -> int:
         return len(self.captions)
@@ -213,23 +216,31 @@ class SimpleShapesText(SimpleShapesDomain):
         dataset_path: str | Path,
         split: str,
         transform: Callable[[Any], Any] | None = None,
+        additional_args: dict[str, Any] | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
 
         self.dataset_path = Path(dataset_path)
         self.split = split
 
+        self.additional_args = additional_args or {}
+        self.latent_filename = self.additional_args.get(
+            "latent_filename", "latent"
+        )
+
         self.raw_text = SimpleShapesRawText(self.dataset_path, self.split)
 
         self.bert_mean = torch.from_numpy(
-            np.load(self.dataset_path / "latent_mean.npy")
+            np.load(self.dataset_path / f"{self.latent_filename}_mean.npy")
         )
         self.bert_std = torch.from_numpy(
-            np.load(self.dataset_path / "latent_std.npy")
+            np.load(self.dataset_path / f"{self.latent_filename}_std.npy")
         )
 
         bert_data = torch.from_numpy(
-            np.load(self.dataset_path / f"{self.split}_latent.npy")[0]
+            np.load(
+                self.dataset_path / f"{self.split}_{self.latent_filename}.npy"
+            )[0]
         )
         self.bert_data = (bert_data - self.bert_mean) / self.bert_std
         self.transform = transform

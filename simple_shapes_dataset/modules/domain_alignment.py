@@ -15,6 +15,7 @@ def get_aligned_datasets(
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
     transforms: dict[str, Callable[[Any], Any]] | None = None,
+    domain_args: dict[str, Any] | None = None,
 ) -> Mapping[frozenset[str], Subset]:
     assert split in ["train", "val", "test"]
 
@@ -43,7 +44,11 @@ def get_aligned_datasets(
     datasets = {
         domain_group: Subset(
             SimpleShapesDataset(
-                dataset_path, split, list(domain_group), transforms
+                dataset_path,
+                split,
+                list(domain_group),
+                transforms,
+                domain_args,
             ),
             indices,  # type: ignore
         )

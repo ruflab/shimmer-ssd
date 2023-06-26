@@ -14,19 +14,24 @@ class SimpleShapesDataset(torchdata.Dataset):
         split: str,
         selected_domains: list[str],
         transforms: dict[str, Callable[[Any], Any]] | None = None,
+        domain_args: dict[str, Any] | None = None,
     ):
         self.dataset_path = Path(dataset_path)
         self.split = split
 
         self.selected_domains = selected_domains
         self.domains: dict[str, Sequence] = {}
+        self.domain_args = domain_args or {}
 
         for domain in self.selected_domains:
             transform = None
             if transforms is not None and domain in transforms:
                 transform = transforms[domain]
             self.domains[domain] = AVAILABLE_DOMAINS[domain](
-                dataset_path, split, transform
+                dataset_path,
+                split,
+                transform,
+                self.domain_args.get(domain, None),
             )
 
     def __len__(self) -> int:

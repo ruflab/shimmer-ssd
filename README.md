@@ -82,3 +82,26 @@ datasets = get_aligned_datasets(
     }
 )
 ```
+
+## Old style dataset
+If `train_latent.npy` is not available in your dataset, you may need to specify to path
+to the latent vectors (probably something like `train_bert-base-uncased.npy`).
+
+
+```python
+SimpleShapesDataset(
+    "/path/to/dataset",
+    split="train",
+    selected_domains=["t"],  # Will only load the visual domain
+    transforms={
+        # transform to apply to the visual domain
+        "v": torchvision.transforms.ToTensor(),
+    },
+    domain_args={
+        "t": {
+            "latent_filepath": "bert-base-uncased"
+        }
+    }
+)
+```
+The `domain_args` argument is also available in `get_aligned_datasets`.
