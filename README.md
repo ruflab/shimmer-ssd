@@ -99,7 +99,7 @@ SimpleShapesDataset(
     },
     domain_args={
         "t": {
-            "latent_filepath": "bert-base-uncased"
+            "latent_filename": "bert-base-uncased"
         }
     }
 )
