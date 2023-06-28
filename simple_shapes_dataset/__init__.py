@@ -1,7 +1,7 @@
 import simple_shapes_dataset.cli as cli
 import simple_shapes_dataset.text as text
-from simple_shapes_dataset.modules.dataset import SimpleShapesDataset
-from simple_shapes_dataset.modules.domain import (
+from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
+from simple_shapes_dataset.dataset.domain import (
     AVAILABLE_DOMAINS,
     Attribute,
     RawText,
@@ -11,7 +11,7 @@ from simple_shapes_dataset.modules.domain import (
     SimpleShapesText,
     Text,
 )
-from simple_shapes_dataset.modules.domain_alignment import get_aligned_datasets
+from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
 
 from .version import __version__
 

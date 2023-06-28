@@ -4,7 +4,7 @@ from typing import Any
 
 import torch.utils.data as torchdata
 
-from simple_shapes_dataset.modules.domain import AVAILABLE_DOMAINS
+from simple_shapes_dataset.dataset.domain import AVAILABLE_DOMAINS
 
 
 class SimpleShapesDataset(torchdata.Dataset):
