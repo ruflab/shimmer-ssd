@@ -1,6 +1,6 @@
-from pathlib import Path
+from utils import PROJECT_DIR
 
-from simple_shapes_dataset.modules.domain import (
+from simple_shapes_dataset.dataset.domain import (
     Attribute,
     RawText,
     SimpleShapesAttributes,
@@ -9,8 +9,6 @@ from simple_shapes_dataset.modules.domain import (
     SimpleShapesText,
     Text,
 )
-
-PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 
 def test_image_domain():

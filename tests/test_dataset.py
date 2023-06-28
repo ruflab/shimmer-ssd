@@ -1,12 +1,9 @@
-from pathlib import Path
-
 import torch.utils.data
 import torchvision
+from utils import PROJECT_DIR
 
-from simple_shapes_dataset.modules.dataset import SimpleShapesDataset
-from simple_shapes_dataset.modules.domain_alignment import get_aligned_datasets
-
-PROJECT_DIR = Path(__file__).resolve().parents[1]
+from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
+from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
 
 
 def test_dataset():

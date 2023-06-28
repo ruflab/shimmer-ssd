@@ -128,7 +128,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
 
         label = self.labels[index]
         item = Attribute(
-            category=label[0],
+            category=label[0].long(),
             x=label[1],
             y=label[2],
             size=label[3],

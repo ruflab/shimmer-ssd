@@ -2,7 +2,6 @@ import math
 from enum import StrEnum
 
 import torch
-from shimmer.modules.domain.domain import DomainModule
 from torch import nn
 
 
@@ -32,23 +31,18 @@ def gaussian_nll(mu, log_sigma, x):
     )
 
 
-class VAE(DomainModule):
+class VAE(nn.Module):
     def __init__(
         self,
-        channel_num: int,
-        ae_size: int,
-        z_size: int,
+        encoder: nn.Module,
+        decoder: nn.Module,
         beta: float = 1,
         vae_type: VAEType = VAEType.beta,
     ):
         super().__init__()
 
-        assert channel_num in [1, 3]
         assert beta >= 0
 
-        self.channel_num = channel_num
-        self.ae_size = ae_size
-        self.z_size = z_size
         self.beta = beta
         self.vae_type = vae_type
 
@@ -59,29 +53,11 @@ class VAE(DomainModule):
         else:
             self.register_buffer("log_sigma", torch.tensor(0.0))
 
-        self.encoder = Encoder(
-            channel_num, ae_size=ae_size, use_batchnorm=True
-        )
-        self.q_mean = nn.Linear(self.encoder.out_size, self.z_size)
-        self.q_logvar = nn.Linear(self.encoder.out_size, self.z_size)
-
-        self.decoder = Decoder(
-            channel_num,
-            ae_size=ae_size,
-            z_size=self.z_size,
-            use_batchnorm=True,
-        )
-
-    def encode_stats(self, x: torch.Tensor):
-        out = self.encoder(x)
-        out = out.view(out.size(0), -1)
-
-        mean_z = self.q_mean(out)
-        var_z = self.q_logvar(out)
-        return mean_z, var_z
+        self.encoder = encoder
+        self.decoder = decoder
 
     def encode(self, x: torch.Tensor):
-        mean_z, _ = self.encode_stats(x)
+        mean_z, _ = self.encoder(x)
         return mean_z
 
     def decode(self, z):
@@ -90,7 +66,7 @@ class VAE(DomainModule):
     def forward(
         self, x: torch.Tensor
     ) -> tuple[tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
-        mean, logvar = self.encode_stats(x)
+        mean, logvar = self.encoder(x)
         z = reparameterize(mean, logvar)
 
         x_reconstructed = self.decoder(z)
@@ -103,136 +79,146 @@ class VAE(DomainModule):
         return gaussian_nll(x_reconstructed, self.log_sigma, x).sum()
 
 
-class Encoder(nn.Module):
+class RAEEncoder(nn.Module):
     def __init__(
         self,
         num_channels: int,
-        ae_size: int = 1028,
-        kernel_size: int = 4,
+        ae_dim: int = 1028,
+        z_dim: int = 16,
+        kernel_dim: int = 4,
         padding: int = 1,
-        use_batchnorm: bool = False,
+        use_batchnorm: bool = True,
     ):
         super().__init__()
 
-        self.sizes = [
-            ae_size // (2**i) for i in reversed(range(4))
+        self.dims = [
+            ae_dim // (2**i) for i in reversed(range(4))
         ]  # 1 2 4 8 # 32 64 128 256
 
-        self.kernel_size = kernel_size
+        self.kernel_dim = kernel_dim
         self.padding = padding
-        self.sizes[-1] = ae_size
+        self.dims[-1] = ae_dim
         self.use_batchnorm = use_batchnorm
 
-        self.out_size = self.sizes[3] * 2 * 2
+        self.out_dim = self.dims[3] * 2 * 2
+        self.z_dim = z_dim
 
         self.layers = nn.Sequential(
             nn.Conv2d(
                 num_channels,
-                self.sizes[0],
-                kernel_size=self.kernel_size,
+                self.dims[0],
+                kernel_dim=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.sizes[0])
+            nn.BatchNorm2d(self.dims[0])
             if self.use_batchnorm
             else nn.Identity(),
             nn.ReLU(),
             nn.Conv2d(
-                self.sizes[0],
-                self.sizes[1],
-                kernel_size=self.kernel_size,
+                self.dims[0],
+                self.dims[1],
+                kernel_dim=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.sizes[1])
+            nn.BatchNorm2d(self.dims[1])
             if self.use_batchnorm
             else nn.Identity(),
             nn.ReLU(),
             nn.Conv2d(
-                self.sizes[1],
-                self.sizes[2],
-                kernel_size=self.kernel_size,
+                self.dims[1],
+                self.dims[2],
+                kernel_dim=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.sizes[2])
+            nn.BatchNorm2d(self.dims[2])
             if self.use_batchnorm
             else nn.Identity(),
             nn.ReLU(),
             nn.Conv2d(
-                self.sizes[2],
-                self.sizes[3],
-                kernel_size=self.kernel_size,
+                self.dims[2],
+                self.dims[3],
+                kernel_dim=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.sizes[3])
+            nn.BatchNorm2d(self.dims[3])
             if self.use_batchnorm
             else nn.Identity(),
             nn.ReLU(),
         )
 
+        self.q_mean = nn.Linear(self.out_dim, self.z_dim)
+        self.q_logvar = nn.Linear(self.out_dim, self.z_dim)
+
     def forward(self, x):
-        return self.layers(x).view(x.size(0), -1)
+        out = self.layers(x).view(x.dim(0), -1)
+        out = out.view(out.size(0), -1)
+
+        mean_z = self.q_mean(out)
+        var_z = self.q_logvar(out)
+        return mean_z, var_z
 
 
-class Decoder(nn.Module):
+class RAEDecoder(nn.Module):
     def __init__(
         self,
         num_channels: int,
-        z_size: int,
-        ae_size: int = 1028,
-        kernel_size: int = 4,
+        z_dim: int,
+        ae_dim: int = 1028,
+        kernel_dim: int = 4,
         padding: int = 1,
         use_batchnorm: bool = True,
     ):
         super().__init__()
 
         self.num_channels = num_channels
-        self.sizes = [ae_size // (2**i) for i in reversed(range(3))]
-        self.sizes[-1] = ae_size
+        self.dims = [ae_dim // (2**i) for i in reversed(range(3))]
+        self.dims[-1] = ae_dim
 
-        self.kernel_size = kernel_size
+        self.kernel_dim = kernel_dim
         self.padding = padding
         self.use_batchnorm = use_batchnorm
 
         self.layers = nn.Sequential(
             nn.ConvTranspose2d(
-                z_size,
-                self.sizes[2],
-                kernel_size=8,
+                z_dim,
+                self.dims[2],
+                kernel_dim=8,
                 stride=1,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.sizes[2])
+            nn.BatchNorm2d(self.dims[2])
             if self.use_batchnorm
             else nn.Identity(),
             nn.ReLU(),
             nn.ConvTranspose2d(
-                self.sizes[2],
-                self.sizes[1],
-                kernel_size=self.kernel_size,
+                self.dims[2],
+                self.dims[1],
+                kernel_dim=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.sizes[1])
+            nn.BatchNorm2d(self.dims[1])
             if self.use_batchnorm
             else nn.Identity(),
             nn.ReLU(),
             nn.ConvTranspose2d(
-                self.sizes[1],
-                self.sizes[0],
-                kernel_size=self.kernel_size,
+                self.dims[1],
+                self.dims[0],
+                kernel_dim=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.sizes[0])
+            nn.BatchNorm2d(self.dims[0])
             if self.use_batchnorm
             else nn.Identity(),
             nn.ReLU(),
@@ -241,9 +227,9 @@ class Decoder(nn.Module):
         self.out_layer = nn.Sequential(
             nn.ZeroPad2d((0, 1, 0, 1)),
             nn.Conv2d(
-                self.sizes[0],
+                self.dims[0],
                 self.num_channels,
-                kernel_size=self.kernel_size,
+                kernel_dim=self.kernel_dim,
                 stride=1,
                 padding=self.padding,
             ),
