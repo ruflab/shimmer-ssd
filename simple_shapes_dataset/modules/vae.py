@@ -112,7 +112,7 @@ class RAEEncoder(nn.Module):
             nn.Conv2d(
                 num_channels,
                 self.dims[0],
-                kernel_dim=self.kernel_dim,
+                kernel_size=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
@@ -124,7 +124,7 @@ class RAEEncoder(nn.Module):
             nn.Conv2d(
                 self.dims[0],
                 self.dims[1],
-                kernel_dim=self.kernel_dim,
+                kernel_size=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
@@ -136,7 +136,7 @@ class RAEEncoder(nn.Module):
             nn.Conv2d(
                 self.dims[1],
                 self.dims[2],
-                kernel_dim=self.kernel_dim,
+                kernel_size=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
@@ -148,7 +148,7 @@ class RAEEncoder(nn.Module):
             nn.Conv2d(
                 self.dims[2],
                 self.dims[3],
-                kernel_dim=self.kernel_dim,
+                kernel_size=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
@@ -195,7 +195,7 @@ class RAEDecoder(nn.Module):
             nn.ConvTranspose2d(
                 z_dim,
                 self.dims[2],
-                kernel_dim=8,
+                kernel_size=8,
                 stride=1,
                 bias=not self.use_batchnorm,
             ),
@@ -206,7 +206,7 @@ class RAEDecoder(nn.Module):
             nn.ConvTranspose2d(
                 self.dims[2],
                 self.dims[1],
-                kernel_dim=self.kernel_dim,
+                kernel_size=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
@@ -218,7 +218,7 @@ class RAEDecoder(nn.Module):
             nn.ConvTranspose2d(
                 self.dims[1],
                 self.dims[0],
-                kernel_dim=self.kernel_dim,
+                kernel_size=self.kernel_dim,
                 stride=2,
                 padding=self.padding,
                 bias=not self.use_batchnorm,
@@ -234,7 +234,7 @@ class RAEDecoder(nn.Module):
             nn.Conv2d(
                 self.dims[0],
                 self.num_channels,
-                kernel_dim=self.kernel_dim,
+                kernel_size=self.kernel_dim,
                 stride=1,
                 padding=self.padding,
             ),

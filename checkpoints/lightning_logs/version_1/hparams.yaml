@@ -1,0 +1,6 @@
+latent_dim: 12
+hidden_dim: 32
+n_layers: 2
+beta: 1
+vae_type: beta
+optim_lr: 0.001

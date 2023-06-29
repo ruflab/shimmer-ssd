@@ -1,4 +1,4 @@
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +12,7 @@ class SimpleShapesDataset(torchdata.Dataset):
         self,
         dataset_path: str | Path,
         split: str,
-        selected_domains: list[str],
+        selected_domains: Iterable[str],
         transforms: dict[str, Callable[[Any], Any]] | None = None,
         domain_args: dict[str, Any] | None = None,
     ):

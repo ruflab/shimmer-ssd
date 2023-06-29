@@ -19,7 +19,10 @@ torchdata = "^0.6.1"
 pillow = "^9.5.0"
 numpy = "^1.25"
 torch = "^2.0.1"
-shimmer = {git = "git@github.com:bdvllrs/shimmer.git"}
+# shimmer = {git = "git@github.com:bdvllrs/shimmer.git", path = "../shimmer", develop = true}
+shimmer = {path = "../shimmer", develop = true}
+wandb = "^0.15.4"
+lightning = "2.0.4"
 
 [tool.poetry.group.dev.dependencies]
 types-tqdm = "^4.65.0.1"

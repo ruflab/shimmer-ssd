@@ -1,0 +1,6 @@
+wandb: 
+    enabled: true
+    save_dir: "/mnt/SSD/benjamin/wandb/test"
+    project: "test"
+    entity: "bdevillers"
+    reinit: true
