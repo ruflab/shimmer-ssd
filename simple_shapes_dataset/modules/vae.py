@@ -1,13 +1,9 @@
 import math
-from enum import StrEnum
 
 import torch
 from torch import nn
 
-
-class VAEType(StrEnum):
-    sigma = "sigma"
-    beta = "beta"
+from simple_shapes_dataset.config.types import VAEType
 
 
 def reparameterize(mean, logvar):
@@ -77,6 +73,15 @@ class VAE(nn.Module):
         self, x_reconstructed: torch.Tensor, x: torch.Tensor
     ) -> torch.Tensor:
         return gaussian_nll(x_reconstructed, self.log_sigma, x).sum()
+
+    def get_losses(
+        self, x: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        (mean, logvar), x_reconstructed = self(x)
+        reconstruction_loss = self.reconstruction_loss(x_reconstructed, x)
+        kl_divergence = kl_divergence_loss(mean, logvar)
+        total_loss = reconstruction_loss + self.beta * kl_divergence
+        return reconstruction_loss, kl_divergence, total_loss
 
 
 class RAEEncoder(nn.Module):

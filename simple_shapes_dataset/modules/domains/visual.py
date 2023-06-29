@@ -1,32 +1,28 @@
 import torch
 from shimmer.modules.domain import DomainModule
 
-from simple_shapes_dataset.modules.vae import (
-    VAE,
-    RAEDecoder,
-    RAEEncoder,
-    VAEType,
-)
+from simple_shapes_dataset.config.types import VAEType
+from simple_shapes_dataset.modules.vae import VAE, RAEDecoder, RAEEncoder
 
 
-class VisualModule(DomainModule):
+class VisualDomainModule(DomainModule):
     def __init__(
         self,
         num_channels: int,
         ae_dim: int,
-        z_dim: int,
+        latent_dim: int,
         beta: float = 1,
         vae_type: VAEType = VAEType.beta,
     ):
         vae_encoder = RAEEncoder(
             num_channels,
             ae_dim,
-            z_dim,
+            latent_dim,
             use_batchnorm=True,
         )
         vae_decoder = RAEDecoder(
             num_channels,
-            z_dim,
+            latent_dim,
             ae_dim,
         )
         self.vae = VAE(vae_encoder, vae_decoder, beta, vae_type)
