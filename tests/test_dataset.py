@@ -87,18 +87,19 @@ def test_datamodule():
     datamodule.setup()
 
     train_dataloader = datamodule.train_dataloader()
-    assert isinstance(train_dataloader, dict)
-    assert len(train_dataloader) == 1
-    assert frozenset(["attr"]) in train_dataloader.keys()
+    item = next(iter(train_dataloader))
+    assert isinstance(item, dict)
+    assert len(item) == 1
+    assert frozenset(["attr"]) in item.keys()
 
 
 def test_datamodule_aligned_dataset():
     datamodule = SimpleShapesDataModule(
         PROJECT_DIR / "sample_dataset",
         domain_proportions={
-            frozenset(["v", "t"]): 0.5,
-            frozenset("v"): 1.0,
-            frozenset("t"): 1.0,
+            frozenset(["v", "attr"]): 0.5,
+            frozenset(["v"]): 1.0,
+            frozenset(["attr"]): 1.0,
         },
         batch_size=2,
         seed=0,
@@ -107,10 +108,11 @@ def test_datamodule_aligned_dataset():
     datamodule.setup()
 
     train_dataloader = datamodule.train_dataloader()
-    assert isinstance(train_dataloader, dict)
-    for domain in train_dataloader.keys():
+    item = next(iter(train_dataloader))
+    assert isinstance(item, dict)
+    for domain in item.keys():
         assert domain in [
-            frozenset(["v", "t"]),
+            frozenset(["v", "attr"]),
             frozenset(["v"]),
-            frozenset(["t"]),
+            frozenset(["attr"]),
         ]
