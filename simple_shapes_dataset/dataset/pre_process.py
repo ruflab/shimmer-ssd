@@ -37,10 +37,10 @@ class UnnormalizeAttributes:
             x=to_unit_range(attr.x) * self.image_size,
             y=to_unit_range(attr.y) * self.image_size,
             size=to_unit_range(attr.size) * self.image_size,
-            rotation=to_unit_range(attr.rotation),
-            color_r=to_unit_range(attr.color_r),
-            color_g=to_unit_range(attr.color_g),
-            color_b=to_unit_range(attr.color_b),
+            rotation=attr.rotation,
+            color_r=to_unit_range(attr.color_r) * 255,
+            color_g=to_unit_range(attr.color_g) * 255,
+            color_b=to_unit_range(attr.color_b) * 255,
         )
 
 
@@ -71,7 +71,7 @@ def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
         x=attributes[:, 0],
         y=attributes[:, 1],
         size=attributes[:, 2],
-        rotation=torch.atan2(attributes[:, 6], attributes[:, 7]),
+        rotation=torch.atan2(attributes[:, 3], attributes[:, 4]),
         color_r=attributes[:, 5],
         color_g=attributes[:, 6],
         color_b=attributes[:, 7],

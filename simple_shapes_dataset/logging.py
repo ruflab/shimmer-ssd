@@ -41,17 +41,18 @@ class LogSamplesCallback(pl.Callback):
             return
 
         samples = self.to(self.reference_samples, pl_module.device)
+        if trainer.current_epoch == 0:
+            self.log_samples(trainer.logger, samples, "reference")
+
         with torch.no_grad():
             pl_module.eval()
             generated_samples = pl_module(samples)
             pl_module.train()
 
         for logger in trainer.loggers:
-            self.log_samples(logger, samples, generated_samples)
+            self.log_samples(logger, generated_samples, "prediction")
 
-    def log_samples(
-        self, logger: Logger, samples: Any, generated_samples: Any
-    ) -> None:
+    def log_samples(self, logger: Logger, samples: Any, mode: str) -> None:
         raise NotImplementedError
 
 
@@ -158,27 +159,17 @@ class LogAttributesCallback(LogSamplesCallback):
         return [x.to(device) for x in samples]
 
     def log_samples(
-        self,
-        logger: Logger,
-        samples: Sequence[torch.Tensor],
-        generated_samples: Sequence[torch.Tensor],
+        self, logger: Logger, samples: Sequence[torch.Tensor], mode: str
     ) -> None:
         if not isinstance(logger, WandbLogger):
             logging.warning("Only logging to wandb is supported")
             return
+
         log_attribute(
             logger,
             samples,
             image_size=self.image_size,
-            key=f"{self.log_key}_target",
-            ncols=self.ncols,
-            dpi=self.dpi,
-        )
-        log_attribute(
-            logger,
-            generated_samples,
-            image_size=32,
-            key=f"{self.log_key}_prediction",
+            key=f"{self.log_key}_{mode}",
             ncols=self.ncols,
             dpi=self.dpi,
         )

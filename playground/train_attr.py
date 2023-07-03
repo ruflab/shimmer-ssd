@@ -45,6 +45,7 @@ def main():
             project=config.wandb.project,
             entity=config.wandb.entity,
         )
+        wandb_logger.experiment.config.update(config)
 
     val_samples = data_module.get_samples("val", 2)[frozenset(["attr"])][
         "attr"
