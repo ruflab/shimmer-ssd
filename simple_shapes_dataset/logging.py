@@ -136,6 +136,7 @@ def log_attribute(
         categories, locations, sizes, rotations, colors, image_size, ncols, dpi
     )
     logger.log_image(key=key, images=[fig])
+    plt.close()
 
 
 class LogAttributesCallback(LogSamplesCallback):
