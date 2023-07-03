@@ -1,0 +1,4 @@
+training:
+    optim:
+        lr: 1e-3
+        weight_decay: 0

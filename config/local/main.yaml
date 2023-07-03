@@ -1,0 +1,11 @@
+default_root_dir: "/home/benjamin/Projects/simple-shapes-dataset/checkpoints"
+
+dataset:
+    path: "/home/benjamin/Projects/simple-shapes-dataset/sample_dataset"
+
+wandb: 
+    enabled: true
+    save_dir: "/mnt/SSD/benjamin/wandb/test"
+    project: "test"
+    entity: "bdevillers"
+    reinit: true

@@ -87,9 +87,6 @@ class Attribute(NamedTuple):
     color_r: torch.Tensor
     color_g: torch.Tensor
     color_b: torch.Tensor
-    color_h: torch.Tensor
-    color_s: torch.Tensor
-    color_v: torch.Tensor
 
 
 class SimpleShapesAttributes(SimpleShapesDomain):
@@ -136,9 +133,6 @@ class SimpleShapesAttributes(SimpleShapesDomain):
             color_r=label[5] / 255,
             color_g=label[6] / 255,
             color_b=label[7] / 255,
-            color_h=label[8] / 255,
-            color_s=label[9] / 255,
-            color_v=label[10] / 255,
         )
 
         if self.transform is not None:

@@ -1,10 +1,6 @@
 from dataclasses import dataclass, field
-from enum import StrEnum
 
-
-class VAEType(StrEnum):
-    sigma = "sigma"
-    beta = "beta"
+from shimmer.modules.vae import VAEType
 
 
 @dataclass
@@ -29,8 +25,3 @@ class AttributeModule:
 class DomainModules:
     visual: VisualModule = field(default_factory=VisualModule)
     attribute: AttributeModule = field(default_factory=AttributeModule)
-
-
-@dataclass
-class Config:
-    domain_modules: DomainModules = field(default_factory=DomainModules)

@@ -1,10 +1,6 @@
 from dataclasses import dataclass, field
-from enum import StrEnum
 
-
-class VAEType(StrEnum):
-    sigma = "sigma"
-    beta = "beta"
+from shimmer.modules.vae import VAEType
 
 
 @dataclass

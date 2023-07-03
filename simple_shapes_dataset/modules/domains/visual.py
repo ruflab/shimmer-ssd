@@ -1,8 +1,8 @@
 import torch
 from shimmer.modules.domain import DomainModule
+from shimmer.modules.vae import VAE, VAEType
 
-from simple_shapes_dataset.config.domains import VAEType
-from simple_shapes_dataset.modules.vae import VAE, RAEDecoder, RAEEncoder
+from simple_shapes_dataset.modules.vae import RAEDecoder, RAEEncoder
 
 
 class VisualDomainModule(DomainModule):

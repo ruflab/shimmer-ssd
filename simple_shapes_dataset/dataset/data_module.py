@@ -5,11 +5,14 @@ from typing import Any
 import lightning.pytorch as pl
 import torchvision
 from lightning.pytorch.utilities.combined_loader import CombinedLoader
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, default_collate
 
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
-from simple_shapes_dataset.dataset.pre_process import attribute_to_tensor
+from simple_shapes_dataset.dataset.pre_process import (
+    NormalizeAttributes,
+    attribute_to_tensor,
+)
 
 
 class SimpleShapesDataModule(pl.LightningDataModule):
@@ -40,7 +43,9 @@ class SimpleShapesDataModule(pl.LightningDataModule):
         transforms = {}
         for domain in domains:
             if domain == "attr":
-                transforms[domain] = attribute_to_tensor
+                transforms[domain] = torchvision.transforms.Compose(
+                    [NormalizeAttributes(32), attribute_to_tensor]
+                )
             if domain == "v":
                 transforms[domain] = torchvision.transforms.ToTensor()
         return transforms
@@ -101,6 +106,16 @@ class SimpleShapesDataModule(pl.LightningDataModule):
 
         self.val_dataset = self._get_dataset("val")
         self.test_dataset = self._get_dataset("test")
+
+    def get_samples(
+        self, split: str, amount: int
+    ) -> dict[frozenset[str], dict[str, Any]]:
+        datasets = self._get_dataset(split)
+
+        return {
+            domain: default_collate([dataset[k] for k in range(amount)])
+            for domain, dataset in datasets.items()
+        }
 
     def train_dataloader(
         self,
