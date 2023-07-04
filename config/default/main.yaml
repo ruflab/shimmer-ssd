@@ -2,3 +2,7 @@ default_root_dir: ???
 
 dataset: 
     path: ???
+
+training:
+    batch_size: 1024
+    num_workers: 4

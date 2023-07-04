@@ -3,7 +3,7 @@ from collections.abc import Mapping, Sequence
 import torch
 import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
-from shimmer.modules.vae import VAE, VAEType, gaussian_nll, kl_divergence_loss
+from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
 from torch import nn
 
 
@@ -23,7 +23,10 @@ class VAEEncoder(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
             nn.Linear(hidden_dim, out_dim),
+            nn.ReLU(),
         )
 
         self.q_mean = nn.Linear(self.out_dim, self.out_dim)
@@ -33,7 +36,7 @@ class VAEEncoder(nn.Module):
         self, x: list[torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
         out = torch.cat(x, dim=-1)
-        out = torch.relu(self.encoder(out))
+        out = self.encoder(out)
         return self.q_mean(out), self.q_logvar(out)
 
 
@@ -49,6 +52,8 @@ class VAEDecoder(nn.Module):
         self.hidden_dim = hidden_dim
 
         self.decoder = nn.Sequential(
+            nn.Linear(self.in_dim, self.hidden_dim),
+            nn.ReLU(),
             nn.Linear(self.in_dim, self.hidden_dim),
             nn.ReLU(),
         )
@@ -76,9 +81,7 @@ class AttributeDomainModule(DomainModule):
         self,
         latent_dim: int,
         hidden_dim: int,
-        n_layers: int,
         beta: float = 1,
-        vae_type: VAEType = VAEType.beta,
         coef_categories: float = 1,
         coef_attributes: float = 1,
         optim_lr: float = 1e-3,
@@ -90,13 +93,12 @@ class AttributeDomainModule(DomainModule):
         self.latent_dim = latent_dim
         self.in_dim = 11
         self.hidden_dim = hidden_dim
-        self.n_layers = n_layers
-        self.coef_catogories = coef_categories
+        self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
 
         vae_encoder = VAEEncoder(self.hidden_dim, self.latent_dim)
         vae_decoder = VAEDecoder(self.latent_dim, self.hidden_dim)
-        self.vae = VAE(vae_encoder, vae_decoder, beta, vae_type)
+        self.vae = VAE(vae_encoder, vae_decoder, beta)
 
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
@@ -127,11 +129,11 @@ class AttributeDomainModule(DomainModule):
             reduction="sum",
         )
         reconstruction_loss_attributes = gaussian_nll(
-            reconstruction_attributes, self.vae.log_sigma, x_attributes
+            reconstruction_attributes, torch.tensor(0), x_attributes
         ).sum()
 
         reconstruction_loss = (
-            self.coef_catogories * reconstruction_loss_categories
+            self.coef_categories * reconstruction_loss_categories
             + self.coef_attributes * reconstruction_loss_attributes
         )
         kl_loss = kl_divergence_loss(mean, logvar)

@@ -2,6 +2,7 @@ import os
 
 import lightning.pytorch as pl
 from lightning.pytorch.loggers.wandb import WandbLogger
+from omegaconf import OmegaConf
 from shimmer.config import load_config
 from utils import PROJECT_DIR
 
@@ -14,7 +15,6 @@ from simple_shapes_dataset.modules.domains.attribute import (
 
 
 def main():
-    print(PROJECT_DIR)
     debug_mode = bool(int(os.getenv("DEBUG", "0")))
     config = load_config(
         PROJECT_DIR / "config",
@@ -33,9 +33,9 @@ def main():
     attr_domain_module = AttributeDomainModule(
         latent_dim=config.domain_modules.attribute.latent_dim,
         hidden_dim=config.domain_modules.attribute.hidden_dim,
-        n_layers=config.domain_modules.attribute.n_layers,
         optim_lr=config.training.optim.lr,
         optim_weight_decay=config.training.optim.weight_decay,
+        beta=config.domain_modules.attribute.beta,
     )
 
     wandb_logger = None
@@ -45,12 +45,14 @@ def main():
             project=config.wandb.project,
             entity=config.wandb.entity,
         )
-        wandb_logger.experiment.config.update(config)
+        wandb_logger.experiment.config.update(
+            OmegaConf.to_container(config, resolve=True)
+        )
 
-    val_samples = data_module.get_samples("val", 2)[frozenset(["attr"])][
+    val_samples = data_module.get_samples("val", 32)[frozenset(["attr"])][
         "attr"
     ]
-    train_samples = data_module.get_samples("train", 2)[frozenset(["attr"])][
+    train_samples = data_module.get_samples("train", 32)[frozenset(["attr"])][
         "attr"
     ]
     callbacks = [
@@ -58,13 +60,13 @@ def main():
             val_samples,
             log_key="images/val_attr",
             image_size=32,
-            ncols=2,
+            ncols=8,
         ),
         LogAttributesCallback(
             train_samples,
             log_key="images/train_attr",
             image_size=32,
-            ncols=2,
+            ncols=8,
         ),
     ]
 

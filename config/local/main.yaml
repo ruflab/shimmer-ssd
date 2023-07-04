@@ -1,7 +1,8 @@
 default_root_dir: "/home/benjamin/Projects/simple-shapes-dataset/checkpoints"
 
 dataset:
-    path: "/home/benjamin/Projects/simple-shapes-dataset/sample_dataset"
+    # path: "/home/benjamin/Projects/simple-shapes-dataset/sample_dataset"
+    path: "/mnt/SSD/datasets/simple_shapes_dataset"
 
 wandb: 
     enabled: true
