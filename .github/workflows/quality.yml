@@ -11,14 +11,12 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: "3.11.4"
-      - name: Add shimmer deploy key
-        run: |
-            eval `ssh-agent -s`
-            ssh-add - <<< '${{ secrets.SHIMMER_DEPLOY }}'
       - name: Install Poetry
         uses: snok/install-poetry@v1
       - name: Install dependencies
         run: |
+            eval `ssh-agent -s`
+            ssh-add - <<< '${{ secrets.SHIMMER_DEPLOY }}'
             poetry install --with dev
       - name: Analysing the code with flake8
         run: |
