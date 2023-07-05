@@ -6,7 +6,7 @@ dataset:
 
 wandb: 
     enabled: true
-    save_dir: "/mnt/SSD/benjamin/wandb/test"
-    project: "test"
-    entity: "bdevillers"
+    save_dir: "/mnt/SSD/benjamin/wandb/shimmer-ssd"
+    project: "shimmer-simple-shapes"
+    entity: "vanrullen-lab"
     reinit: true

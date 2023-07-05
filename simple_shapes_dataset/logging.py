@@ -1,3 +1,4 @@
+import io
 import logging
 from collections.abc import Sequence
 from typing import Any
@@ -9,6 +10,7 @@ import torch
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
+from PIL import Image
 
 from simple_shapes_dataset.cli.utils import generate_image
 from simple_shapes_dataset.dataset.pre_process import (
@@ -56,6 +58,16 @@ class LogSamplesCallback(pl.Callback):
         raise NotImplementedError
 
 
+def get_pil_image(figure: plt.Figure) -> Image.Image:
+    buf = io.BytesIO()
+    figure.savefig(buf)
+    buf.seek(0)
+    return Image.open(buf)
+    # return Image.frombytes(
+    #     "RGB", figure.canvas.get_width_height(), figure.canvas.tostring_rgb()
+    # )
+
+
 def figure_grid(
     categories: np.ndarray,
     locations: np.ndarray,
@@ -65,7 +77,7 @@ def figure_grid(
     image_size: int,
     ncols: int = 8,
     dpi: float = 100,
-):
+) -> Image.Image:
     reminder = 1 if categories.shape[0] % ncols else 0
     nrows = categories.shape[0] // ncols + reminder
 
@@ -99,7 +111,9 @@ def figure_grid(
                 image_size,
             )
             ax.set_facecolor("black")
-    return figure
+    image = get_pil_image(figure)  # type: ignore
+    plt.close(figure)
+    return image
 
 
 def log_attribute(
@@ -109,7 +123,7 @@ def log_attribute(
     key: str,
     ncols: int = 8,
     dpi: float = 100,
-):
+) -> None:
     unnormalizer = UnnormalizeAttributes(image_size)
     attributes = unnormalizer(tensor_to_attribute(samples))
 
@@ -132,11 +146,10 @@ def log_attribute(
     sizes = attributes.size.cpu().numpy()
     rotations = attributes.rotation.cpu().numpy()
 
-    fig = figure_grid(
+    image = figure_grid(
         categories, locations, sizes, rotations, colors, image_size, ncols, dpi
     )
-    logger.log_image(key=key, images=[fig])
-    plt.close(fig)
+    logger.log_image(key=key, images=[image])
 
 
 class LogAttributesCallback(LogSamplesCallback):

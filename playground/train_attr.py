@@ -1,6 +1,11 @@
 import os
 
 import lightning.pytorch as pl
+from lightning.pytorch.callbacks import (
+    EarlyStopping,
+    ModelCheckpoint,
+    RichProgressBar,
+)
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer.config import load_config
@@ -44,6 +49,7 @@ def main():
             save_dir=config.wandb.save_dir,
             project=config.wandb.project,
             entity=config.wandb.entity,
+            tags=["train_attr"],
         )
         wandb_logger.experiment.config.update(
             OmegaConf.to_container(config, resolve=True)
@@ -56,6 +62,18 @@ def main():
         "attr"
     ]
     callbacks = [
+        ModelCheckpoint(
+            dirpath=config.default_root_dir,
+            filename="{epoch}",
+            monitor="val/loss",
+            mode="min",
+            save_top_k=1,
+        ),
+        EarlyStopping(
+            monitor="val/loss",
+            mode="min",
+            patience=10,
+        ),
         LogAttributesCallback(
             val_samples,
             log_key="images/val_attr",
@@ -69,6 +87,8 @@ def main():
             ncols=8,
         ),
     ]
+    if config.training.enable_progress_bar:
+        callbacks.append(RichProgressBar())
 
     trainer = pl.Trainer(
         logger=wandb_logger,

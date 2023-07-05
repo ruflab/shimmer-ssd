@@ -54,7 +54,7 @@ class VAEDecoder(nn.Module):
         self.decoder = nn.Sequential(
             nn.Linear(self.in_dim, self.hidden_dim),
             nn.ReLU(),
-            nn.Linear(self.in_dim, self.hidden_dim),
+            nn.Linear(self.hidden_dim, self.hidden_dim),
             nn.ReLU(),
         )
 

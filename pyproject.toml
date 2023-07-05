@@ -22,6 +22,7 @@ torch = "^2.0.1"
 shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "main"}
 wandb = "^0.15.4"
 lightning = "2.0.4"
+rich = "^13.4.2"
 
 [tool.poetry.group.dev.dependencies]
 types-tqdm = "^4.65.0.1"
