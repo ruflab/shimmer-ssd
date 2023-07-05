@@ -48,32 +48,14 @@ def main():
         },
     )
 
-    wandb_logger = None
-    if config.wandb.enabled:
-        wandb_logger = WandbLogger(
-            save_dir=config.wandb.save_dir,
-            project=config.wandb.project,
-            entity=config.wandb.entity,
-            tags=["train_attr"],
-        )
-        wandb_logger.experiment.config.update(
-            OmegaConf.to_container(config, resolve=True)
-        )
-
     val_samples = data_module.get_samples("val", 32)[frozenset(["attr"])][
         "attr"
     ]
     train_samples = data_module.get_samples("train", 32)[frozenset(["attr"])][
         "attr"
     ]
+
     callbacks = [
-        ModelCheckpoint(
-            dirpath=config.default_root_dir,
-            filename="{epoch}",
-            monitor="val/loss",
-            mode="min",
-            save_top_k=1,
-        ),
         LearningRateMonitor(logging_interval="step"),
         EarlyStopping(
             monitor="val/loss",
@@ -93,8 +75,35 @@ def main():
             ncols=8,
         ),
     ]
+
     if config.training.enable_progress_bar:
         callbacks.append(RichProgressBar())
+
+    wandb_logger = None
+    if config.wandb.enabled:
+        wandb_logger = WandbLogger(
+            save_dir=config.wandb.save_dir,
+            project=config.wandb.project,
+            entity=config.wandb.entity,
+            tags=["train_attr"],
+        )
+        wandb_logger.experiment.config.update(
+            OmegaConf.to_container(config, resolve=True)
+        )
+
+        checkpoint_dir = (
+            config.default_root_dir
+            / f"{wandb_logger.name}-{wandb_logger.version}"
+        )
+        callbacks.append(
+            ModelCheckpoint(
+                dirpath=checkpoint_dir,
+                filename="{epoch}",
+                monitor="val/loss",
+                mode="min",
+                save_top_k=1,
+            )
+        )
 
     trainer = pl.Trainer(
         logger=wandb_logger,
