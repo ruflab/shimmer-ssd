@@ -57,7 +57,7 @@ class SimpleShapesDataModule(pl.LightningDataModule):
         return False
 
     def _get_selected_domains(self) -> set[str]:
-        selected_domains = set()
+        selected_domains: set[str] = set()
         for domain in self.domain_proportions.keys():
             selected_domains.update(domain)
         return selected_domains
