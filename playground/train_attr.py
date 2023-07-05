@@ -10,8 +10,8 @@ from lightning.pytorch.callbacks import (
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer.config import load_config
-from utils import PROJECT_DIR
 
+from simple_shapes_dataset import PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogAttributesCallback

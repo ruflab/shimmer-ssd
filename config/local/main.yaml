@@ -10,3 +10,7 @@ wandb:
     project: "shimmer-simple-shapes"
     entity: "vanrullen-lab"
     reinit: true
+
+visualization:
+    explore_vae:
+        checkpoint: ${default_root_dir}/qjjpwi2z/epoch=96.ckpt
