@@ -3,6 +3,7 @@ import os
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import (
     EarlyStopping,
+    LearningRateMonitor,
     ModelCheckpoint,
     RichProgressBar,
 )
@@ -38,9 +39,13 @@ def main():
     attr_domain_module = AttributeDomainModule(
         latent_dim=config.domain_modules.attribute.latent_dim,
         hidden_dim=config.domain_modules.attribute.hidden_dim,
+        beta=config.domain_modules.attribute.beta,
         optim_lr=config.training.optim.lr,
         optim_weight_decay=config.training.optim.weight_decay,
-        beta=config.domain_modules.attribute.beta,
+        scheduler_args={
+            "max_lr": config.training.optim.max_lr,
+            "total_steps": config.training.max_steps,
+        },
     )
 
     wandb_logger = None
@@ -69,6 +74,7 @@ def main():
             mode="min",
             save_top_k=1,
         ),
+        LearningRateMonitor(logging_interval="step"),
         EarlyStopping(
             monitor="val/loss",
             mode="min",
@@ -93,7 +99,7 @@ def main():
     trainer = pl.Trainer(
         logger=wandb_logger,
         fast_dev_run=config.training.fast_dev_run,
-        max_epochs=config.training.max_epochs,
+        max_steps=config.training.max_steps,
         enable_progress_bar=config.training.enable_progress_bar,
         default_root_dir=config.default_root_dir,
         callbacks=callbacks,  # type: ignore

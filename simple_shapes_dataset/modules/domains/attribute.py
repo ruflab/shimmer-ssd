@@ -1,10 +1,12 @@
 from collections.abc import Mapping, Sequence
+from typing import Any
 
 import torch
 import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
 from torch import nn
+from torch.optim.lr_scheduler import OneCycleLR
 
 
 class VAEEncoder(nn.Module):
@@ -86,6 +88,7 @@ class AttributeDomainModule(DomainModule):
         coef_attributes: float = 1,
         optim_lr: float = 1e-3,
         optim_weight_decay: float = 0,
+        scheduler_args: Mapping[str, Any] | None = None,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -102,6 +105,7 @@ class AttributeDomainModule(DomainModule):
 
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
+        self.scheduler_args = scheduler_args or {}
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         return self.vae.encode(x)
@@ -168,9 +172,14 @@ class AttributeDomainModule(DomainModule):
         x = batch[frozenset(["attr"])]["attr"]
         return self.generic_step(x, "train")
 
-    def configure_optimizers(self) -> torch.optim.Adam:
-        return torch.optim.Adam(
+    def configure_optimizers(
+        self,
+    ) -> dict[str, torch.optim.Adam | torch.optim.lr_scheduler.LRScheduler]:
+        optimizer = torch.optim.Adam(
             self.parameters(),
             lr=self.optim_lr,
             weight_decay=self.optim_weight_decay,
         )
+        lr_scheduler = OneCycleLR(optimizer, **self.scheduler_args)
+
+        return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}

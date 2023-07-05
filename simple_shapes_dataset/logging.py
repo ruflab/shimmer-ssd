@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from typing import Any
 
 import lightning.pytorch as pl
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -17,6 +18,8 @@ from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
     tensor_to_attribute,
 )
+
+matplotlib.use("Agg")
 
 
 class LogSamplesCallback(pl.Callback):
