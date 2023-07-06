@@ -46,24 +46,36 @@ Load the dataset:
 ```python
 import torchvision
 
-from simple_shapes_dataset.modules import SimpleShapesDataset
+from simple_shapes_dataset.dataset import (
+    SimpleShapesDataset, NormalizeAttributes, attribute_to_tensor
+)
 
 
 dataset = SimpleShapesDataset(
     "/path/to/dataset",
     split="train",
-    selected_domains=["v"],  # Will only load the visual domain
+    selected_domains=["v", "attr"],  # Will only load the visual and attr domains
+
+    # transform to apply to the domains domain
     transforms={
-        # transform to apply to the visual domain
         "v": torchvision.transforms.ToTensor(),
+        "attr": torchvision.Compose([
+            NormalizeAttributes(image_size=32),
+            attribute_to_tensor,
+        ])
     }
 )
 
+item = dataset[0]
+assert isinstance(item, dict)
+
+visual_domain = item["v"]
+attr_domain = item["attr"]
 ```
 
 If you need to use the alignment splits, use:
 ```python
-from simple_shapes_dataset.modules import get_aligned_datasets
+from simple_shapes_dataset.dataset import get_aligned_datasets
 
 datasets = get_aligned_datasets(
     "/path/to/dataset",
@@ -73,15 +85,24 @@ datasets = get_aligned_datasets(
     domain_proportions={
         frozenset(["v", "t"]): 0.5,  # proportion of data where visual and text are aligned
         # you also need to provide the proportion for individual domains.
-        frozenset("v"): 1.0,
-        frozenset("t"): 1.0,
+        frozenset(["v"]): 1.0,
+        frozenset(["t"]): 1.0,
     },
     seed=0,
     transforms={
         "v": torchvision.transforms.ToTensor(),
     }
 )
+
+assert isinstance(datasets, dict)
+
+v_dataset = datasets[frozenset(["v"])]  # all items
+t_dataset = datasets[frozenset(["t"])]  # all items
+vt_dataset = datasets[frozenset(["v", "t"])]  # 50% of items
 ```
+
+`v_dataset`, `t_dataset`, and `vt_dataset` are `torch.utils.data.Subset` of
+the `SimpleShapesDataset`.
 
 ## Old style dataset
 If `train_latent.npy` is not available in your dataset, you may need to specify to path
@@ -93,10 +114,6 @@ SimpleShapesDataset(
     "/path/to/dataset",
     split="train",
     selected_domains=["t"],  # Will only load the visual domain
-    transforms={
-        # transform to apply to the visual domain
-        "v": torchvision.transforms.ToTensor(),
-    },
     domain_args={
         "t": {
             "latent_filename": "bert-base-uncased"
