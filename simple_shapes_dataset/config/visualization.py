@@ -7,6 +7,10 @@ from omegaconf import MISSING
 @dataclass
 class ExploreVAE:
     checkpoint: Path = MISSING
+    num_samples: int = 5
+    range_start: int = -6
+    range_end: int = 6
+    wandb_name: str | None = None
 
 
 @dataclass

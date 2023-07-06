@@ -9,7 +9,7 @@ from lightning.pytorch.callbacks import (
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
-from shimmer.config import load_config
+from shimmer.config import load_structured_config
 
 from simple_shapes_dataset import PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
@@ -22,10 +22,10 @@ from simple_shapes_dataset.modules.domains.attribute import (
 
 def main():
     debug_mode = bool(int(os.getenv("DEBUG", "0")))
-    config = load_config(
+    config = load_structured_config(
         PROJECT_DIR / "config",
+        Config,
         load_dirs=["train_attr"],
-        structure=Config,
         debug_mode=debug_mode,
     )
 
@@ -81,11 +81,13 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
+        run_name = f"attr_vae_z={config.domain_modules.attribute.latent_dim}"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
             project=config.wandb.project,
             entity=config.wandb.entity,
             tags=["train_attr"],
+            name=run_name,
         )
         wandb_logger.experiment.config.update(
             OmegaConf.to_container(config, resolve=True)

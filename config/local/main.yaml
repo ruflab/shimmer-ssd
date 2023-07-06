@@ -14,3 +14,4 @@ wandb:
 visualization:
     explore_vae:
         checkpoint: ${default_root_dir}/qjjpwi2z/epoch=96.ckpt
+        wandb_name: "qjjpwi2z"
