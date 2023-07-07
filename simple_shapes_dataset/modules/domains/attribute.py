@@ -174,7 +174,7 @@ class AttributeDomainModule(DomainModule):
 
     def configure_optimizers(
         self,
-    ) -> dict[str, torch.optim.Adam | torch.optim.lr_scheduler.LRScheduler]:
+    ) -> dict[str, Any]:
         optimizer = torch.optim.Adam(
             self.parameters(),
             lr=self.optim_lr,
@@ -182,4 +182,10 @@ class AttributeDomainModule(DomainModule):
         )
         lr_scheduler = OneCycleLR(optimizer, **self.scheduler_args)
 
-        return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": lr_scheduler,
+                "interval": "step",
+            },
+        }
