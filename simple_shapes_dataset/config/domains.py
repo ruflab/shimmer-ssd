@@ -11,9 +11,11 @@ class VisualModule:
 
 @dataclass
 class AttributeModule:
-    latent_dim: int = 8
+    latent_dim: int = 12
     hidden_dim: int = 64
     beta: float = 0.01
+    coef_categories: float = 0.2
+    coef_attributes: float = 1
 
 
 @dataclass

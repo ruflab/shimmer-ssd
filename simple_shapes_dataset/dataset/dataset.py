@@ -1,13 +1,20 @@
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
 import torch.utils.data as torchdata
 
-from simple_shapes_dataset.dataset.domain import AVAILABLE_DOMAINS
+from simple_shapes_dataset.dataset.domain import (
+    AVAILABLE_DOMAINS,
+    SimpleShapesDomain,
+)
 
 
 class SimpleShapesDataset(torchdata.Dataset):
+    """
+    Dataset class to obtain a SimpleShapesDataset.
+    """
+
     def __init__(
         self,
         dataset_path: str | Path,
@@ -16,11 +23,22 @@ class SimpleShapesDataset(torchdata.Dataset):
         transforms: dict[str, Callable[[Any], Any]] | None = None,
         domain_args: dict[str, Any] | None = None,
     ):
+        """
+        Params:
+            dataset_path (str | pathlib.Path): Path to the dataset.
+            split (str): Split to use. One of 'train', 'val', 'test'.
+            selected_domains (Iterable[str]): Domains to include in the dataset.
+            transforms (dict[str, (Any) -> Any]): Optional transforms to apply
+                to the domains. The keys are the domain names,
+                the values are the transforms.
+            domain_args (dict[str, Any]): Optional additional arguments to pass
+                to the domains.
+        """
         self.dataset_path = Path(dataset_path)
         self.split = split
 
         self.selected_domains = selected_domains
-        self.domains: dict[str, Sequence] = {}
+        self.domains: dict[str, SimpleShapesDomain] = {}
         self.domain_args = domain_args or {}
 
         for domain in self.selected_domains:
@@ -34,12 +52,27 @@ class SimpleShapesDataset(torchdata.Dataset):
                 self.domain_args.get(domain, None),
             )
 
+        lengths = {len(domain) for domain in self.domains.values()}
+        assert len(lengths) == 1, "Domains have different lengths"
+
     def __len__(self) -> int:
+        """
+        All domains should be the same length.
+        Returns the length of the first domain.
+        """
         for domain in self.domains.values():
             return len(domain)
         return 0
 
-    def __getitem__(self, index) -> dict[str, Any]:
+    def __getitem__(self, index: int) -> dict[str, Any]:
+        """
+        Params:
+            index (int): Index of the item to get.
+        Returns:
+            dict[str, Any]: Dictionary containing the domains. The keys are the
+            domain names, the values are the domains as given by the domain model at
+            the given index.
+        """
         return {
             domain_name: domain[index]
             for domain_name, domain in self.domains.items()

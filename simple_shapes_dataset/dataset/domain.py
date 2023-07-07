@@ -12,6 +12,12 @@ from PIL import Image
 
 
 class SimpleShapesDomain(Sequence):
+    """
+    Base class for a domain of the SimpleShapesDataset.
+    All domains extend this base class and implement the
+    __getitem__ and __len__ methods.
+    """
+
     def __init__(
         self,
         dataset_path: str | Path,
@@ -19,6 +25,14 @@ class SimpleShapesDomain(Sequence):
         transform: Callable[[Any], Any] | None = None,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
+        """
+        Params:
+            dataset_path (str | pathlib.Path): Path to the dataset.
+            split (str): The split of the dataset to use. One of "train", "val", "test".
+            transform (Any -> Any): Optional transform to apply to the data.
+            additional_args (dict[str, Any]): Optional additional arguments to pass
+                to the domain.
+        """
         raise NotImplementedError
 
     def __len__(self) -> int:
@@ -29,7 +43,7 @@ class SimpleShapesDomain(Sequence):
         ...
 
     @overload
-    def __getitem__(self, index: slice) -> Sequence:
+    def __getitem__(self, index: slice) -> Sequence[Any]:
         ...
 
     def __getitem__(self, index):
@@ -37,6 +51,10 @@ class SimpleShapesDomain(Sequence):
 
 
 class SimpleShapesImages(SimpleShapesDomain):
+    """
+    Domain for the images of the SimpleShapesDataset.
+    """
+
     def __init__(
         self,
         dataset_path: str | Path,
@@ -64,6 +82,12 @@ class SimpleShapesImages(SimpleShapesDomain):
         ...
 
     def __getitem__(self, index):
+        """
+        Params:
+            index: The index of the image to retrieve.
+        Returns:
+            A PIL image at the given index.
+        """
         if isinstance(index, slice):
             determined_slice_indices = index.indices(len(self))
             return [self[i] for i in range(*determined_slice_indices)]
@@ -79,6 +103,11 @@ class SimpleShapesImages(SimpleShapesDomain):
 
 
 class Attribute(NamedTuple):
+    """
+    NamedTuple for the attributes of the SimpleShapesDataset.
+    NamedTuples are used as they are correcly handled by pytorch's collate function.
+    """
+
     category: torch.Tensor
     x: torch.Tensor
     y: torch.Tensor
@@ -119,6 +148,10 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         ...
 
     def __getitem__(self, index):
+        """
+        Returns:
+            An Attribute named tuple at the given index.
+        """
         if isinstance(index, slice):
             determined_slice_indices = index.indices(len(self))
             return [self[i] for i in range(*determined_slice_indices)]
@@ -212,6 +245,11 @@ class SimpleShapesText(SimpleShapesDomain):
         transform: Callable[[Any], Any] | None = None,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
+        """
+        Possible additional args:
+            latent_filename: The name of the model used to get the latent file.
+                It will load files of the form {split}_{latent_filename}.npy.
+        """
         assert split in ("train", "val", "test"), "Invalid split"
 
         self.dataset_path = Path(dataset_path)
