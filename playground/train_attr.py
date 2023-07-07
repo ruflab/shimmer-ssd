@@ -40,6 +40,8 @@ def main():
         latent_dim=config.domain_modules.attribute.latent_dim,
         hidden_dim=config.domain_modules.attribute.hidden_dim,
         beta=config.domain_modules.attribute.beta,
+        coef_categories=config.domain_modules.attribute.coef_categories,
+        coef_attributes=config.domain_modules.attribute.coef_attributes,
         optim_lr=config.training.optim.lr,
         optim_weight_decay=config.training.optim.weight_decay,
         scheduler_args={
