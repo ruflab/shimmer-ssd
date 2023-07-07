@@ -190,3 +190,33 @@ class LogAttributesCallback(LogSamplesCallback):
             ncols=self.ncols,
             dpi=self.dpi,
         )
+
+
+class LogVisualCallback(LogSamplesCallback):
+    def __init__(
+        self,
+        reference_samples: Sequence[torch.Tensor],
+        log_key: str,
+        image_size: int,
+        every_n_epochs: int = 1,
+        ncols: int = 8,
+        dpi: float = 100,
+    ) -> None:
+        super().__init__(reference_samples, log_key, every_n_epochs)
+        self.image_size = image_size
+        self.ncols = ncols
+        self.dpi = dpi
+
+    def to(
+        self, samples: Sequence[torch.Tensor], device: torch.device
+    ) -> list[torch.Tensor]:
+        return [x.to(device) for x in samples]
+
+    def log_samples(
+        self, logger: Logger, samples: Sequence[torch.Tensor], mode: str
+    ) -> None:
+        if not isinstance(logger, WandbLogger):
+            logging.warning("Only logging to wandb is supported")
+            return
+
+        print("ok")
