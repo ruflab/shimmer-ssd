@@ -11,6 +11,7 @@ from PIL import Image
 from shimmer.config import load_structured_config
 from shimmer.modules.vae import VAE
 
+import wandb
 from simple_shapes_dataset import PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.pre_process import (
@@ -175,19 +176,19 @@ def main() -> None:
     )
     caption = f"VAE_Exploration_from_{range_start}_to_{range_end}"
     image = get_pil_image(fig)
-    plt.savefig(PROJECT_DIR / f"data/{caption}.pdf")
-    # plt.show()
-    # if config.visualization.explore_vae.wandb_name is not None:
-    #     wandb.init(
-    #         project=config.wandb.project,
-    #         entity=config.wandb.entity,
-    #         id=config.visualization.explore_vae.wandb_name,
-    #         resume=True,
-    #     )
-    #     wandb.log({"vae_exploration": [wandb.Image(image, caption=caption)]})
-    #
-    # else:
-    #     plt.show()
+
+    if config.visualization.explore_vae.wandb_name is not None:
+        wandb.init(
+            project=config.wandb.project,
+            entity=config.wandb.entity,
+            id=config.visualization.explore_vae.wandb_name,
+            resume=True,
+        )
+        wandb.log({"vae_exploration": [wandb.Image(image, caption=caption)]})
+
+    else:
+        plt.savefig(PROJECT_DIR / f"data/{caption}.pdf")
+        plt.show()
 
 
 if __name__ == "__main__":
