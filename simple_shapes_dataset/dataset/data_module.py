@@ -44,7 +44,7 @@ class SimpleShapesDataModule(pl.LightningDataModule):
         for domain in domains:
             if domain == "attr":
                 transforms[domain] = torchvision.transforms.Compose(
-                    [NormalizeAttributes(32), attribute_to_tensor]
+                    [NormalizeAttributes(image_size=32), attribute_to_tensor]
                 )
             if domain == "v":
                 transforms[domain] = torchvision.transforms.ToTensor()

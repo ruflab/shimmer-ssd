@@ -37,7 +37,9 @@ def to_unit_range(x: torch.Tensor) -> torch.Tensor:
 
 
 class UnnormalizeAttributes:
-    def __init__(self, min_size: int, max_size: int, image_size: int = 32):
+    def __init__(
+        self, min_size: int = 7, max_size: int = 14, image_size: int = 32
+    ):
         self.min_size = min_size
         self.max_size = max_size
         self.scale_size = self.max_size - self.min_size

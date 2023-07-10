@@ -32,7 +32,7 @@ def get_figure(
     ncols: int = 8,
     dpi: float = 100,
 ) -> Image.Image:
-    unnormalizer = UnnormalizeAttributes(image_size)
+    unnormalizer = UnnormalizeAttributes(image_size=image_size)
     attributes = unnormalizer(tensor_to_attribute(samples))
 
     categories = attributes.category.cpu().numpy()
