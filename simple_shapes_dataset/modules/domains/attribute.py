@@ -175,7 +175,7 @@ class AttributeDomainModule(DomainModule):
     def configure_optimizers(
         self,
     ) -> dict[str, Any]:
-        optimizer = torch.optim.Adam(
+        optimizer = torch.optim.AdamW(
             self.parameters(),
             lr=self.optim_lr,
             weight_decay=self.optim_weight_decay,

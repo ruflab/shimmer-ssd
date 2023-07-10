@@ -89,12 +89,18 @@ class VisualDomainModule(DomainModule):
 
     def configure_optimizers(
         self,
-    ) -> dict[str, torch.optim.Adam | torch.optim.lr_scheduler.LRScheduler]:
-        optimizer = torch.optim.Adam(
+    ) -> dict[str, Any]:
+        optimizer = torch.optim.AdamW(
             self.parameters(),
             lr=self.optim_lr,
             weight_decay=self.optim_weight_decay,
         )
         lr_scheduler = OneCycleLR(optimizer, **self.scheduler_args)
 
-        return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": lr_scheduler,
+                "interval": "step",
+            },
+        }
