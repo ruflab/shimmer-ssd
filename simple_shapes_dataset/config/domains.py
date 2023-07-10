@@ -14,7 +14,7 @@ class AttributeModule:
     latent_dim: int = 12
     hidden_dim: int = 64
     beta: float = 0.01
-    coef_categories: float = 0.2
+    coef_categories: float = 1
     coef_attributes: float = 1
 
 

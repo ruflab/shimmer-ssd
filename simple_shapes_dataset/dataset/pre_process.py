@@ -7,15 +7,24 @@ from simple_shapes_dataset.dataset.domain import Attribute
 
 
 class NormalizeAttributes:
-    def __init__(self, image_size: int = 32):
+    def __init__(
+        self, min_size: int = 7, max_size: int = 14, image_size: int = 32
+    ):
+        self.min_size = min_size
+        self.max_size = max_size
+        self.scale_size = self.max_size - self.min_size
+
         self.image_size = image_size
+        self.min_position = self.max_size // 2
+        self.max_position = self.image_size - self.min_position
+        self.scale_position = self.max_position - self.min_position
 
     def __call__(self, attr: Attribute) -> Attribute:
         return Attribute(
             category=attr.category,
-            x=(attr.x / self.image_size) * 2 - 1,
-            y=(attr.y / self.image_size) * 2 - 1,
-            size=(attr.size / self.image_size) * 2 - 1,
+            x=((attr.x - self.min_position) / self.scale_position) * 2 - 1,
+            y=((attr.y - self.min_position) / self.scale_position) * 2 - 1,
+            size=((attr.size - self.min_size) / self.scale_size) * 2 - 1,
             rotation=attr.rotation,
             color_r=(attr.color_r) * 2 - 1,
             color_g=(attr.color_g) * 2 - 1,
@@ -28,15 +37,22 @@ def to_unit_range(x: torch.Tensor) -> torch.Tensor:
 
 
 class UnnormalizeAttributes:
-    def __init__(self, image_size: int = 32):
+    def __init__(self, min_size: int, max_size: int, image_size: int = 32):
+        self.min_size = min_size
+        self.max_size = max_size
+        self.scale_size = self.max_size - self.min_size
+
         self.image_size = image_size
+        self.min_position = self.max_size // 2
+        self.max_position = self.image_size - self.min_position
+        self.scale_position = self.max_position - self.min_position
 
     def __call__(self, attr: Attribute) -> Attribute:
         return Attribute(
             category=attr.category,
-            x=to_unit_range(attr.x) * self.image_size,
-            y=to_unit_range(attr.y) * self.image_size,
-            size=to_unit_range(attr.size) * self.image_size,
+            x=to_unit_range(attr.x) * self.scale_position + self.min_position,
+            y=to_unit_range(attr.y) * self.scale_position + self.min_position,
+            size=to_unit_range(attr.size) * self.scale_size + self.min_size,
             rotation=attr.rotation,
             color_r=to_unit_range(attr.color_r) * 255,
             color_g=to_unit_range(attr.color_g) * 255,
