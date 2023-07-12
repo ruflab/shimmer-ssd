@@ -1,7 +1,6 @@
 import os
 
 import lightning.pytorch as pl
-import torch
 from lightning.pytorch.callbacks import (
     EarlyStopping,
     LearningRateMonitor,
@@ -26,10 +25,6 @@ def main():
         Config,
         load_dirs=["train_v"],
         debug_mode=debug_mode,
-    )
-
-    torch.set_float32_matmul_precision(
-        config.training.float32_matmul_precision
     )
 
     data_module = SimpleShapesDataModule(
@@ -114,6 +109,7 @@ def main():
         enable_progress_bar=config.training.enable_progress_bar,
         default_root_dir=config.default_root_dir,
         callbacks=callbacks,  # type: ignore
+        precision=config.training.precision,
     )
 
     trainer.fit(v_domain_module, data_module)

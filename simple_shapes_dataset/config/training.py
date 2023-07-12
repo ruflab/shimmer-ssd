@@ -17,6 +17,6 @@ class Training:
     max_steps: int = 100_000
     enable_progress_bar: bool = True
 
-    float32_matmul_precision: str = "highest"
+    precision: str | int = "32"
 
     optim: Optim = field(default_factory=Optim)
