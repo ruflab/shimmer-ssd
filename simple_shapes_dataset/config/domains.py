@@ -5,15 +5,15 @@ from dataclasses import dataclass, field
 class VisualModule:
     num_channels: int = 3
     ae_dim: int = 64
-    latent_dim: int = 12
-    beta: float = 1
+    latent_dim: int = 8
+    beta: float = 0.05
 
 
 @dataclass
 class AttributeModule:
-    latent_dim: int = 12
+    latent_dim: int = 8
     hidden_dim: int = 64
-    beta: float = 0.01
+    beta: float = 0.05
     coef_categories: float = 1
     coef_attributes: float = 1
 

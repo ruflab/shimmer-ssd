@@ -1,7 +1,6 @@
 training:
     optim:
-        lr: 5e-3
         max_lr: 5e-3
-        weight_decay: 0
+        weight_decay: 1e-5
 
-    max_steps: 200_000
+    max_steps: 100_000

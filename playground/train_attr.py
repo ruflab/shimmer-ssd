@@ -1,7 +1,9 @@
 import os
 
 import lightning.pytorch as pl
+import torch
 from lightning.pytorch.callbacks import (
+    EarlyStopping,
     LearningRateMonitor,
     ModelCheckpoint,
     RichProgressBar,
@@ -26,6 +28,10 @@ def main():
         Config,
         load_dirs=["train_attr"],
         debug_mode=debug_mode,
+    )
+
+    torch.set_float32_matmul_precision(
+        config.training.float32_matmul_precision
     )
 
     data_module = SimpleShapesDataModule(
@@ -58,11 +64,11 @@ def main():
 
     callbacks = [
         LearningRateMonitor(logging_interval="step"),
-        # EarlyStopping(
-        #     monitor="val/loss",
-        #     mode="min",
-        #     patience=10,
-        # ),
+        EarlyStopping(
+            monitor="val/loss",
+            mode="min",
+            patience=30,
+        ),
         LogAttributesCallback(
             val_samples,
             log_key="images/val_attr",
