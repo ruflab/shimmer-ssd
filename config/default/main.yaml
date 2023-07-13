@@ -5,4 +5,4 @@ dataset:
 
 training:
     batch_size: 1024
-    num_workers: 8
+    num_workers: 32

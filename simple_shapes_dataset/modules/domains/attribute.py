@@ -111,7 +111,10 @@ class AttributeDomainModule(DomainModule):
         return self.vae.encode(x)
 
     def decode(self, z: torch.Tensor) -> Sequence[torch.Tensor]:
-        return self.vae.decode(z)
+        out = self.vae.decode(z)
+        if not isinstance(out, Sequence):
+            raise ValueError("The output of vae.decode should be a sequence.")
+        return out
 
     def forward(self, x: Sequence[torch.Tensor]) -> Sequence[torch.Tensor]:
         return self.decode(self.encode(x))
@@ -189,3 +192,26 @@ class AttributeDomainModule(DomainModule):
                 "interval": "step",
             },
         }
+
+    def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_closure):
+        self._should_skip_lr_scheduler_step = False
+        scaler = getattr(
+            self.trainer.strategy.precision_plugin, "scaler", None
+        )
+        if scaler:
+            scale_before_step = scaler.get_scale()
+            optimizer.step(closure=optimizer_closure)
+            scale_after_step = scaler.get_scale()
+            self._should_skip_lr_scheduler_step = (
+                scale_before_step > scale_after_step
+            )
+        else:
+            optimizer.step(closure=optimizer_closure)
+
+    def lr_scheduler_step(self, scheduler, metric):
+        if self._should_skip_lr_scheduler_step:
+            return
+        if metric is None:
+            scheduler.step()
+        else:
+            scheduler.step(metric)

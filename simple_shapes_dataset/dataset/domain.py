@@ -66,12 +66,13 @@ class SimpleShapesImages(SimpleShapesDomain):
 
         self.dataset_path = Path(dataset_path)
         self.split = split
-        self.image_path = self.dataset_path / self.split
+        self.image_path = (self.dataset_path / self.split).resolve()
         self.transform = transform
         self.additional_args = additional_args
+        self.dataset_size = len(list(self.image_path.iterdir()))
 
     def __len__(self) -> int:
-        return len(list(self.image_path.iterdir()))
+        return self.dataset_size
 
     @overload
     def __getitem__(self, index: int) -> Image.Image:
@@ -128,7 +129,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
 
-        self.dataset_path = Path(dataset_path)
+        self.dataset_path = Path(dataset_path).resolve()
         self.split = split
         self.labels: torch.Tensor = torch.from_numpy(
             np.load(self.dataset_path / f"{split}_labels.npy")
@@ -201,7 +202,7 @@ class SimpleShapesRawText(SimpleShapesDomain):
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
 
-        self.dataset_path = Path(dataset_path)
+        self.dataset_path = Path(dataset_path).resolve()
         self.split = split
 
         self.captions = np.load(self.dataset_path / f"{split}_captions.npy")
@@ -252,7 +253,7 @@ class SimpleShapesText(SimpleShapesDomain):
         """
         assert split in ("train", "val", "test"), "Invalid split"
 
-        self.dataset_path = Path(dataset_path)
+        self.dataset_path = Path(dataset_path).resolve()
         self.split = split
 
         self.additional_args = additional_args or {}

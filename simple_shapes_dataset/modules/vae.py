@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 
@@ -79,13 +80,11 @@ class RAEEncoder(nn.Module):
         self.q_mean = nn.Linear(self.out_dim, self.z_dim)
         self.q_logvar = nn.Linear(self.out_dim, self.z_dim)
 
-    def forward(self, x):
-        out = self.layers(x).view(x.dim(0), -1)
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        out = self.layers(x).view(x.size(0), -1)
         out = out.view(out.size(0), -1)
 
-        mean_z = self.q_mean(out)
-        var_z = self.q_logvar(out)
-        return mean_z, var_z
+        return self.q_mean(out), self.q_logvar(out)
 
 
 class RAEDecoder(nn.Module):
@@ -158,5 +157,5 @@ class RAEDecoder(nn.Module):
             nn.Sigmoid(),
         )
 
-    def forward(self, z):
+    def forward(self, z: torch.Tensor) -> torch.Tensor:
         return self.out_layer(self.layers(z[:, :, None, None]))

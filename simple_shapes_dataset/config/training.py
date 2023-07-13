@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -17,6 +18,7 @@ class Training:
     max_steps: int = 100_000
     enable_progress_bar: bool = True
 
-    precision: str | int = "32"
+    precision: Any = 32
+    float32_matmul_precision: str = "highest"
 
     optim: Optim = field(default_factory=Optim)

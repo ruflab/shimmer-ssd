@@ -1,4 +1,4 @@
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Any
 
 import torch
@@ -40,27 +40,28 @@ class VisualDomainModule(DomainModule):
         self.optim_weight_decay = optim_weight_decay
         self.scheduler_args = scheduler_args or {}
 
-    def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.vae.encode(x)
 
-    def decode(self, z: torch.Tensor) -> Sequence[torch.Tensor]:
-        return self.vae.decode(z)
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        out = self.vae.decode(z)
+        if not isinstance(out, torch.Tensor):
+            raise ValueError("vae.decode should provide a tensor.")
+        return out
 
-    def forward(self, x: Sequence[torch.Tensor]) -> Sequence[torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.decode(self.encode(x))
 
     def generic_step(
         self,
-        x: Sequence[torch.Tensor],
+        x: torch.Tensor,
         mode: str = "train",
     ) -> torch.Tensor:
-        x_images = x[0]
-
         (mean, logvar), reconstruction = self.vae(x)
         reconstruction_images = reconstruction[1]
 
         reconstruction_loss = gaussian_nll(
-            reconstruction_images, torch.tensor(0), x_images
+            reconstruction_images, torch.tensor(0), x
         ).sum()
 
         kl_loss = kl_divergence_loss(mean, logvar)
@@ -73,7 +74,7 @@ class VisualDomainModule(DomainModule):
 
     def validation_step(
         self,
-        batch: Mapping[str, Sequence[torch.Tensor]],
+        batch: Mapping[str, torch.Tensor],
         batch_idx: int,
     ) -> torch.Tensor:
         x = batch["v"]
@@ -81,7 +82,7 @@ class VisualDomainModule(DomainModule):
 
     def training_step(
         self,
-        batch: Mapping[frozenset[str], Mapping[str, Sequence[torch.Tensor]]],
+        batch: Mapping[frozenset[str], Mapping[str, torch.Tensor]],
         batch_idx: int,
     ) -> torch.Tensor:
         x = batch[frozenset(["v"])]["v"]
@@ -97,6 +98,9 @@ class VisualDomainModule(DomainModule):
         )
         lr_scheduler = OneCycleLR(optimizer, **self.scheduler_args)
 
+        # FIXME: This might trigger a warning if mixed-precision, as per
+        # https://github.com/Lightning-AI/lightning/issues/5558
+
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
@@ -104,3 +108,26 @@ class VisualDomainModule(DomainModule):
                 "interval": "step",
             },
         }
+
+    def optimizer_step(self, epoch, batch_idx, optimizer, optimizer_closure):
+        self._should_skip_lr_scheduler_step = False
+        scaler = getattr(
+            self.trainer.strategy.precision_plugin, "scaler", None
+        )
+        if scaler:
+            scale_before_step = scaler.get_scale()
+            optimizer.step(closure=optimizer_closure)
+            scale_after_step = scaler.get_scale()
+            self._should_skip_lr_scheduler_step = (
+                scale_before_step > scale_after_step
+            )
+        else:
+            optimizer.step(closure=optimizer_closure)
+
+    def lr_scheduler_step(self, scheduler, metric):
+        if self._should_skip_lr_scheduler_step:
+            return
+        if metric is None:
+            scheduler.step()
+        else:
+            scheduler.step(metric)

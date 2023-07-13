@@ -1,6 +1,7 @@
 import os
 
 import lightning.pytorch as pl
+import torch
 from lightning.pytorch.callbacks import (
     EarlyStopping,
     LearningRateMonitor,
@@ -108,6 +109,10 @@ def main():
                 save_top_k=1,
             )
         )
+
+    torch.set_float32_matmul_precision(
+        config.training.float32_matmul_precision
+    )
 
     trainer = pl.Trainer(
         logger=wandb_logger,
