@@ -68,12 +68,14 @@ def main():
         LogAttributesCallback(
             val_samples,
             log_key="images/val_attr",
+            every_n_epochs=config.logging.log_val_medias_every_n_epochs,
             image_size=32,
             ncols=8,
         ),
         LogAttributesCallback(
             train_samples,
             log_key="images/train_attr",
+            every_n_epochs=config.logging.log_train_medias_every_n_epochs,
             image_size=32,
             ncols=8,
         ),

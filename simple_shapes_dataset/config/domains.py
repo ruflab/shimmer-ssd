@@ -6,7 +6,7 @@ class VisualModule:
     num_channels: int = 3
     ae_dim: int = 64
     latent_dim: int = 8
-    beta: float = 0.05
+    beta: float = 0.1
 
 
 @dataclass

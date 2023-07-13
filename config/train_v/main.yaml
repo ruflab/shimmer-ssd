@@ -5,3 +5,7 @@ training:
         weight_decay: 1e-5
 
     max_steps: 200_000
+
+logging:
+    log_val_medias_every_n_epochs: 10
+    log_train_medias_every_n_epochs: 10

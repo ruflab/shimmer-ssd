@@ -6,6 +6,7 @@ from shimmer import ShimmerInfoConfig
 
 from simple_shapes_dataset.config.dataset import Dataset
 from simple_shapes_dataset.config.domains import DomainModules
+from simple_shapes_dataset.config.logging import Logging
 from simple_shapes_dataset.config.training import Training
 from simple_shapes_dataset.config.visualization import Visualization
 from simple_shapes_dataset.config.wandb import WanDB
@@ -17,6 +18,7 @@ class Config:
     dataset: Dataset = field(default_factory=Dataset)
     training: Training = field(default_factory=Training)
     wandb: WanDB = field(default_factory=WanDB)
+    logging: Logging = field(default_factory=Logging)
     domain_modules: DomainModules = field(default_factory=DomainModules)
     visualization: Visualization = field(default_factory=Visualization)
     __shimmer__: ShimmerInfoConfig | None = None

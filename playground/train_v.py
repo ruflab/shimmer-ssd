@@ -2,7 +2,12 @@ import os
 
 import lightning.pytorch as pl
 import torch
-from lightning.pytorch.callbacks import ModelCheckpoint, RichProgressBar
+from lightning.pytorch.callbacks import (
+    EarlyStopping,
+    LearningRateMonitor,
+    ModelCheckpoint,
+    RichProgressBar,
+)
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer.config import load_structured_config
@@ -47,22 +52,22 @@ def main():
     train_samples = data_module.get_samples("train", 32)[frozenset(["v"])]["v"]
 
     callbacks: list[pl.Callback] = [
-        # LearningRateMonitor(logging_interval="step"),
-        # EarlyStopping(
-        #     monitor="val/loss",
-        #     mode="min",
-        #     patience=30,
-        # ),
+        LearningRateMonitor(logging_interval="step"),
+        EarlyStopping(
+            monitor="val/loss",
+            mode="min",
+            patience=30,
+        ),
         LogVisualCallback(
             val_samples,
             log_key="images/val_attr",
-            image_size=32,
+            every_n_epochs=config.logging.log_val_medias_every_n_epochs,
             ncols=8,
         ),
         LogVisualCallback(
             train_samples,
             log_key="images/train_attr",
-            image_size=32,
+            every_n_epochs=config.logging.log_train_medias_every_n_epochs,
             ncols=8,
         ),
     ]

@@ -12,6 +12,7 @@ from lightning.pytorch.loggers import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from PIL import Image
+from torchvision.utils import make_grid
 
 from simple_shapes_dataset.cli.utils import generate_image
 from simple_shapes_dataset.dataset.pre_process import (
@@ -27,7 +28,7 @@ class LogSamplesCallback(pl.Callback):
         self,
         reference_samples: Any,
         log_key: str,
-        every_n_epochs: int = 1,
+        every_n_epochs: int | None = 1,
     ) -> None:
         super().__init__()
         self.reference_samples = reference_samples
@@ -39,12 +40,10 @@ class LogSamplesCallback(pl.Callback):
             return samples.to(device)
         raise NotImplementedError
 
-    def on_train_epoch_end(
+    def on_callback(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
     ) -> None:
         if trainer.logger is None:
-            return
-        if trainer.current_epoch % self.every_n_epochs != 0:
             return
 
         samples = self.to(self.reference_samples, pl_module.device)
@@ -59,6 +58,22 @@ class LogSamplesCallback(pl.Callback):
         for logger in trainer.loggers:
             self.log_samples(logger, generated_samples, "prediction")
 
+    def on_train_epoch_end(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule
+    ) -> None:
+        if (
+            self.every_n_epochs is None
+            or trainer.current_epoch % self.every_n_epochs != 0
+        ):
+            return
+
+        return self.on_callback(trainer, pl_module)
+
+    def on_fit_end(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule
+    ) -> None:
+        return self.on_callback(trainer, pl_module)
+
     def log_samples(self, logger: Logger, samples: Any, mode: str) -> None:
         raise NotImplementedError
 
@@ -68,9 +83,6 @@ def get_pil_image(figure: plt.Figure) -> Image.Image:
     figure.savefig(buf)
     buf.seek(0)
     return Image.open(buf)
-    # return Image.frombytes(
-    #     "RGB", figure.canvas.get_width_height(), figure.canvas.tostring_rgb()
-    # )
 
 
 def figure_grid(
@@ -163,7 +175,7 @@ class LogAttributesCallback(LogSamplesCallback):
         reference_samples: Sequence[torch.Tensor],
         log_key: str,
         image_size: int,
-        every_n_epochs: int = 1,
+        every_n_epochs: int | None = 1,
         ncols: int = 8,
         dpi: float = 100,
     ) -> None:
@@ -199,15 +211,11 @@ class LogVisualCallback(LogSamplesCallback):
         self,
         reference_samples: torch.Tensor,
         log_key: str,
-        image_size: int,
-        every_n_epochs: int = 1,
+        every_n_epochs: int | None = 1,
         ncols: int = 8,
-        dpi: float = 100,
     ) -> None:
         super().__init__(reference_samples, log_key, every_n_epochs)
-        self.image_size = image_size
         self.ncols = ncols
-        self.dpi = dpi
 
     def log_samples(
         self, logger: Logger, samples: torch.Tensor, mode: str
@@ -215,3 +223,6 @@ class LogVisualCallback(LogSamplesCallback):
         if not isinstance(logger, WandbLogger):
             logging.warning("Only logging to wandb is supported")
             return
+
+        images = make_grid(samples, nrow=self.ncols, pad_value=1)
+        logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
