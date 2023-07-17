@@ -93,7 +93,7 @@ def plot_vae(
             ax = fig.add_subplot(gs[j, i])
 
             z = (
-                torch.randn(z_size)
+                torch.zeros(z_size)
                 .unsqueeze(0)
                 .unsqueeze(0)
                 .expand(num_samples, num_samples, -1)
