@@ -1,0 +1,4 @@
+visualization:
+    explore_vae:
+        # wandb_name: x0kxs5pe
+        checkpoint: ${default_root_dir}/shimmer-simple-shapes-x0kxs5pe/epoch=494.ckpt

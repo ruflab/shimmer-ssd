@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 @dataclass
 class VisualModule:
     num_channels: int = 3
-    ae_dim: int = 64
+    ae_dim: int = 256
     latent_dim: int = 8
     beta: float = 0.1
 

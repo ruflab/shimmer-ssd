@@ -25,8 +25,6 @@ class VAEEncoder(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
             nn.Linear(hidden_dim, out_dim),
             nn.ReLU(),
         )
@@ -61,14 +59,10 @@ class VAEDecoder(nn.Module):
         )
 
         self.decoder_categories = nn.Sequential(
-            nn.Linear(self.hidden_dim, self.hidden_dim),
-            nn.ReLU(),
             nn.Linear(self.hidden_dim, 3),
         )
 
         self.decoder_attributes = nn.Sequential(
-            nn.Linear(self.hidden_dim, self.hidden_dim),
-            nn.ReLU(),
             nn.Linear(self.hidden_dim, 8),
             nn.Tanh(),
         )

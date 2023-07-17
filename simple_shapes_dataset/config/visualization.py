@@ -8,8 +8,8 @@ from omegaconf import MISSING
 class ExploreVAE:
     checkpoint: Path = MISSING
     num_samples: int = 5
-    range_start: int = -6
-    range_end: int = 6
+    range_start: int = -3
+    range_end: int = 3
     wandb_name: str | None = None
 
 

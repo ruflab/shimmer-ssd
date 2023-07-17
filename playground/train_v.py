@@ -3,7 +3,6 @@ import os
 import lightning.pytorch as pl
 import torch
 from lightning.pytorch.callbacks import (
-    EarlyStopping,
     LearningRateMonitor,
     ModelCheckpoint,
     RichProgressBar,
@@ -53,11 +52,11 @@ def main():
 
     callbacks: list[pl.Callback] = [
         LearningRateMonitor(logging_interval="step"),
-        EarlyStopping(
-            monitor="val/loss",
-            mode="min",
-            patience=30,
-        ),
+        # EarlyStopping(
+        #     monitor="val/loss",
+        #     mode="min",
+        #     patience=30,
+        # ),
         LogVisualCallback(
             val_samples,
             log_key="images/val_attr",
