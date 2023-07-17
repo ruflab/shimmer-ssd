@@ -14,6 +14,7 @@ from simple_shapes_dataset.config.wandb import WanDB
 
 @dataclass()
 class Config:
+    seed: int = 0
     default_root_dir: Path = MISSING
     dataset: Dataset = field(default_factory=Dataset)
     training: Training = field(default_factory=Training)

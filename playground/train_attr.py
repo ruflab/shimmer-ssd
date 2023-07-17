@@ -29,6 +29,8 @@ def main():
         debug_mode=debug_mode,
     )
 
+    pl.seed_everything(config.seed, workers=True)
+
     data_module = SimpleShapesDataModule(
         config.dataset.path,
         {frozenset(["attr"]): 1.0},
