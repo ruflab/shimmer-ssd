@@ -2,10 +2,10 @@ from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
-import lightning.pytorch as pl
-import torchvision
+from lightning.pytorch import LightningDataModule
 from lightning.pytorch.utilities.combined_loader import CombinedLoader
 from torch.utils.data import DataLoader, Dataset, default_collate
+from torchvision.transforms import Compose, ToTensor
 
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
@@ -15,7 +15,7 @@ from simple_shapes_dataset.dataset.pre_process import (
 )
 
 
-class SimpleShapesDataModule(pl.LightningDataModule):
+class SimpleShapesDataModule(LightningDataModule):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -43,11 +43,11 @@ class SimpleShapesDataModule(pl.LightningDataModule):
         transforms = {}
         for domain in domains:
             if domain == "attr":
-                transforms[domain] = torchvision.transforms.Compose(
+                transforms[domain] = Compose(
                     [NormalizeAttributes(image_size=32), attribute_to_tensor]
                 )
             if domain == "v":
-                transforms[domain] = torchvision.transforms.ToTensor()
+                transforms[domain] = ToTensor()
         return transforms
 
     def _require_aligned_dataset(self) -> bool:

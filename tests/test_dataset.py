@@ -1,5 +1,5 @@
-import torch.utils.data
-import torchvision
+from torch.utils.data.dataloader import DataLoader
+from torchvision.transforms import ToTensor
 from utils import PROJECT_DIR
 
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
@@ -39,7 +39,7 @@ def test_dataset_val():
 
 def test_dataloader():
     transform = {
-        "v": torchvision.transforms.ToTensor(),
+        "v": ToTensor(),
     }
     dataset = SimpleShapesDataset(
         PROJECT_DIR / "sample_dataset",
@@ -48,7 +48,7 @@ def test_dataloader():
         transforms=transform,
     )
 
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
+    dataloader = DataLoader(dataset, batch_size=2)
     item = next(iter(dataloader))
     for domain in ["v", "attr"]:
         assert domain in item
