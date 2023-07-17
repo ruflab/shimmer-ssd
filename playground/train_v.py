@@ -116,6 +116,8 @@ def main():
         default_root_dir=config.default_root_dir,
         callbacks=callbacks,
         precision=config.training.precision,
+        accelerator=config.training.accelerator,
+        devices=config.training.devices,
     )
 
     trainer.fit(v_domain_module, data_module)

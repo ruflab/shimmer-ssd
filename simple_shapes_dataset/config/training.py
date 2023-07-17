@@ -13,6 +13,8 @@ class Optim:
 class Training:
     batch_size: int = 1024
     num_workers: int = 0
+    devices: int = 1
+    accelerator: str = "gpu"
 
     fast_dev_run: bool = False
     max_steps: int = 100_000
