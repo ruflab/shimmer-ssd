@@ -3,6 +3,8 @@ default_root_dir: ???
 dataset: 
     path: ???
 
+seed: 0
+
 training:
     batch_size: 1024
     num_workers: 32
