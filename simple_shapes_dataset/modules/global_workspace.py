@@ -1,11 +1,12 @@
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 
 import torch
 from info_nce import info_nce
 from lightning.pytorch import LightningModule
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.global_workspace import GlobalWorkspace
+from torch.nn import ModuleDict
 from torch.nn.functional import mse_loss
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -24,7 +25,7 @@ class GlobalWorkspaceLightningModule(LightningModule):
         contrastive_loss_coefficient: float,
         optim_lr: float,
         optim_weight_decay: float,
-        scheduler_args: dict[str, Any],
+        scheduler_args: dict[str, Any] | None = None,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(
@@ -36,7 +37,9 @@ class GlobalWorkspaceLightningModule(LightningModule):
         for module in domain_modules.values():
             module.eval().freeze()
 
-        self.domain_modules = domain_modules
+        self.domain_modules = cast(
+            dict[str, DomainModule], ModuleDict(domain_modules)
+        )
 
         self.loss_coefficients = {
             "demi_cycles": demi_cycle_loss_coefficient,
@@ -47,7 +50,21 @@ class GlobalWorkspaceLightningModule(LightningModule):
 
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
-        self.scheduler_args = scheduler_args
+        self.scheduler_args: dict[str, Any] = {
+            "max_lr": optim_lr,
+            "total_steps": 1,
+        }
+        self.scheduler_args.update(scheduler_args or {})
+
+    def demi_cycle(self, latent_domains: LatentsT):
+        predictions: dict[str, torch.Tensor] = {}
+        for domains, latents in latent_domains.items():
+            if len(domains) > 1:
+                continue
+            domain_name = list(domains)[0]
+            z = self.global_workspace.translate(latents, to=domain_name)
+            predictions[domain_name] = z
+        return predictions
 
     def demi_cycle_loss(
         self, latent_domains: LatentsT
@@ -65,6 +82,22 @@ class GlobalWorkspaceLightningModule(LightningModule):
             list(losses.values()), dim=0
         ).mean()
         return losses
+
+    def cycle(
+        self, latent_domains: LatentsT
+    ) -> dict[tuple[str, str], torch.Tensor]:
+        predictions: dict[tuple[str, str], torch.Tensor] = {}
+        for domains_source, latents_source in latent_domains.items():
+            if len(domains_source) > 1:
+                continue
+            domain_name_source = list(domains_source)[0]
+            for domain_name_target in self.domain_modules.keys():
+                z = self.global_workspace.cycle(
+                    latents_source, through=domain_name_target
+                )
+                domains = (domain_name_source, domain_name_target)
+                predictions[domains] = z[domain_name_source]
+        return predictions
 
     def cycle_loss(self, latent_domains: LatentsT) -> dict[str, torch.Tensor]:
         losses: dict[str, torch.Tensor] = {}
@@ -84,6 +117,27 @@ class GlobalWorkspaceLightningModule(LightningModule):
                 )
         losses["cycles"] = torch.stack(list(losses.values()), dim=0).mean()
         return losses
+
+    def translation(
+        self, latent_domains: LatentsT
+    ) -> dict[tuple[str, str], torch.Tensor]:
+        predictions: dict[tuple[str, str], torch.Tensor] = {}
+        for domains, latents in latent_domains.items():
+            if len(domains) < 2:
+                continue
+            for domain_name_source in domains:
+                z = self.global_workspace.encode(
+                    {domain_name_source: latents[domain_name_source]}
+                )
+                for domain_name_target in domains:
+                    if domain_name_source == domain_name_target:
+                        continue
+                    prediction = self.global_workspace.decode(
+                        z, domains={domain_name_target}
+                    )[domain_name_target]
+                    domains = (domain_name_source, domain_name_target)
+                    predictions[domains] = prediction
+        return predictions
 
     def translation_loss(
         self, latent_domains: LatentsT
@@ -146,17 +200,23 @@ class GlobalWorkspaceLightningModule(LightningModule):
         ).mean()
         return losses
 
+    def encode_domain(self, domain: Any, name: str) -> torch.Tensor:
+        return self.domain_modules[name].encode(domain)
+
     def encode_domains(
         self,
         batch: Mapping[frozenset[str], Mapping[str, Any]],
     ) -> dict[frozenset[str], dict[str, torch.Tensor]]:
         return {
             domains: {
-                name: self.domain_modules[name].encode(domain)
+                name: self.encode_domain(domain, name)
                 for name, domain in data.items()
             }
             for domains, data in batch.items()
         }
+
+    def decode_domain(self, domain: torch.Tensor, name: str) -> Any:
+        return self.domain_modules[name].decode(domain)
 
     def decode_domains(
         self,
@@ -164,7 +224,7 @@ class GlobalWorkspaceLightningModule(LightningModule):
     ) -> dict[frozenset[str], dict[str, Any]]:
         return {
             domains: {
-                name: self.domain_modules[name].decode(domain)
+                name: self.decode_domain(domain, name)
                 for name, domain in latents.items()
             }
             for domains, latents in latents_domain.items()
@@ -206,20 +266,14 @@ class GlobalWorkspaceLightningModule(LightningModule):
 
         return losses["loss"]
 
-    def validation_step(
-        self,
-        data: Mapping[str, Any],
-        batch_idx: int,
-    ) -> torch.Tensor:
+    def validation_step(self, data: Mapping[str, Any], _) -> torch.Tensor:
         batch = {frozenset(data.keys()): data}
         for domain in data.keys():
             batch[frozenset([domain])] = {domain: data[domain]}
         return self.generic_step(batch, mode="val")
 
     def training_step(
-        self,
-        batch: Mapping[frozenset[str], Mapping[str, Any]],
-        batch_idx: int,
+        self, batch: Mapping[frozenset[str], Mapping[str, Any]], _
     ) -> torch.Tensor:
         return self.generic_step(batch, mode="train")
 
@@ -229,6 +283,7 @@ class GlobalWorkspaceLightningModule(LightningModule):
             lr=self.optim_lr,
             weight_decay=self.optim_weight_decay,
         )
+
         lr_scheduler = OneCycleLR(optimizer, **self.scheduler_args)
 
         return {

@@ -1,6 +1,6 @@
 import io
 import logging
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import lightning.pytorch as pl
@@ -18,6 +18,9 @@ from simple_shapes_dataset.cli.utils import generate_image
 from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
     tensor_to_attribute,
+)
+from simple_shapes_dataset.modules.global_workspace import (
+    GlobalWorkspaceLightningModule,
 )
 
 matplotlib.use("Agg")
@@ -41,21 +44,25 @@ class LogSamplesCallback(pl.Callback):
         raise NotImplementedError
 
     def on_callback(
-        self, trainer: pl.Trainer, pl_module: pl.LightningModule
+        self,
+        current_epoch: int,
+        loggers: Sequence[Logger],
+        pl_module: pl.LightningModule,
     ) -> None:
-        if trainer.logger is None:
+        if not (len(loggers)) is None:
             return
 
         samples = self.to(self.reference_samples, pl_module.device)
-        if trainer.current_epoch == 0:
-            self.log_samples(trainer.logger, samples, "reference")
+        if current_epoch == 0:
+            for logger in loggers:
+                self.log_samples(logger, samples, "reference")
 
         with torch.no_grad():
             pl_module.eval()
             generated_samples = pl_module(samples)
             pl_module.train()
 
-        for logger in trainer.loggers:
+        for logger in loggers:
             self.log_samples(logger, generated_samples, "prediction")
 
     def on_train_epoch_end(
@@ -67,12 +74,16 @@ class LogSamplesCallback(pl.Callback):
         ):
             return
 
-        return self.on_callback(trainer, pl_module)
+        return self.on_callback(
+            trainer.current_epoch, trainer.loggers, pl_module
+        )
 
     def on_fit_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
     ) -> None:
-        return self.on_callback(trainer, pl_module)
+        return self.on_callback(
+            trainer.current_epoch, trainer.loggers, pl_module
+        )
 
     def log_samples(self, logger: Logger, samples: Any, mode: str) -> None:
         raise NotImplementedError
@@ -226,3 +237,160 @@ class LogVisualCallback(LogSamplesCallback):
 
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
         logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
+
+
+class LogGWImagesCallback(pl.Callback):
+    def __init__(
+        self,
+        reference_samples: Mapping[frozenset[str], Mapping[str, Any]],
+        log_key: str,
+        every_n_epochs: int | None = 1,
+        image_size: int = 32,
+        ncols: int = 8,
+        dpi: float = 100,
+    ) -> None:
+        super().__init__()
+        self.reference_samples = reference_samples
+        self.every_n_epochs = every_n_epochs
+        self.log_key = log_key
+        self.image_size = image_size
+        self.ncols = ncols
+        self.dpi = dpi
+
+    def to(
+        self,
+        samples: Mapping[
+            frozenset[str], Mapping[str, torch.Tensor | Sequence[torch.Tensor]]
+        ],
+        device: torch.device,
+    ) -> dict[
+        frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]
+    ]:
+        out: dict[
+            frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]
+        ] = {}
+        for domain_names, domains in samples.items():
+            latents: dict[str, torch.Tensor | Sequence[torch.Tensor]] = {}
+            for domain_name, domain in domains.items():
+                if isinstance(domain, torch.Tensor):
+                    latents[domain_name] = domain.to(device)
+                else:
+                    latents[domain_name] = [x.to(device) for x in domain]
+            out[domain_names] = latents
+        return out
+
+    def on_callback(
+        self,
+        current_epoch: int,
+        loggers: Sequence[Logger],
+        pl_module: GlobalWorkspaceLightningModule,
+    ) -> None:
+        if not (len(loggers)):
+            return
+
+        samples = self.to(self.reference_samples, pl_module.device)
+        latents = pl_module.encode_domains(samples)
+        if current_epoch == 0:
+            for domain_names, domains in latents.items():
+                for domain_name, domain in domains.items():
+                    for logger in loggers:
+                        self.log_samples(
+                            logger,
+                            pl_module.decode_domain(domain, domain_name),
+                            domain_name,
+                            f"reference_{'-'.join(domain_names)}_{domain_name}",
+                        )
+
+        with torch.no_grad():
+            pl_module.eval()
+            prediction_demi_cycles = pl_module.demi_cycle(latents)
+            prediction_cycles = pl_module.cycle(latents)
+            prediction_translations = pl_module.translation(latents)
+            pl_module.train()
+
+        for logger in loggers:
+            for domain, prediction in prediction_demi_cycles.items():
+                self.log_samples(
+                    logger,
+                    pl_module.decode_domain(prediction, domain),
+                    domain,
+                    f"prediction_demi_cycles_{domain}",
+                )
+            for (domain_s, domain_t), prediction in prediction_cycles.items():
+                self.log_samples(
+                    logger,
+                    pl_module.decode_domain(prediction, domain_s),
+                    domain_s,
+                    f"prediction_cycles_{domain_s}_through_{domain_t}",
+                )
+            for (
+                domain_s,
+                domain_t,
+            ), prediction in prediction_translations.items():
+                self.log_samples(
+                    logger,
+                    pl_module.decode_domain(prediction, domain_t),
+                    domain_t,
+                    f"prediction_translation_{domain_s}_to_{domain_t}",
+                )
+
+    def on_train_epoch_end(
+        self, trainer: pl.Trainer, pl_module: GlobalWorkspaceLightningModule
+    ) -> None:
+        if (
+            self.every_n_epochs is None
+            or trainer.current_epoch % self.every_n_epochs != 0
+        ):
+            return
+
+        return self.on_callback(
+            trainer.current_epoch, trainer.loggers, pl_module
+        )
+
+    def on_fit_end(
+        self, trainer: pl.Trainer, pl_module: GlobalWorkspaceLightningModule
+    ) -> None:
+        return self.on_callback(
+            trainer.current_epoch, trainer.loggers, pl_module
+        )
+
+    def log_samples(
+        self,
+        logger: Logger,
+        samples: Any,
+        domain: str,
+        mode: str,
+    ) -> None:
+        if not isinstance(logger, WandbLogger):
+            logging.warning("Only logging to wandb is supported")
+            return
+
+        match domain:
+            case "v":
+                self.log_visual_samples(logger, samples, mode)
+            case "attr":
+                self.log_attribute_samples(logger, samples, mode)
+
+    def log_visual_samples(
+        self,
+        logger: WandbLogger,
+        samples: Any,
+        mode: str,
+    ) -> None:
+        images = make_grid(samples, nrow=self.ncols, pad_value=1)
+        logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
+
+    def log_attribute_samples(
+        self,
+        logger: WandbLogger,
+        samples: Any,
+        mode: str,
+    ) -> None:
+        log_attribute(
+            logger,
+            samples,
+            image_size=self.image_size,
+            key=f"{self.log_key}_{mode}",
+            ncols=self.ncols,
+            dpi=self.dpi,
+        )

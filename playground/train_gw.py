@@ -22,6 +22,7 @@ from simple_shapes_dataset.config.global_workspace import (
 )
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
+from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains.attribute import (
     AttributeDomainModule,
 )
@@ -139,8 +140,21 @@ def main():
         },
     )
 
+    val_samples = data_module.get_samples("val", 32)
+    train_samples = data_module.get_samples("train", 32)
+
     callbacks: list[Callback] = [
         LearningRateMonitor(logging_interval="step"),
+        LogGWImagesCallback(
+            val_samples,
+            log_key="images/val",
+            every_n_epochs=config.logging.log_val_medias_every_n_epochs,
+        ),
+        LogGWImagesCallback(
+            train_samples,
+            log_key="images/train",
+            every_n_epochs=config.logging.log_train_medias_every_n_epochs,
+        ),
     ]
 
     if config.training.enable_progress_bar:

@@ -1,5 +1,5 @@
 training:
     num_workers: 0
 
-wandb: 
-    enabled: false
+# wandb: 
+#     enabled: false

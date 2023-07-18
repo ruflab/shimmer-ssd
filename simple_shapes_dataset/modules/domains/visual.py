@@ -38,7 +38,11 @@ class VisualDomainModule(DomainModule):
 
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
-        self.scheduler_args = scheduler_args or {}
+        self.scheduler_args: dict[str, Any] = {
+            "max_lr": optim_lr,
+            "total_steps": 1,
+        }
+        self.scheduler_args.update(scheduler_args or {})
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.vae.encode(x)

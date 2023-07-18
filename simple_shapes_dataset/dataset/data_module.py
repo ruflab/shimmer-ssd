@@ -4,7 +4,7 @@ from typing import Any
 
 from lightning.pytorch import LightningDataModule
 from lightning.pytorch.utilities.combined_loader import CombinedLoader
-from torch.utils.data import DataLoader, Dataset, default_collate
+from torch.utils.data import DataLoader, Dataset, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
@@ -13,6 +13,39 @@ from simple_shapes_dataset.dataset.pre_process import (
     NormalizeAttributes,
     attribute_to_tensor,
 )
+
+DatasetT = SimpleShapesDataset | Subset[SimpleShapesDataset]
+
+
+class RepeatedDataset(Dataset):
+    """
+    Repeats a dataset to have at least a minimum size.
+    """
+
+    def __init__(
+        self, dataset: DatasetT, min_size: int, drop_last: bool = False
+    ):
+        """
+        Params:
+            dataset: dataset to repeat
+            min_size (int): minimum amount of element in the final dataset
+            drop_last (bool): whether to remove overflow when repeating the dataset.
+        """
+        self.dataset = dataset
+        assert min_size >= len(self.dataset)
+        self.dataset_size = len(self.dataset)
+        if drop_last:
+            self.total_size = min_size
+        else:
+            self.total_size = (
+                min_size // self.dataset_size + 1
+            ) * self.dataset_size
+
+    def __len__(self) -> int:
+        return self.total_size
+
+    def __getitem__(self, index) -> Any:
+        return self.dataset[index % self.dataset_size]
 
 
 class SimpleShapesDataModule(LightningDataModule):
@@ -33,9 +66,9 @@ class SimpleShapesDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-        self.train_dataset: Mapping[frozenset[str], Dataset] | None = None
-        self.val_dataset: Mapping[frozenset[str], Dataset] | None = None
-        self.test_dataset: Mapping[frozenset[str], Dataset] | None = None
+        self.train_dataset: Mapping[frozenset[str], DatasetT] | None = None
+        self.val_dataset: Mapping[frozenset[str], DatasetT] | None = None
+        self.test_dataset: Mapping[frozenset[str], DatasetT] | None = None
 
     def _get_transforms(
         self, domains: Iterable[str]
@@ -62,7 +95,7 @@ class SimpleShapesDataModule(LightningDataModule):
             selected_domains.update(domain)
         return selected_domains
 
-    def _get_dataset(self, split: str) -> Mapping[frozenset[str], Dataset]:
+    def _get_dataset(self, split: str) -> Mapping[frozenset[str], DatasetT]:
         assert split in ("train", "val", "test")
 
         domains = self._get_selected_domains()
@@ -123,15 +156,18 @@ class SimpleShapesDataModule(LightningDataModule):
         assert self.train_dataset is not None
 
         dataloaders = {}
+        max_sized_dataset = max(
+            len(dataset) for dataset in self.train_dataset.values()
+        )
         for domain, dataset in self.train_dataset.items():
             dataloaders[domain] = DataLoader(
-                dataset,
+                RepeatedDataset(dataset, max_sized_dataset, drop_last=False),
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 drop_last=True,
                 shuffle=True,
             )
-        return CombinedLoader(dataloaders, mode="max_size_cycle")
+        return CombinedLoader(dataloaders, mode="min_size")
 
     def val_dataloader(
         self,
