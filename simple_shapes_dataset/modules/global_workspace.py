@@ -175,6 +175,7 @@ class GlobalWorkspaceLightningModule(LightningModule):
     ) -> dict[str, torch.Tensor]:
         losses: dict[str, torch.Tensor] = {}
 
+        done_domains: list[set[str]] = []
         for domains, latents in latent_domains.items():
             if len(domains) < 2:
                 continue
@@ -185,6 +186,10 @@ class GlobalWorkspaceLightningModule(LightningModule):
                 for domain_name_target in domains:
                     if domain_name_source == domain_name_target:
                         continue
+                    selected_domains = {domain_name_source, domain_name_target}
+                    if selected_domains in done_domains:
+                        continue
+                    done_domains.append(selected_domains)
                     z_target = self.global_workspace.encode(
                         {domain_name_target: latents[domain_name_target]}
                     )
