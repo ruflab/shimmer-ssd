@@ -140,8 +140,14 @@ def main():
         },
     )
 
-    val_samples = data_module.get_samples("val", 32)
     train_samples = data_module.get_samples("train", 32)
+    val_samples = data_module.get_samples("val", 32)
+    for domains in val_samples.keys():
+        for domain in domains:
+            val_samples[frozenset([domain])] = {
+                domain: val_samples[domains][domain]
+            }
+        break
 
     callbacks: list[Callback] = [
         LearningRateMonitor(logging_interval="step"),

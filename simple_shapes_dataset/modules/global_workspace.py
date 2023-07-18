@@ -92,6 +92,8 @@ class GlobalWorkspaceLightningModule(LightningModule):
                 continue
             domain_name_source = list(domains_source)[0]
             for domain_name_target in self.domain_modules.keys():
+                if domain_name_source == domain_name_target:
+                    continue
                 z = self.global_workspace.cycle(
                     latents_source, through=domain_name_target
                 )
