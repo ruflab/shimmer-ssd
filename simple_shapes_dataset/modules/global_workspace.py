@@ -9,6 +9,9 @@ from shimmer.modules.global_workspace import GlobalWorkspace
 from torch.nn.functional import mse_loss
 from torch.optim.lr_scheduler import OneCycleLR
 
+LatentsDomainGroupT = Mapping[str, torch.Tensor]
+LatentsT = Mapping[frozenset[str], LatentsDomainGroupT]
+
 
 class GlobalWorkspaceLightningModule(LightningModule):
     def __init__(
@@ -47,75 +50,97 @@ class GlobalWorkspaceLightningModule(LightningModule):
         self.scheduler_args = scheduler_args
 
     def demi_cycle_loss(
-        self, latent_domains: Mapping[str, torch.Tensor]
+        self, latent_domains: LatentsT
     ) -> dict[str, torch.Tensor]:
         losses: dict[str, torch.Tensor] = {}
-        for domain_name in latent_domains.keys():
-            z = self.global_workspace.translate(latent_domains, to=domain_name)
+        for domains, latents in latent_domains.items():
+            if len(domains) > 1:
+                continue
+            domain_name = list(domains)[0]
+            z = self.global_workspace.translate(latents, to=domain_name)
             losses[f"demi_cycle_{domain_name}"] = mse_loss(
-                z, latent_domains[domain_name]
+                z, latents[domain_name]
             )
         losses["demi_cycles"] = torch.stack(
             list(losses.values()), dim=0
         ).mean()
         return losses
 
-    def cycle_loss(
-        self, latent_domains: Mapping[str, torch.Tensor]
-    ) -> dict[str, torch.Tensor]:
+    def cycle_loss(self, latent_domains: LatentsT) -> dict[str, torch.Tensor]:
         losses: dict[str, torch.Tensor] = {}
-        for domain_name_target in self.domain_modules.keys():
-            z = self.global_workspace.cycle(
-                latent_domains, through=domain_name_target
-            )
-            for domain_name_source in latent_domains.keys():
+        for domains_source, latents_source in latent_domains.items():
+            if len(domains_source) > 1:
+                continue
+            domain_name_source = list(domains_source)[0]
+            for domain_name_target in self.domain_modules.keys():
+                z = self.global_workspace.cycle(
+                    latents_source, through=domain_name_target
+                )
                 loss_name = (
                     f"cycle_{domain_name_source}_through_{domain_name_target}"
                 )
                 losses[loss_name] = mse_loss(
-                    z[domain_name_source], latent_domains[domain_name_source]
+                    z[domain_name_source], latents_source[domain_name_source]
                 )
         losses["cycles"] = torch.stack(list(losses.values()), dim=0).mean()
         return losses
 
     def translation_loss(
-        self, latent_domains: Mapping[str, torch.Tensor]
+        self, latent_domains: LatentsT
     ) -> dict[str, torch.Tensor]:
         losses: dict[str, torch.Tensor] = {}
-        for domain_name_source in latent_domains.keys():
-            z = self.global_workspace.encode(
-                {domain_name_source: latent_domains[domain_name_source]}
-            )
-            for domain_name_target in self.domain_modules.keys():
-                prediction = self.global_workspace.decode(
-                    z, domains={domain_name_target}
-                )[domain_name_target]
-                loss_name = (
-                    f"translation_{domain_name_source}_to_{domain_name_target}"
+        for domains, latents in latent_domains.items():
+            if len(domains) < 2:
+                continue
+            for domain_name_source in domains:
+                z = self.global_workspace.encode(
+                    {domain_name_source: latents[domain_name_source]}
                 )
-                losses[loss_name] = mse_loss(
-                    prediction, latent_domains[domain_name_target]
-                )
+                for domain_name_target in domains:
+                    if domain_name_source == domain_name_target:
+                        continue
+                    prediction = self.global_workspace.decode(
+                        z, domains={domain_name_target}
+                    )[domain_name_target]
+                    loss_name = (
+                        f"translation_{domain_name_source}"
+                        f"_to_{domain_name_target}"
+                    )
+                    if loss_name in losses.keys():
+                        raise ValueError(f"{loss_name} is already computed.")
+                    losses[loss_name] = mse_loss(
+                        prediction, latents[domain_name_target]
+                    )
         losses["translations"] = torch.stack(
             list(losses.values()), dim=0
         ).mean()
         return losses
 
     def contrastive_loss(
-        self, latent_domains: Mapping[str, torch.Tensor]
+        self, latent_domains: LatentsT
     ) -> dict[str, torch.Tensor]:
         losses: dict[str, torch.Tensor] = {}
 
-        for domain_name_source in latent_domains.keys():
-            z_source = self.global_workspace.encode(
-                {domain_name_source: latent_domains[domain_name_source]}
-            )
-            for domain_name_target in self.domain_modules.keys():
-                z_target = self.global_workspace.encode(
-                    {domain_name_target: latent_domains[domain_name_target]}
+        for domains, latents in latent_domains.items():
+            if len(domains) < 2:
+                continue
+            for domain_name_source in domains:
+                z_source = self.global_workspace.encode(
+                    {domain_name_source: latents[domain_name_source]}
                 )
-                loss_name = f"contrastive_{domain_name_source}_and_{domain_name_target}"
-                losses[loss_name] = info_nce(z_source, z_target)
+                for domain_name_target in domains:
+                    if domain_name_source == domain_name_target:
+                        continue
+                    z_target = self.global_workspace.encode(
+                        {domain_name_target: latents[domain_name_target]}
+                    )
+                    loss_name = (
+                        f"contrastive_{domain_name_source}"
+                        f"_and_{domain_name_target}"
+                    )
+                    if loss_name in losses.keys():
+                        raise ValueError(f"{loss_name} is already computed.")
+                    losses[loss_name] = info_nce(z_source, z_target)
         losses["contrastives"] = torch.stack(
             list(losses.values()), dim=0
         ).mean()
@@ -123,27 +148,35 @@ class GlobalWorkspaceLightningModule(LightningModule):
 
     def encode_domains(
         self,
-        domains: Mapping[str, Any],
-    ) -> dict[str, torch.Tensor]:
+        batch: Mapping[frozenset[str], Mapping[str, Any]],
+    ) -> dict[frozenset[str], dict[str, torch.Tensor]]:
         return {
-            name: self.domain_modules[name].encode(domain)
-            for name, domain in domains.items()
+            domains: {
+                name: self.domain_modules[name].encode(domain)
+                for name, domain in data.items()
+            }
+            for domains, data in batch.items()
         }
 
     def decode_domains(
         self,
-        domains: Mapping[str, torch.Tensor],
-    ) -> dict[str, Any]:
+        latents_domain: LatentsT,
+    ) -> dict[frozenset[str], dict[str, Any]]:
         return {
-            name: self.domain_modules[name].decode(domain)
-            for name, domain in domains.items()
+            domains: {
+                name: self.domain_modules[name].decode(domain)
+                for name, domain in latents.items()
+            }
+            for domains, latents in latents_domain.items()
         }
 
     def _get_batch_size(
-        self, domain_latents: Mapping[str, torch.Tensor]
+        self,
+        domain_latents: LatentsT,
     ) -> int:
         for data in domain_latents.values():
-            return data.size(0)
+            for tensor in data.values():
+                return tensor.size(0)
         return 0
 
     def generic_step(
@@ -151,19 +184,15 @@ class GlobalWorkspaceLightningModule(LightningModule):
         batch: Mapping[frozenset[str], Mapping[str, Any]],
         mode: str,
     ) -> torch.Tensor:
-        losses: dict[str, torch.Tensor] = {}
-        batch_size = 0
-        for domains, data in batch.items():
-            domain_latents = self.encode_domains(data)
-            batch_size = self._get_batch_size(domain_latents)
+        domain_latents = self.encode_domains(batch)
+        batch_size = self._get_batch_size(domain_latents)
 
-            match len(domains):
-                case 1:
-                    losses.update(self.demi_cycle_loss(domain_latents))
-                    losses.update(self.cycle_loss(domain_latents))
-                case 2:
-                    losses.update(self.translation_loss(domain_latents))
-                    losses.update(self.contrastive_loss(domain_latents))
+        losses: dict[str, torch.Tensor] = {}
+        losses.update(self.demi_cycle_loss(domain_latents))
+        losses.update(self.cycle_loss(domain_latents))
+        losses.update(self.translation_loss(domain_latents))
+        losses.update(self.contrastive_loss(domain_latents))
+
         losses["loss"] = torch.stack(
             [
                 self.loss_coefficients[name] * losses[name]
