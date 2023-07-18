@@ -89,7 +89,7 @@ def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
         x=attributes[:, 0],
         y=attributes[:, 1],
         size=attributes[:, 2],
-        rotation=torch.atan2(attributes[:, 3], attributes[:, 4]),
+        rotation=torch.atan2(attributes[:, 4], attributes[:, 3]),
         color_r=attributes[:, 5],
         color_g=attributes[:, 6],
         color_b=attributes[:, 7],
