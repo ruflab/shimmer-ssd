@@ -289,17 +289,18 @@ class LogGWImagesCallback(pl.Callback):
             return
 
         samples = self.to(self.reference_samples, pl_module.device)
-        latents = pl_module.encode_domains(samples)
         if current_epoch == 0:
-            for domain_names, domains in latents.items():
+            for domain_names, domains in samples.items():
                 for domain_name, domain in domains.items():
                     for logger in loggers:
                         self.log_samples(
                             logger,
-                            pl_module.decode_domain(domain, domain_name),
+                            domain,
                             domain_name,
-                            f"reference_{'-'.join(domain_names)}_{domain_name}",
+                            f"ref_{'-'.join(domain_names)}_{domain_name}",
                         )
+
+        latents = pl_module.encode_domains(samples)
 
         with torch.no_grad():
             pl_module.eval()
@@ -314,14 +315,14 @@ class LogGWImagesCallback(pl.Callback):
                     logger,
                     pl_module.decode_domain(prediction, domain),
                     domain,
-                    f"prediction_demi_cycles_{domain}",
+                    f"pred_dcy_{domain}",
                 )
             for (domain_s, domain_t), prediction in prediction_cycles.items():
                 self.log_samples(
                     logger,
                     pl_module.decode_domain(prediction, domain_s),
                     domain_s,
-                    f"prediction_cycles_{domain_s}_through_{domain_t}",
+                    f"pred_cy_{domain_s}_in_{domain_t}",
                 )
             for (
                 domain_s,
@@ -331,7 +332,7 @@ class LogGWImagesCallback(pl.Callback):
                     logger,
                     pl_module.decode_domain(prediction, domain_t),
                     domain_t,
-                    f"prediction_translation_{domain_s}_to_{domain_t}",
+                    f"pred_trans_{domain_s}_to_{domain_t}",
                 )
 
     def on_train_epoch_end(
@@ -378,7 +379,7 @@ class LogGWImagesCallback(pl.Callback):
         mode: str,
     ) -> None:
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
-        logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
+        logger.log_image(key=f"{self.log_key}/{mode}", images=[images])
 
     def log_attribute_samples(
         self,
@@ -390,7 +391,7 @@ class LogGWImagesCallback(pl.Callback):
             logger,
             samples,
             image_size=self.image_size,
-            key=f"{self.log_key}_{mode}",
+            key=f"{self.log_key}/{mode}",
             ncols=self.ncols,
             dpi=self.dpi,
         )
