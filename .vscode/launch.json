@@ -26,6 +26,18 @@
             }
         },
         {
+            "type": "python",
+            "request": "launch",
+            "name": "Train GW",
+            "program": "${workspaceFolder}/playground/train_gw.py",
+            "justMyCode": false,
+            "env": {
+                "DEBUG": "1",
+                "CUDA_VISIBLE_DEVICES": "1",
+                "CUDA_DEVICE_ORDER": "PCI_BUS_ID"
+            }
+        },
+        {
             "type": "<adapter-name>",
             "request": "launch",
             "name": "Launch"
