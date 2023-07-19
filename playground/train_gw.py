@@ -20,7 +20,7 @@ from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 from simple_shapes_dataset.modules.global_workspace import (
-    GlobalWorkspaceLightningModule,
+    DeterministicGlobalWorkspaceLightningModule,
 )
 
 
@@ -80,7 +80,7 @@ def main():
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
     )
-    module = GlobalWorkspaceLightningModule(
+    module = DeterministicGlobalWorkspaceLightningModule(
         global_workspace,
         {name: domain.module for name, domain in domains.items()},
         config.global_workspace.loss_coefficients.demi_cycles,
