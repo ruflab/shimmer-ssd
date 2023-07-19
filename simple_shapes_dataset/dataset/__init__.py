@@ -1,3 +1,4 @@
+from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 from simple_shapes_dataset.dataset.domain import (
     AVAILABLE_DOMAINS,
@@ -23,6 +24,7 @@ __all__ = [
     "SimpleShapesText",
     "SimpleShapesRawText",
     "SimpleShapesDataset",
+    "SimpleShapesDataModule",
     "Attribute",
     "RawText",
     "Text",

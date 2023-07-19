@@ -1,6 +1,5 @@
 import os
 from collections.abc import Mapping
-from typing import cast
 
 from lightning.pytorch import Callback, Trainer, seed_everything
 from lightning.pytorch.callbacks import (
@@ -16,58 +15,13 @@ from shimmer.modules.global_workspace import GlobalWorkspace
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import PROJECT_DIR
-from simple_shapes_dataset.config.global_workspace import (
-    DomainClass,
-    LoadedDomainConfig,
-)
 from simple_shapes_dataset.config.root import Config
-from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
+from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogGWImagesCallback
-from simple_shapes_dataset.modules.domains.attribute import (
-    AttributeDomainModule,
-)
-from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
+from simple_shapes_dataset.modules.domains import load_pretrained_domains
 from simple_shapes_dataset.modules.global_workspace import (
     GlobalWorkspaceLightningModule,
 )
-from simple_shapes_dataset.modules.vae import RAEEncoder
-
-
-def get_domain(domain: LoadedDomainConfig) -> DomainDescription:
-    match domain.domain_type:
-        case DomainClass.v:
-            module = cast(
-                VisualDomainModule,
-                VisualDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path
-                ),
-            )
-            return DomainDescription(
-                module=module,
-                latent_dim=cast(RAEEncoder, module.vae.encoder).z_dim,
-            )
-
-        case DomainClass.attr:
-            module = cast(
-                AttributeDomainModule,
-                AttributeDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path
-                ),
-            )
-            return DomainDescription(
-                module=module, latent_dim=module.latent_dim
-            )
-        case _:
-            raise NotImplementedError
-
-
-def get_domains(
-    domains: list[LoadedDomainConfig],
-) -> dict[str, DomainDescription]:
-    modules: dict[str, DomainDescription] = {}
-    for domain in domains:
-        modules[domain.domain_type.value] = get_domain(domain)
-    return modules
 
 
 def global_workspace_from_domains(
@@ -115,7 +69,7 @@ def main():
         seed=config.seed,
     )
 
-    domains = get_domains(config.global_workspace.domains)
+    domains = load_pretrained_domains(config.global_workspace.domains)
 
     global_workspace = global_workspace_from_domains(
         domains,

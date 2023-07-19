@@ -18,7 +18,10 @@ from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
     tensor_to_attribute,
 )
-from simple_shapes_dataset.logging import figure_grid, get_pil_image
+from simple_shapes_dataset.logging import (
+    get_attribute_figure_grid,
+    get_pil_image,
+)
 from simple_shapes_dataset.modules.domains.attribute import (
     AttributeDomainModule,
 )
@@ -53,7 +56,7 @@ def get_figure(
     )
     sizes = attributes.size.cpu().numpy()
     rotations = attributes.rotation.cpu().numpy()
-    return figure_grid(
+    return get_attribute_figure_grid(
         categories, locations, sizes, rotations, colors, image_size, ncols, dpi
     )
 
