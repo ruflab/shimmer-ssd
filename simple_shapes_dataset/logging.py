@@ -104,7 +104,6 @@ def get_attribute_figure_grid(
     colors: np.ndarray,
     image_size: int,
     ncols: int = 8,
-    dpi: float = 100,
     padding: float = 2,
 ) -> Image.Image:
     reminder = 1 if categories.shape[0] % ncols else 0
@@ -112,6 +111,7 @@ def get_attribute_figure_grid(
 
     width = ncols * (image_size + padding) + padding
     height = nrows * (image_size + padding) + padding
+    dpi = 1
 
     figure = plt.figure(
         figsize=(width / dpi, height / dpi), dpi=dpi, facecolor="white"
@@ -151,7 +151,6 @@ def make_attribute_grid(
     samples: Sequence[torch.Tensor],
     image_size: int,
     ncols: int = 8,
-    dpi: float = 100,
     padding: float = 2,
 ) -> Image.Image:
     unnormalizer = UnnormalizeAttributes(image_size=image_size)
@@ -184,7 +183,6 @@ def make_attribute_grid(
         colors,
         image_size,
         ncols,
-        dpi,
         padding,
     )
 
@@ -197,12 +195,10 @@ class LogAttributesCallback(LogSamplesCallback):
         image_size: int,
         every_n_epochs: int | None = 1,
         ncols: int = 8,
-        dpi: float = 100,
     ) -> None:
         super().__init__(reference_samples, log_key, every_n_epochs)
         self.image_size = image_size
         self.ncols = ncols
-        self.dpi = dpi
 
     def to(
         self, samples: Sequence[torch.Tensor], device: torch.device
@@ -220,7 +216,6 @@ class LogAttributesCallback(LogSamplesCallback):
             samples,
             image_size=self.image_size,
             ncols=self.ncols,
-            dpi=self.dpi,
         )
         logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
@@ -255,7 +250,6 @@ class LogGWImagesCallback(pl.Callback):
         every_n_epochs: int | None = 1,
         image_size: int = 32,
         ncols: int = 8,
-        dpi: float = 100,
     ) -> None:
         super().__init__()
         self.reference_samples = reference_samples
@@ -263,7 +257,6 @@ class LogGWImagesCallback(pl.Callback):
         self.log_key = log_key
         self.image_size = image_size
         self.ncols = ncols
-        self.dpi = dpi
 
     def to(
         self,
@@ -399,6 +392,5 @@ class LogGWImagesCallback(pl.Callback):
             samples,
             image_size=self.image_size,
             ncols=self.ncols,
-            dpi=self.dpi,
         )
         logger.log_image(key=f"{self.log_key}/{mode}", images=[image])
