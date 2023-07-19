@@ -1,5 +1,6 @@
 import os
 from collections.abc import Mapping
+from typing import cast
 
 from lightning.pytorch import Callback, Trainer, seed_everything
 from lightning.pytorch.callbacks import (
@@ -11,7 +12,10 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer import load_structured_config
 from shimmer.modules.domain import DomainDescription
-from shimmer.modules.global_workspace import GlobalWorkspace
+from shimmer.modules.global_workspace import (
+    GlobalWorkspace,
+    VariationalGlobalWorkspace,
+)
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import PROJECT_DIR
@@ -20,7 +24,7 @@ from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 from simple_shapes_dataset.modules.global_workspace import (
-    DeterministicGlobalWorkspaceLightningModule,
+    VariationalGlobalWorkspaceLightningModule,
 )
 
 
@@ -31,10 +35,14 @@ def global_workspace_from_domains(
     encoder_n_layers: int,
     decoder_hidden_dim: int,
     decoder_n_layers: int,
-) -> GlobalWorkspace:
+    is_variational: bool = False,
+) -> GlobalWorkspace | VariationalGlobalWorkspace:
     domain_names = set(domains.keys())
     input_dims = {name: domain.latent_dim for name, domain in domains.items()}
-    return GlobalWorkspace(
+    workspace_type = (
+        VariationalGlobalWorkspace if is_variational else GlobalWorkspace
+    )
+    return workspace_type(
         domain_names,
         latent_dim,
         input_dims,
@@ -72,21 +80,26 @@ def main():
 
     domains = load_pretrained_domains(config.global_workspace.domains)
 
-    global_workspace = global_workspace_from_domains(
-        domains,
-        config.global_workspace.latent_dim,
-        config.global_workspace.encoders.hidden_dim,
-        config.global_workspace.encoders.n_layers,
-        config.global_workspace.decoders.hidden_dim,
-        config.global_workspace.decoders.n_layers,
+    global_workspace = cast(
+        VariationalGlobalWorkspace,
+        global_workspace_from_domains(
+            domains,
+            config.global_workspace.latent_dim,
+            config.global_workspace.encoders.hidden_dim,
+            config.global_workspace.encoders.n_layers,
+            config.global_workspace.decoders.hidden_dim,
+            config.global_workspace.decoders.n_layers,
+            is_variational=True,
+        ),
     )
-    module = DeterministicGlobalWorkspaceLightningModule(
+    module = VariationalGlobalWorkspaceLightningModule(
         global_workspace,
         {name: domain.module for name, domain in domains.items()},
         config.global_workspace.loss_coefficients.demi_cycles,
         config.global_workspace.loss_coefficients.cycles,
         config.global_workspace.loss_coefficients.translations,
         config.global_workspace.loss_coefficients.contrastives,
+        config.global_workspace.loss_coefficients.kl,
         config.training.optim.lr,
         config.training.optim.weight_decay,
         scheduler_args={

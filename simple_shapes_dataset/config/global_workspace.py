@@ -36,6 +36,7 @@ class LossCoeffients:
     demi_cycles: int = 1
     translations: int = 1
     contrastives: int = 1
+    kl: int = 1
 
 
 @dataclass

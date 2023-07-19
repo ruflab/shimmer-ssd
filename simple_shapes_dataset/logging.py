@@ -23,10 +23,15 @@ from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainModule,
 )
 from simple_shapes_dataset.modules.global_workspace import (
-    GlobalWorkspaceLightningModule,
+    DeterministicGlobalWorkspaceLightningModule,
+    VariationalGlobalWorkspaceLightningModule,
 )
 
 matplotlib.use("Agg")
+GlobalWorkspaceLightningModuleType = (
+    DeterministicGlobalWorkspaceLightningModule
+    | VariationalGlobalWorkspaceLightningModule
+)
 
 
 class LogSamplesCallback(pl.Callback):
@@ -287,7 +292,7 @@ class LogGWImagesCallback(pl.Callback):
         self,
         current_epoch: int,
         loggers: Sequence[Logger],
-        pl_module: GlobalWorkspaceLightningModule,
+        pl_module: GlobalWorkspaceLightningModuleType,
     ) -> None:
         if not (len(loggers)):
             return
@@ -344,7 +349,9 @@ class LogGWImagesCallback(pl.Callback):
                 )
 
     def on_train_epoch_end(
-        self, trainer: pl.Trainer, pl_module: GlobalWorkspaceLightningModule
+        self,
+        trainer: pl.Trainer,
+        pl_module: GlobalWorkspaceLightningModuleType,
     ) -> None:
         if (
             self.every_n_epochs is None
@@ -357,7 +364,9 @@ class LogGWImagesCallback(pl.Callback):
         )
 
     def on_fit_end(
-        self, trainer: pl.Trainer, pl_module: GlobalWorkspaceLightningModule
+        self,
+        trainer: pl.Trainer,
+        pl_module: GlobalWorkspaceLightningModuleType,
     ) -> None:
         return self.on_callback(
             trainer.current_epoch, trainer.loggers, pl_module
@@ -366,7 +375,7 @@ class LogGWImagesCallback(pl.Callback):
     def log_samples(
         self,
         logger: Logger,
-        pl_module: GlobalWorkspaceLightningModule,
+        pl_module: GlobalWorkspaceLightningModuleType,
         samples: Any,
         domain: str,
         mode: str,
