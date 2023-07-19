@@ -96,7 +96,7 @@ def get_pil_image(figure: plt.Figure) -> Image.Image:
     return Image.open(buf)
 
 
-def figure_grid(
+def get_attribute_figure_grid(
     categories: np.ndarray,
     locations: np.ndarray,
     sizes: np.ndarray,
@@ -105,23 +105,26 @@ def figure_grid(
     image_size: int,
     ncols: int = 8,
     dpi: float = 100,
+    padding: float = 2,
 ) -> Image.Image:
     reminder = 1 if categories.shape[0] % ncols else 0
     nrows = categories.shape[0] // ncols + reminder
 
-    width = ncols * (image_size + 1) + 1
-    height = nrows * (image_size + 1) + 1
+    width = ncols * (image_size + padding) + padding
+    height = nrows * (image_size + padding) + padding
 
-    figure = plt.figure(figsize=(width / dpi, height / dpi), dpi=dpi)
+    figure = plt.figure(
+        figsize=(width / dpi, height / dpi), dpi=dpi, facecolor="white"
+    )
     gs = gridspec.GridSpec(
         nrows,
         ncols,
-        wspace=1 / 10,
-        hspace=1 / 10,
-        left=0,
-        right=1,
-        bottom=0,
-        top=1,
+        wspace=padding / image_size,
+        hspace=padding / image_size,
+        left=padding / width,
+        right=1 - padding / width,
+        bottom=padding / height,
+        top=1 - padding / height,
     )
     for i in range(nrows):
         for j in range(ncols):
@@ -144,14 +147,13 @@ def figure_grid(
     return image
 
 
-def log_attribute(
-    logger: WandbLogger,
+def make_attribute_grid(
     samples: Sequence[torch.Tensor],
     image_size: int,
-    key: str,
     ncols: int = 8,
     dpi: float = 100,
-) -> None:
+    padding: float = 2,
+) -> Image.Image:
     unnormalizer = UnnormalizeAttributes(image_size=image_size)
     attributes = unnormalizer(tensor_to_attribute(samples))
 
@@ -174,10 +176,17 @@ def log_attribute(
     sizes = attributes.size.cpu().numpy()
     rotations = attributes.rotation.cpu().numpy()
 
-    image = figure_grid(
-        categories, locations, sizes, rotations, colors, image_size, ncols, dpi
+    return get_attribute_figure_grid(
+        categories,
+        locations,
+        sizes,
+        rotations,
+        colors,
+        image_size,
+        ncols,
+        dpi,
+        padding,
     )
-    logger.log_image(key=key, images=[image])
 
 
 class LogAttributesCallback(LogSamplesCallback):
@@ -207,14 +216,13 @@ class LogAttributesCallback(LogSamplesCallback):
             logging.warning("Only logging to wandb is supported")
             return
 
-        log_attribute(
-            logger,
+        image = make_attribute_grid(
             samples,
             image_size=self.image_size,
-            key=f"{self.log_key}_{mode}",
             ncols=self.ncols,
             dpi=self.dpi,
         )
+        logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
 
 class LogVisualCallback(LogSamplesCallback):
@@ -387,11 +395,10 @@ class LogGWImagesCallback(pl.Callback):
         samples: Any,
         mode: str,
     ) -> None:
-        log_attribute(
-            logger,
+        image = make_attribute_grid(
             samples,
             image_size=self.image_size,
-            key=f"{self.log_key}/{mode}",
             ncols=self.ncols,
             dpi=self.dpi,
         )
+        logger.log_image(key=f"{self.log_key}/{mode}", images=[image])
