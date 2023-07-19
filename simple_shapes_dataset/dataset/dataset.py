@@ -28,6 +28,8 @@ class SimpleShapesDataset(torchdata.Dataset):
             dataset_path (str | pathlib.Path): Path to the dataset.
             split (str): Split to use. One of 'train', 'val', 'test'.
             selected_domains (Iterable[str]): Domains to include in the dataset.
+                If "v" is given and "v_latents" key is in domain_args, then "v" is
+                replaced by the "v_latents" domain.
             transforms (dict[str, (Any) -> Any]): Optional transforms to apply
                 to the domains. The keys are the domain names,
                 the values are the transforms.
@@ -37,14 +39,17 @@ class SimpleShapesDataset(torchdata.Dataset):
         self.dataset_path = Path(dataset_path)
         self.split = split
 
-        self.selected_domains = selected_domains
         self.domains: dict[str, SimpleShapesDomain] = {}
         self.domain_args = domain_args or {}
 
-        for domain in self.selected_domains:
+        for domain in selected_domains:
+            if domain == "v" and "v_latents" in self.domain_args:
+                domain = "v_latents"
+
             transform = None
             if transforms is not None and domain in transforms:
                 transform = transforms[domain]
+
             self.domains[domain] = AVAILABLE_DOMAINS[domain](
                 dataset_path,
                 split,

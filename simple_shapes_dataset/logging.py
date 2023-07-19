@@ -1,7 +1,7 @@
 import io
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, cast
 
 import lightning.pytorch as pl
 import matplotlib
@@ -18,6 +18,9 @@ from simple_shapes_dataset.cli.utils import generate_image
 from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
     tensor_to_attribute,
+)
+from simple_shapes_dataset.modules.domains.visual import (
+    VisualLatentDomainModule,
 )
 from simple_shapes_dataset.modules.global_workspace import (
     GlobalWorkspaceLightningModule,
@@ -296,6 +299,7 @@ class LogGWImagesCallback(pl.Callback):
                     for logger in loggers:
                         self.log_samples(
                             logger,
+                            pl_module,
                             domain,
                             domain_name,
                             f"ref_{'-'.join(domain_names)}_{domain_name}",
@@ -314,6 +318,7 @@ class LogGWImagesCallback(pl.Callback):
             for domain, prediction in prediction_demi_cycles.items():
                 self.log_samples(
                     logger,
+                    pl_module,
                     pl_module.decode_domain(prediction, domain),
                     domain,
                     f"pred_dcy_{domain}",
@@ -321,6 +326,7 @@ class LogGWImagesCallback(pl.Callback):
             for (domain_s, domain_t), prediction in prediction_cycles.items():
                 self.log_samples(
                     logger,
+                    pl_module,
                     pl_module.decode_domain(prediction, domain_s),
                     domain_s,
                     f"pred_cy_{domain_s}_in_{domain_t}",
@@ -331,6 +337,7 @@ class LogGWImagesCallback(pl.Callback):
             ), prediction in prediction_translations.items():
                 self.log_samples(
                     logger,
+                    pl_module,
                     pl_module.decode_domain(prediction, domain_t),
                     domain_t,
                     f"pred_trans_{domain_s}_to_{domain_t}",
@@ -359,6 +366,7 @@ class LogGWImagesCallback(pl.Callback):
     def log_samples(
         self,
         logger: Logger,
+        pl_module: GlobalWorkspaceLightningModule,
         samples: Any,
         domain: str,
         mode: str,
@@ -370,6 +378,16 @@ class LogGWImagesCallback(pl.Callback):
         match domain:
             case "v":
                 self.log_visual_samples(logger, samples, mode)
+            case "v_latents":
+                assert "v_latents" in pl_module.domain_modules
+
+                module = cast(
+                    VisualLatentDomainModule,
+                    pl_module.domain_modules["v_latents"],
+                )
+                self.log_visual_samples(
+                    logger, module.decode_images(samples), mode
+                )
             case "attr":
                 self.log_attribute_samples(logger, samples, mode)
 

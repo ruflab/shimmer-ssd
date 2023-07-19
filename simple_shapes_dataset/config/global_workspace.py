@@ -1,13 +1,15 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 from omegaconf import MISSING
 
 
-class DomainClass(StrEnum):
+class DomainType(StrEnum):
     attr = "attr"
     v = "v"
+    v_latents = "v_latents"
 
 
 @dataclass
@@ -19,7 +21,7 @@ class EncodersConfig:
 @dataclass
 class LoadedDomainConfig:
     checkpoint_path: Path = MISSING
-    domain_type: DomainClass = MISSING
+    domain_type: DomainType = MISSING
 
 
 @dataclass
@@ -44,3 +46,4 @@ class GlobalWorkspace:
     decoders: EncodersConfig = field(default_factory=EncodersConfig)
     domain_proportions: list[DomainProportion] = field(default_factory=list)
     loss_coefficients: LossCoeffients = field(default_factory=LossCoeffients)
+    domain_args: dict[str, Any] = field(default_factory=dict)

@@ -1,0 +1,6 @@
+domain_checkpoint:
+    checkpoint_path: ${default_root_dir}/shimmer-simple-shapes-z5ec9tmq/epoch=501.ckpt
+    domain_type: v
+
+presaved_latents_path:
+    v: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy

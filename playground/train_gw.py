@@ -67,6 +67,7 @@ def main():
         batch_size=config.training.batch_size,
         num_workers=config.training.num_workers,
         seed=config.seed,
+        domain_args=config.global_workspace.domain_args,
     )
 
     domains = load_pretrained_domains(config.global_workspace.domains)

@@ -41,17 +41,17 @@ def get_aligned_datasets(
         alignement_split_path, allow_pickle=True
     ).item()
 
-    datasets = {
-        domain_group: Subset(
-            SimpleShapesDataset(
-                dataset_path,
-                split,
-                list(domain_group),
-                transforms,
-                domain_args,
-            ),
-            indices,  # type: ignore
+    datasets = {}
+    for domain_group, indices in domain_split.items():
+        dataset = SimpleShapesDataset(
+            dataset_path,
+            split,
+            list(domain_group),
+            transforms,
+            domain_args,
         )
-        for domain_group, indices in domain_split.items()
-    }
+        domains = frozenset(dataset.domains.keys())
+
+        datasets[domains] = Subset(dataset, indices)  # type: ignore
+
     return datasets

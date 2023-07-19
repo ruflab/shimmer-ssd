@@ -7,6 +7,10 @@ global_workspace:
         -   domains: ["v", "attr"]
             proportion: 0.001
 
+    domain_args:
+        v_latents:
+            presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy
+
 logging:
     log_val_medias_every_n_epochs: 10
     log_train_medias_every_n_epochs: 10

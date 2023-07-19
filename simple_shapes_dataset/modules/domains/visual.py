@@ -111,3 +111,18 @@ class VisualDomainModule(DomainModule):
                 "interval": "step",
             },
         }
+
+
+class VisualLatentDomainModule(DomainModule):
+    def __init__(self, visual_module: VisualDomainModule):
+        super().__init__()
+        self.visual_module = visual_module
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return x
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return z
+
+    def decode_images(self, z: torch.Tensor) -> torch.Tensor:
+        return self.visual_module.decode(z)

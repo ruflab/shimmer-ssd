@@ -38,7 +38,8 @@ class RepeatedDataset(Dataset):
             self.total_size = min_size
         else:
             self.total_size = (
-                min_size // self.dataset_size + 1
+                min_size // self.dataset_size
+                + int(min_size % self.dataset_size > 0)
             ) * self.dataset_size
 
     def __len__(self) -> int:
@@ -56,12 +57,14 @@ class SimpleShapesDataModule(LightningDataModule):
         batch_size: int,
         num_workers: int = 0,
         seed: int | None = None,
+        domain_args: dict[str, Any] | None = None,
     ) -> None:
         super().__init__()
 
         self.dataset_path = dataset_path
         self.domain_proportions = domain_proportions
         self.seed = seed
+        self.domain_args = domain_args or {}
 
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -91,8 +94,11 @@ class SimpleShapesDataModule(LightningDataModule):
 
     def _get_selected_domains(self) -> set[str]:
         selected_domains: set[str] = set()
-        for domain in self.domain_proportions.keys():
-            selected_domains.update(domain)
+        for domains in self.domain_proportions.keys():
+            for domain in domains:
+                if domain == "v" and "v_latents" in self.domain_args:
+                    domain = "v_latents"
+                selected_domains.add(domain)
         return selected_domains
 
     def _get_dataset(self, split: str) -> Mapping[frozenset[str], DatasetT]:
@@ -112,6 +118,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 domain_proportions=self.domain_proportions,
                 seed=self.seed,
                 transforms=self._get_transforms(domains),
+                domain_args=self.domain_args,
             )
 
         if split in ("val", "test"):
@@ -121,6 +128,7 @@ class SimpleShapesDataModule(LightningDataModule):
                     split=split,
                     selected_domains=domains,
                     transforms=self._get_transforms(domains),
+                    domain_args=self.domain_args,
                 )
             }
         return {
@@ -129,6 +137,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 split=split,
                 selected_domains=[domain],
                 transforms=self._get_transforms([domain]),
+                domain_args=self.domain_args,
             )
             for domain in domains
         }
@@ -152,6 +161,9 @@ class SimpleShapesDataModule(LightningDataModule):
 
     def train_dataloader(
         self,
+        shuffle=True,
+        drop_last=True,
+        **kwargs,
     ) -> CombinedLoader:
         assert self.train_dataset is not None
 
@@ -164,8 +176,9 @@ class SimpleShapesDataModule(LightningDataModule):
                 RepeatedDataset(dataset, max_sized_dataset, drop_last=False),
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
-                drop_last=True,
-                shuffle=True,
+                shuffle=shuffle,
+                drop_last=drop_last,
+                **kwargs,
             )
         return CombinedLoader(dataloaders, mode="min_size")
 

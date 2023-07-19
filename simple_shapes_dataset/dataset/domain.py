@@ -103,6 +103,54 @@ class SimpleShapesImages(SimpleShapesDomain):
         return image
 
 
+class SimpleShapesPretrainedVisual(SimpleShapesDomain):
+    def __init__(
+        self,
+        dataset_path: str | Path,
+        split: str,
+        transform: Callable[[Any], Any] | None = None,
+        additional_args: dict[str, Any] | None = None,
+    ) -> None:
+        assert split in ("train", "val", "test"), "Invalid split"
+
+        self.dataset_path = Path(dataset_path)
+        self.split = split
+        self.transform = transform
+        self.additional_args = additional_args
+
+        assert self.additional_args is not None
+        assert "presaved_path" in self.additional_args
+
+        self.presaved_path = (
+            self.dataset_path
+            / f"saved_latents/{split}/{self.additional_args['presaved_path']}"
+        )
+        self.latents = torch.from_numpy(np.load(self.presaved_path.resolve()))
+        self.dataset_size = self.latents.size(0)
+
+    def __len__(self) -> int:
+        return self.dataset_size
+
+    @overload
+    def __getitem__(self, index: int) -> torch.Tensor:
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[torch.Tensor]:
+        ...
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            determined_slice_indices = index.indices(len(self))
+            return [self[i] for i in range(*determined_slice_indices)]
+
+        x = self.latents[index]
+
+        if self.transform is not None:
+            return self.transform(x)
+        return x
+
+
 class Attribute(NamedTuple):
     """
     NamedTuple for the attributes of the SimpleShapesDataset.
@@ -136,9 +184,10 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         )
         self.transform = transform
         self.additional_args = additional_args
+        self.dataset_size = self.labels.size(0)
 
     def __len__(self) -> int:
-        return self.labels.size(0)
+        return self.dataset_size
 
     @overload
     def __getitem__(self, index: int) -> Attribute:
@@ -212,9 +261,10 @@ class SimpleShapesRawText(SimpleShapesDomain):
         )
         self.transform = transform
         self.additional_args = additional_args or {}
+        self.dataset_size = len(self.captions)
 
     def __len__(self) -> int:
-        return len(self.captions)
+        return self.dataset_size
 
     @overload
     def __getitem__(self, index: int) -> RawText:
@@ -277,9 +327,10 @@ class SimpleShapesText(SimpleShapesDomain):
         )
         self.bert_data = (bert_data - self.bert_mean) / self.bert_std
         self.transform = transform
+        self.dataset_size = self.bert_data.size(0)
 
     def __len__(self) -> int:
-        return self.bert_data.size(0)
+        return self.dataset_size
 
     @overload
     def __getitem__(self, index: int) -> Text:
@@ -307,6 +358,7 @@ class SimpleShapesText(SimpleShapesDomain):
 
 AVAILABLE_DOMAINS: dict[str, type[SimpleShapesDomain]] = {
     "v": SimpleShapesImages,
+    "v_latents": SimpleShapesPretrainedVisual,
     "attr": SimpleShapesAttributes,
     "raw_text": SimpleShapesRawText,
     "t": SimpleShapesText,
