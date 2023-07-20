@@ -357,7 +357,7 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
             if len(domains) > 1:
                 continue
             domain_name = list(domains)[0]
-            z = self.global_workspace.translate(latents, to=domain_name)
+            z = self.global_workspace.translate_mean(latents, to=domain_name)
             predictions[domain_name] = z
         return predictions
 
@@ -389,7 +389,7 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
             for domain_name_target in self.domain_modules.keys():
                 if domain_name_source == domain_name_target:
                     continue
-                z = self.global_workspace.cycle(
+                z = self.global_workspace.cycle_mean(
                     latents_source, through=domain_name_target
                 )
                 domains = (domain_name_source, domain_name_target)
@@ -425,9 +425,10 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
             if len(domains) < 2:
                 continue
             for domain_name_source in domains:
-                z = self.global_workspace.encode(
+                _, (mean, _) = self.global_workspace.encode(
                     {domain_name_source: latents[domain_name_source]}
-                )[0]
+                )
+                z = self.global_workspace.fusion_mechanism(mean)
                 for domain_name_target in domains:
                     if domain_name_source == domain_name_target:
                         continue
