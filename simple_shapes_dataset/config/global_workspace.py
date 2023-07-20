@@ -42,6 +42,7 @@ class LossCoeffients:
 @dataclass
 class GlobalWorkspace:
     latent_dim: int = 12
+    is_variational: bool = False
     domains: list[LoadedDomainConfig] = field(default_factory=list)
     encoders: EncodersConfig = field(default_factory=EncodersConfig)
     decoders: EncodersConfig = field(default_factory=EncodersConfig)

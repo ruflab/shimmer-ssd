@@ -1,11 +1,13 @@
 global_workspace:
+    is_variational: false
+
     domain_proportions: 
         -   domains: ["v"]
             proportion: 1.0
         -   domains: ["attr"]
             proportion: 1.0
         -   domains: ["v", "attr"]
-            proportion: 0.001
+            proportion: 1.0
 
     domain_args:
         v_latents:

@@ -1,6 +1,5 @@
 import os
 from collections.abc import Mapping
-from typing import cast
 
 from lightning.pytorch import Callback, Trainer, seed_everything
 from lightning.pytorch.callbacks import (
@@ -24,8 +23,30 @@ from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 from simple_shapes_dataset.modules.global_workspace import (
+    DeterministicGlobalWorkspaceLightningModule,
     VariationalGlobalWorkspaceLightningModule,
 )
+
+
+def variational_global_workspace_from_domains(
+    domains: Mapping[str, DomainDescription],
+    latent_dim: int,
+    encoder_hiddent_dim: int,
+    encoder_n_layers: int,
+    decoder_hidden_dim: int,
+    decoder_n_layers: int,
+) -> VariationalGlobalWorkspace:
+    domain_names = set(domains.keys())
+    input_dims = {name: domain.latent_dim for name, domain in domains.items()}
+    return VariationalGlobalWorkspace(
+        domain_names,
+        latent_dim,
+        input_dims,
+        {name: encoder_hiddent_dim for name in domains.keys()},
+        {name: encoder_n_layers for name in domains.keys()},
+        {name: decoder_hidden_dim for name in domains.keys()},
+        {name: decoder_n_layers for name in domains.keys()},
+    )
 
 
 def global_workspace_from_domains(
@@ -35,14 +56,10 @@ def global_workspace_from_domains(
     encoder_n_layers: int,
     decoder_hidden_dim: int,
     decoder_n_layers: int,
-    is_variational: bool = False,
-) -> GlobalWorkspace | VariationalGlobalWorkspace:
+) -> GlobalWorkspace:
     domain_names = set(domains.keys())
     input_dims = {name: domain.latent_dim for name, domain in domains.items()}
-    workspace_type = (
-        VariationalGlobalWorkspace if is_variational else GlobalWorkspace
-    )
-    return workspace_type(
+    return GlobalWorkspace(
         domain_names,
         latent_dim,
         input_dims,
@@ -80,33 +97,53 @@ def main():
 
     domain_modules = load_pretrained_domains(config.global_workspace.domains)
 
-    global_workspace = cast(
-        VariationalGlobalWorkspace,
-        global_workspace_from_domains(
+    if config.global_workspace.is_variational:
+        global_workspace = variational_global_workspace_from_domains(
             domain_modules,
             config.global_workspace.latent_dim,
             config.global_workspace.encoders.hidden_dim,
             config.global_workspace.encoders.n_layers,
             config.global_workspace.decoders.hidden_dim,
             config.global_workspace.decoders.n_layers,
-            is_variational=True,
-        ),
-    )
-    module = VariationalGlobalWorkspaceLightningModule(
-        global_workspace,
-        {name: domain.module for name, domain in domain_modules.items()},
-        config.global_workspace.loss_coefficients.demi_cycles,
-        config.global_workspace.loss_coefficients.cycles,
-        config.global_workspace.loss_coefficients.translations,
-        config.global_workspace.loss_coefficients.contrastives,
-        config.global_workspace.loss_coefficients.kl,
-        config.training.optim.lr,
-        config.training.optim.weight_decay,
-        scheduler_args={
-            "max_lr": config.training.optim.max_lr,
-            "total_steps": config.training.max_steps,
-        },
-    )
+        )
+        module = VariationalGlobalWorkspaceLightningModule(
+            global_workspace,
+            {name: domain.module for name, domain in domain_modules.items()},
+            config.global_workspace.loss_coefficients.demi_cycles,
+            config.global_workspace.loss_coefficients.cycles,
+            config.global_workspace.loss_coefficients.translations,
+            config.global_workspace.loss_coefficients.contrastives,
+            config.global_workspace.loss_coefficients.kl,
+            config.training.optim.lr,
+            config.training.optim.weight_decay,
+            scheduler_args={
+                "max_lr": config.training.optim.max_lr,
+                "total_steps": config.training.max_steps,
+            },
+        )
+    else:
+        global_workspace = global_workspace_from_domains(
+            domain_modules,
+            config.global_workspace.latent_dim,
+            config.global_workspace.encoders.hidden_dim,
+            config.global_workspace.encoders.n_layers,
+            config.global_workspace.decoders.hidden_dim,
+            config.global_workspace.decoders.n_layers,
+        )
+        module = DeterministicGlobalWorkspaceLightningModule(
+            global_workspace,
+            {name: domain.module for name, domain in domain_modules.items()},
+            config.global_workspace.loss_coefficients.demi_cycles,
+            config.global_workspace.loss_coefficients.cycles,
+            config.global_workspace.loss_coefficients.translations,
+            config.global_workspace.loss_coefficients.contrastives,
+            config.training.optim.lr,
+            config.training.optim.weight_decay,
+            scheduler_args={
+                "max_lr": config.training.optim.max_lr,
+                "total_steps": config.training.max_steps,
+            },
+        )
 
     train_samples = data_module.get_samples("train", 32)
     val_samples = data_module.get_samples("val", 32)
