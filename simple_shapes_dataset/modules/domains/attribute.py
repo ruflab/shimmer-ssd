@@ -4,12 +4,18 @@ from typing import Any
 import torch
 import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
-from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
+from shimmer.modules.vae import (
+    VAE,
+    VAEDecoder,
+    VAEEncoder,
+    gaussian_nll,
+    kl_divergence_loss,
+)
 from torch import nn
 from torch.optim.lr_scheduler import OneCycleLR
 
 
-class VAEEncoder(nn.Module):
+class Encoder(VAEEncoder):
     def __init__(
         self,
         hidden_dim: int,
@@ -33,14 +39,14 @@ class VAEEncoder(nn.Module):
         self.q_logvar = nn.Linear(self.out_dim, self.out_dim)
 
     def forward(
-        self, x: list[torch.Tensor]
+        self, x: Sequence[torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        out = torch.cat(x, dim=-1)
+        out = torch.cat(list(x), dim=-1)
         out = self.encoder(out)
         return self.q_mean(out), self.q_logvar(out)
 
 
-class VAEDecoder(nn.Module):
+class Decoder(VAEDecoder):
     def __init__(
         self,
         in_dim: int,
@@ -93,8 +99,8 @@ class AttributeDomainModule(DomainModule):
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
 
-        vae_encoder = VAEEncoder(self.hidden_dim, self.latent_dim)
-        vae_decoder = VAEDecoder(self.latent_dim, self.hidden_dim)
+        vae_encoder = Encoder(self.hidden_dim, self.latent_dim)
+        vae_decoder = Decoder(self.latent_dim, self.hidden_dim)
         self.vae = VAE(vae_encoder, vae_decoder, beta)
 
         self.optim_lr = optim_lr

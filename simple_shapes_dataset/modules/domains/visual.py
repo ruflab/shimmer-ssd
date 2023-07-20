@@ -45,12 +45,10 @@ class VisualDomainModule(DomainModule):
         self.scheduler_args.update(scheduler_args or {})
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
-        return self.vae.encode(x)
+        return self.vae.encode((x,))
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
-        out = self.vae.decode(z)
-        if not isinstance(out, torch.Tensor):
-            raise ValueError("vae.decode should provide a tensor.")
+        out = self.vae.decode(z)[0]
         return out
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -61,10 +59,10 @@ class VisualDomainModule(DomainModule):
         x: torch.Tensor,
         mode: str = "train",
     ) -> torch.Tensor:
-        (mean, logvar), reconstruction = self.vae(x)
+        (mean, logvar), reconstruction = self.vae((x,))
 
         reconstruction_loss = gaussian_nll(
-            reconstruction, torch.tensor(0), x
+            reconstruction[0], torch.tensor(0), x
         ).sum()
 
         kl_loss = kl_divergence_loss(mean, logvar)

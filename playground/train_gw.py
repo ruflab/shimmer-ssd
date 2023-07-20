@@ -24,6 +24,7 @@ from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 from simple_shapes_dataset.modules.global_workspace import (
     DeterministicGlobalWorkspaceLightningModule,
+    GlobalWorkspaceLightningModuleType,
     VariationalGlobalWorkspaceLightningModule,
 )
 
@@ -97,6 +98,7 @@ def main():
 
     domain_modules = load_pretrained_domains(config.global_workspace.domains)
 
+    module: GlobalWorkspaceLightningModuleType
     if config.global_workspace.is_variational:
         global_workspace = variational_global_workspace_from_domains(
             domain_modules,

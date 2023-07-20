@@ -649,3 +649,9 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
                 "interval": "step",
             },
         }
+
+
+GlobalWorkspaceLightningModuleType = (
+    DeterministicGlobalWorkspaceLightningModule
+    | VariationalGlobalWorkspaceLightningModule
+)

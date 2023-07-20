@@ -24,14 +24,11 @@ from simple_shapes_dataset.modules.domains.visual import (
 )
 from simple_shapes_dataset.modules.global_workspace import (
     DeterministicGlobalWorkspaceLightningModule,
+    GlobalWorkspaceLightningModuleType,
     VariationalGlobalWorkspaceLightningModule,
 )
 
 matplotlib.use("Agg")
-GlobalWorkspaceLightningModuleType = (
-    DeterministicGlobalWorkspaceLightningModule
-    | VariationalGlobalWorkspaceLightningModule
-)
 
 
 class LogSamplesCallback(pl.Callback):
