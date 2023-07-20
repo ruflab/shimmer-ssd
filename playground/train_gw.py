@@ -78,12 +78,12 @@ def main():
         domain_args=config.global_workspace.domain_args,
     )
 
-    domains = load_pretrained_domains(config.global_workspace.domains)
+    domain_modules = load_pretrained_domains(config.global_workspace.domains)
 
     global_workspace = cast(
         VariationalGlobalWorkspace,
         global_workspace_from_domains(
-            domains,
+            domain_modules,
             config.global_workspace.latent_dim,
             config.global_workspace.encoders.hidden_dim,
             config.global_workspace.encoders.n_layers,
@@ -94,7 +94,7 @@ def main():
     )
     module = VariationalGlobalWorkspaceLightningModule(
         global_workspace,
-        {name: domain.module for name, domain in domains.items()},
+        {name: domain.module for name, domain in domain_modules.items()},
         config.global_workspace.loss_coefficients.demi_cycles,
         config.global_workspace.loss_coefficients.cycles,
         config.global_workspace.loss_coefficients.translations,

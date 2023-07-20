@@ -33,7 +33,7 @@ def main():
         seed=config.seed,
     )
 
-    device = torch.device("cuda" if torch.cuda.is_available else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     assert (
         config.domain_checkpoint is not None

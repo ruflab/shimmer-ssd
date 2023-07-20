@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -20,8 +20,8 @@ class SimpleShapesDataset(torchdata.Dataset):
         dataset_path: str | Path,
         split: str,
         selected_domains: Iterable[str],
-        transforms: dict[str, Callable[[Any], Any]] | None = None,
-        domain_args: dict[str, Any] | None = None,
+        transforms: Mapping[str, Callable[[Any], Any]] | None = None,
+        domain_args: Mapping[str, Any] | None = None,
     ):
         """
         Params:
@@ -30,10 +30,10 @@ class SimpleShapesDataset(torchdata.Dataset):
             selected_domains (Iterable[str]): Domains to include in the dataset.
                 If "v" is given and "v_latents" key is in domain_args, then "v" is
                 replaced by the "v_latents" domain.
-            transforms (dict[str, (Any) -> Any]): Optional transforms to apply
+            transforms (Mapping[str, (Any) -> Any]): Optional transforms to apply
                 to the domains. The keys are the domain names,
                 the values are the transforms.
-            domain_args (dict[str, Any]): Optional additional arguments to pass
+            domain_args (Mapping[str, Any]): Optional additional arguments to pass
                 to the domains.
         """
         self.dataset_path = Path(dataset_path)

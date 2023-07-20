@@ -300,12 +300,12 @@ class LogGWImagesCallback(pl.Callback):
         samples = self.to(self.reference_samples, pl_module.device)
         if current_epoch == 0:
             for domain_names, domains in samples.items():
-                for domain_name, domain_s in domains.items():
+                for domain_name, domain_tensor in domains.items():
                     for logger in loggers:
                         self.log_samples(
                             logger,
                             pl_module,
-                            domain_s,
+                            domain_tensor,
                             domain_name,
                             f"ref_{'-'.join(domain_names)}_{domain_name}",
                         )
@@ -351,8 +351,17 @@ class LogGWImagesCallback(pl.Callback):
     def on_train_epoch_end(
         self,
         trainer: pl.Trainer,
-        pl_module: GlobalWorkspaceLightningModuleType,
+        pl_module: pl.LightningModule,
     ) -> None:
+        if not isinstance(
+            pl_module,
+            (
+                DeterministicGlobalWorkspaceLightningModule,
+                VariationalGlobalWorkspaceLightningModule,
+            ),
+        ):
+            return
+
         if (
             self.every_n_epochs is None
             or trainer.current_epoch % self.every_n_epochs != 0
@@ -366,8 +375,17 @@ class LogGWImagesCallback(pl.Callback):
     def on_fit_end(
         self,
         trainer: pl.Trainer,
-        pl_module: GlobalWorkspaceLightningModuleType,
+        pl_module: pl.LightningModule,
     ) -> None:
+        if not isinstance(
+            pl_module,
+            (
+                DeterministicGlobalWorkspaceLightningModule,
+                VariationalGlobalWorkspaceLightningModule,
+            ),
+        ):
+            return
+
         return self.on_callback(
             trainer.current_epoch, trainer.loggers, pl_module
         )

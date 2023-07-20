@@ -13,7 +13,7 @@ from simple_shapes_dataset.modules.domains.attribute import (
 )
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 from simple_shapes_dataset.modules.global_workspace import (
-    _GlobalWorkspaceLightningModule,
+    DeterministicGlobalWorkspaceLightningModule,
 )
 
 
@@ -70,7 +70,7 @@ def test_gw_logger():
         {"v": 2, "attr": 2},
     )
 
-    module = _GlobalWorkspaceLightningModule(
+    module = DeterministicGlobalWorkspaceLightningModule(
         global_workspace,
         {name: domain.module for name, domain in domains.items()},
         1,
