@@ -1,5 +1,5 @@
 global_workspace:
-    is_variational: false
+    is_variational: true
 
     domain_proportions: 
         -   domains: ["v"]
