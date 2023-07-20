@@ -190,6 +190,8 @@ def create_domain_split(
     domain_alignment: list[tuple[str, float]],
 ):
     np.random.seed(seed)
+    split_path = dataset_path / "domain_splits"
+    split_path.mkdir(exist_ok=True)
 
     domain_sets = {}
     for domain, prop in domain_alignment:
@@ -212,7 +214,7 @@ def create_domain_split(
         )
 
         np.save(
-            dataset_path / f"{split}_{split_name}_domain_split.npy",
+            split_path / f"{split}_{split_name}_domain_split.npy",
             domain_split,  # type: ignore
         )
 
