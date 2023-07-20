@@ -113,7 +113,7 @@ to the latent vectors (probably something like `train_bert-base-uncased.npy`).
 SimpleShapesDataset(
     "/path/to/dataset",
     split="train",
-    selected_domains=["t"],  # Will only load the visual domain
+    selected_domains=["t"],  # Will only load the text domain
     domain_args={
         "t": {
             "latent_filename": "bert-base-uncased"
