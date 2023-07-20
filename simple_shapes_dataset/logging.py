@@ -300,12 +300,12 @@ class LogGWImagesCallback(pl.Callback):
         samples = self.to(self.reference_samples, pl_module.device)
         if current_epoch == 0:
             for domain_names, domains in samples.items():
-                for domain_name, domain in domains.items():
+                for domain_name, domain_s in domains.items():
                     for logger in loggers:
                         self.log_samples(
                             logger,
                             pl_module,
-                            domain,
+                            domain_s,
                             domain_name,
                             f"ref_{'-'.join(domain_names)}_{domain_name}",
                         )
@@ -320,13 +320,13 @@ class LogGWImagesCallback(pl.Callback):
             pl_module.train()
 
         for logger in loggers:
-            for domain, prediction in prediction_demi_cycles.items():
+            for domain_s, prediction in prediction_demi_cycles.items():
                 self.log_samples(
                     logger,
                     pl_module,
-                    pl_module.decode_domain(prediction, domain),
-                    domain,
-                    f"pred_dcy_{domain}",
+                    pl_module.decode_domain(prediction, domain_s),
+                    domain_s,
+                    f"pred_dcy_{domain_s}",
                 )
             for (domain_s, domain_t), prediction in prediction_cycles.items():
                 self.log_samples(

@@ -60,7 +60,7 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
         }
         self.scheduler_args.update(scheduler_args or {})
 
-    def demi_cycle(self, latent_domains: LatentsT):
+    def demi_cycle(self, latent_domains: LatentsT) -> dict[str, torch.Tensor]:
         predictions: dict[str, torch.Tensor] = {}
         for domains, latents in latent_domains.items():
             if len(domains) > 1:
@@ -141,8 +141,9 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
                     prediction = self.global_workspace.decode(
                         z, domains={domain_name_target}
                     )[domain_name_target]
-                    domains = (domain_name_source, domain_name_target)
-                    predictions[domains] = prediction
+                    predictions[
+                        (domain_name_source, domain_name_target)
+                    ] = prediction
         return predictions
 
     def translation_loss(
@@ -350,7 +351,7 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
         }
         self.scheduler_args.update(scheduler_args or {})
 
-    def demi_cycle(self, latent_domains: LatentsT):
+    def demi_cycle(self, latent_domains: LatentsT) -> dict[str, torch.Tensor]:
         predictions: dict[str, torch.Tensor] = {}
         for domains, latents in latent_domains.items():
             if len(domains) > 1:
@@ -370,7 +371,7 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
             domain_name = list(domains)[0]
             z = self.global_workspace.translate(latents, to=domain_name)
             losses[f"demi_cycle_{domain_name}"] = mse_loss(
-                z, latents[domain_name]
+                z, latents[domain_name], reduction="sum"
             )
         losses["demi_cycles"] = torch.stack(
             list(losses.values()), dim=0
@@ -409,7 +410,9 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
                     f"cycle_{domain_name_source}_through_{domain_name_target}"
                 )
                 losses[loss_name] = mse_loss(
-                    z[domain_name_source], latents_source[domain_name_source]
+                    z[domain_name_source],
+                    latents_source[domain_name_source],
+                    reduction="sum",
                 )
         losses["cycles"] = torch.stack(list(losses.values()), dim=0).mean()
         return losses
@@ -431,8 +434,9 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
                     prediction = self.global_workspace.decode(
                         z, domains={domain_name_target}
                     )[domain_name_target]
-                    domains = (domain_name_source, domain_name_target)
-                    predictions[domains] = prediction
+                    predictions[
+                        (domain_name_source, domain_name_target)
+                    ] = prediction
         return predictions
 
     def translation_loss(
@@ -459,7 +463,9 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
                     if loss_name in losses.keys():
                         raise ValueError(f"{loss_name} is already computed.")
                     losses[loss_name] = mse_loss(
-                        prediction, latents[domain_name_target]
+                        prediction,
+                        latents[domain_name_target],
+                        reduction="sum",
                     )
         losses["translations"] = torch.stack(
             list(losses.values()), dim=0
@@ -498,7 +504,17 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
                     )
                     if loss_name in losses.keys():
                         raise ValueError(f"{loss_name} is already computed.")
-                    losses[loss_name] = info_nce(z_source, z_target)
+                    std_source = logvar_source[domain_name_source].exp()
+                    std_target = logvar_target[domain_name_target].exp()
+                    normalization = 1 + std_source + std_target
+                    normalized_z_source = z_source / normalization
+                    normalized_z_target = z_target / normalization
+
+                    losses[loss_name] = info_nce(
+                        normalized_z_source,
+                        normalized_z_target,
+                        reduction="sum",
+                    )
 
         losses["contrastives"] = torch.stack(
             list(losses.values()), dim=0
@@ -570,11 +586,28 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
         batch_size = self._get_batch_size(domain_latents)
 
         losses: dict[str, torch.Tensor] = {}
-        losses.update(self.demi_cycle_loss(domain_latents))
-        losses.update(self.cycle_loss(domain_latents))
-        losses.update(self.translation_loss(domain_latents))
-        losses.update(self.contrastive_loss(domain_latents))
-        losses.update(self.kl_loss(domain_latents))
+        dcy_losses = self.demi_cycle_loss(domain_latents)
+        losses.update(dcy_losses)
+        cy_losses = self.cycle_loss(domain_latents)
+        losses.update(cy_losses)
+        tr_losses = self.translation_loss(domain_latents)
+        losses.update(tr_losses)
+        cont_losses = self.contrastive_loss(domain_latents)
+        losses.update(cont_losses)
+        kl_losses = self.kl_loss(domain_latents)
+
+        kl_scale_coef = self.loss_coefficients["demi_cycles"] * (
+            len(dcy_losses) - 1
+        )
+        kl_scale_coef = self.loss_coefficients["translations"] * (
+            len(tr_losses) - 1
+        )
+        kl_scale_coef += self.loss_coefficients["cycles"] * (
+            len(cy_losses) - 1
+        )
+
+        kl_losses["kl"] *= kl_scale_coef
+        losses.update(kl_losses)
 
         losses["loss"] = torch.stack(
             [
