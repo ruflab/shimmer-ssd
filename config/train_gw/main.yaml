@@ -11,6 +11,14 @@ global_workspace:
         v_latents:
             presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy
 
+training:
+    optim:
+        lr: 5e-3
+        max_lr: 5e-3
+        weight_decay: 1e-5
+
+    max_steps: 500_000
+
 logging:
     log_val_medias_every_n_epochs: 10
     log_train_medias_every_n_epochs: 10
