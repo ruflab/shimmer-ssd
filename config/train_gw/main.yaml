@@ -15,7 +15,7 @@ global_workspace:
 
 domain_modules:
     attribute:
-        nullify_rotation: true
+        nullify_rotation: false
 
 training:
     optim:
