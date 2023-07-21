@@ -4,7 +4,7 @@ from typing import Any, cast
 import torch
 from info_nce import info_nce
 from lightning.pytorch import LightningModule
-from shimmer.modules.domain import DomainModule
+from shimmer.modules.domain import DomainDescription, DomainModule
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     VariationalGlobalWorkspace,
@@ -18,11 +18,57 @@ LatentsDomainGroupT = Mapping[str, torch.Tensor]
 LatentsT = Mapping[frozenset[str], LatentsDomainGroupT]
 
 
+def variational_global_workspace_from_domains(
+    domains: Mapping[str, DomainDescription],
+    latent_dim: int,
+    encoder_hiddent_dim: int,
+    encoder_n_layers: int,
+    decoder_hidden_dim: int,
+    decoder_n_layers: int,
+) -> VariationalGlobalWorkspace:
+    domain_names = set(domains.keys())
+    input_dims = {name: domain.latent_dim for name, domain in domains.items()}
+    return VariationalGlobalWorkspace(
+        domain_names,
+        latent_dim,
+        input_dims,
+        {name: encoder_hiddent_dim for name in domains.keys()},
+        {name: encoder_n_layers for name in domains.keys()},
+        {name: decoder_hidden_dim for name in domains.keys()},
+        {name: decoder_n_layers for name in domains.keys()},
+    )
+
+
+def global_workspace_from_domains(
+    domains: Mapping[str, DomainDescription],
+    latent_dim: int,
+    encoder_hiddent_dim: int,
+    encoder_n_layers: int,
+    decoder_hidden_dim: int,
+    decoder_n_layers: int,
+) -> GlobalWorkspace:
+    domain_names = set(domains.keys())
+    input_dims = {name: domain.latent_dim for name, domain in domains.items()}
+    return GlobalWorkspace(
+        domain_names,
+        latent_dim,
+        input_dims,
+        {name: encoder_hiddent_dim for name in domains.keys()},
+        {name: encoder_n_layers for name in domains.keys()},
+        {name: decoder_hidden_dim for name in domains.keys()},
+        {name: decoder_n_layers for name in domains.keys()},
+    )
+
+
 class DeterministicGlobalWorkspaceLightningModule(LightningModule):
     def __init__(
         self,
-        global_workspace: GlobalWorkspace,
-        domain_modules: Mapping[str, DomainModule],
+        domain_descriptions: Mapping[str, DomainDescription],
+        latent_dim: int,
+        encoders_hidden_dim: int,
+        encoders_n_layers: int,
+        decoders_hidden_dim: int,
+        decoders_n_layers: int,
         demi_cycle_loss_coefficient: float,
         cycle_loss_coefficient: float,
         translation_loss_coefficient: float,
@@ -32,11 +78,20 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
         scheduler_args: dict[str, Any] | None = None,
     ) -> None:
         super().__init__()
-        self.save_hyperparameters(
-            ignore=["global_workspace", "domain_modules"]
+        self.save_hyperparameters(ignore=["domain_descriptions"])
+
+        self.global_workspace = global_workspace_from_domains(
+            domain_descriptions,
+            latent_dim,
+            encoders_hidden_dim,
+            encoders_n_layers,
+            decoders_hidden_dim,
+            decoders_n_layers,
         )
 
-        self.global_workspace = global_workspace
+        domain_modules = {
+            name: domain.module for name, domain in domain_descriptions.items()
+        }
 
         for module in domain_modules.values():
             module.eval().freeze()
@@ -320,8 +375,12 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
 class VariationalGlobalWorkspaceLightningModule(LightningModule):
     def __init__(
         self,
-        global_workspace: VariationalGlobalWorkspace,
-        domain_modules: Mapping[str, DomainModule],
+        domain_descriptions: Mapping[str, DomainDescription],
+        latent_dim: int,
+        encoders_hidden_dim: int,
+        encoders_n_layers: int,
+        decoders_hidden_dim: int,
+        decoders_n_layers: int,
         demi_cycle_loss_coefficient: float,
         cycle_loss_coefficient: float,
         translation_loss_coefficient: float,
@@ -332,11 +391,20 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
         scheduler_args: dict[str, Any] | None = None,
     ) -> None:
         super().__init__()
-        self.save_hyperparameters(
-            ignore=["global_workspace", "domain_modules"]
+        self.save_hyperparameters(ignore=["domain_descriptions"])
+
+        self.global_workspace = variational_global_workspace_from_domains(
+            domain_descriptions,
+            latent_dim,
+            encoders_hidden_dim,
+            encoders_n_layers,
+            decoders_hidden_dim,
+            decoders_n_layers,
         )
 
-        self.global_workspace = global_workspace
+        domain_modules = {
+            name: domain.module for name, domain in domain_descriptions.items()
+        }
 
         for module in domain_modules.values():
             module.eval().freeze()
