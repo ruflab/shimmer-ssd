@@ -12,6 +12,11 @@ from lightning.pytorch.loggers import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from PIL import Image
+from shimmer.modules.lightning.global_workspace import (
+    DeterministicGlobalWorkspaceLightningModule,
+    GlobalWorkspaceLightningModuleType,
+    VariationalGlobalWorkspaceLightningModule,
+)
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset.cli.utils import generate_image
@@ -21,11 +26,6 @@ from simple_shapes_dataset.dataset.pre_process import (
 )
 from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainModule,
-)
-from simple_shapes_dataset.modules.global_workspace import (
-    DeterministicGlobalWorkspaceLightningModule,
-    GlobalWorkspaceLightningModuleType,
-    VariationalGlobalWorkspaceLightningModule,
 )
 
 matplotlib.use("Agg")

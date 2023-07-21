@@ -10,6 +10,9 @@ import torchvision.transforms.functional as F
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.config import load_structured_config
+from shimmer.modules.lightning.global_workspace import (
+    VariationalGlobalWorkspaceLightningModule,
+)
 from torchvision.utils import make_grid
 
 import wandb
@@ -21,9 +24,6 @@ from simple_shapes_dataset.modules.domains.pretrained import (
 )
 from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainModule,
-)
-from simple_shapes_dataset.modules.global_workspace import (
-    VariationalGlobalWorkspaceLightningModule,
 )
 
 matplotlib.use("Agg")

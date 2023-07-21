@@ -2428,6 +2428,7 @@ files = []
 develop = false
 
 [package.dependencies]
+info-nce-pytorch = "^0.1.4"
 lightning = "^2.0.4"
 matplotlib = "^3.7.1"
 numpy = "^1.25"
@@ -2441,7 +2442,7 @@ torchvision = "^0.15.2"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "ce45c1030f8b5539e34d2a0d1abe40d1eac23fb1"
+resolved_reference = "8ce4272941bc440d82069580488c1d45db1a6b81"
 
 [[package]]
 name = "six"
@@ -2905,13 +2906,13 @@ files = [
 
 [[package]]
 name = "types-pywin32"
-version = "306.0.0.2"
+version = "306.0.0.3"
 description = "Typing stubs for pywin32"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-pywin32-306.0.0.2.tar.gz", hash = "sha256:cdadb6856c3d5df1ecce9140fe20846bce02d964fd60eedc6f23dbeecfb4ce6b"},
-    {file = "types_pywin32-306.0.0.2-py3-none-any.whl", hash = "sha256:e59077d33b4a05c1abf36d7bb27d2322f8fb223f37cb9e4b008853ace4ee4046"},
+    {file = "types-pywin32-306.0.0.3.tar.gz", hash = "sha256:b763ac482c075438d50595a7e4e28646a485e91e363d55e48e8d7dee398aa6e0"},
+    {file = "types_pywin32-306.0.0.3-py3-none-any.whl", hash = "sha256:3b1104fe7febd84af989e49a359ebe106dd76cd1fc184de0d557fb2041776d98"},
 ]
 
 [[package]]
@@ -2927,24 +2928,24 @@ files = [
 
 [[package]]
 name = "types-tabulate"
-version = "0.9.0.2"
+version = "0.9.0.3"
 description = "Typing stubs for tabulate"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-tabulate-0.9.0.2.tar.gz", hash = "sha256:1dd4322a3a146e9073169c74278b8f14a58eb9905ca9db0d2588df408f27cac9"},
-    {file = "types_tabulate-0.9.0.2-py3-none-any.whl", hash = "sha256:a2e41cc41b6b46bfaec78f8fd8e03058fda7a31af6f203a4b235f5482f571f6f"},
+    {file = "types-tabulate-0.9.0.3.tar.gz", hash = "sha256:197651f9d6467193cd166d8500116a6d3a26f2a4eb2db093bc9535ee1c0be55e"},
+    {file = "types_tabulate-0.9.0.3-py3-none-any.whl", hash = "sha256:462d1b62e01728416e8277614d6a3eb172d53a8efaf04a04a973ff2dd45238f6"},
 ]
 
 [[package]]
 name = "types-tqdm"
-version = "4.65.0.1"
+version = "4.65.0.2"
 description = "Typing stubs for tqdm"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-tqdm-4.65.0.1.tar.gz", hash = "sha256:972dd871b6b2b8ff32f1f0f6fdfdf5a4ba2b0b848453689391bec8bd858fb1c4"},
-    {file = "types_tqdm-4.65.0.1-py3-none-any.whl", hash = "sha256:4894fe2b1581374ce9bca3f23d53729e4409d69b352e3d5db5829fa19482962c"},
+    {file = "types-tqdm-4.65.0.2.tar.gz", hash = "sha256:ad07ee08e758cad04299543b2586ef1d3fd5a10c54271457de13e0cba009cc5d"},
+    {file = "types_tqdm-4.65.0.2-py3-none-any.whl", hash = "sha256:956d92e921651309ffe36a783cc10d41d753f107c84e82d84373c84d68737246"},
 ]
 
 [[package]]

@@ -12,6 +12,11 @@ from lightning.pytorch.callbacks import (
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer import load_structured_config
+from shimmer.modules.lightning.global_workspace import (
+    DeterministicGlobalWorkspaceLightningModule,
+    GlobalWorkspaceLightningModuleType,
+    VariationalGlobalWorkspaceLightningModule,
+)
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import PROJECT_DIR
@@ -22,11 +27,6 @@ from simple_shapes_dataset.dataset.pre_process import (
 )
 from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
-from simple_shapes_dataset.modules.global_workspace import (
-    DeterministicGlobalWorkspaceLightningModule,
-    GlobalWorkspaceLightningModuleType,
-    VariationalGlobalWorkspaceLightningModule,
-)
 
 
 def main():
