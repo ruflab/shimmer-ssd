@@ -14,6 +14,16 @@ class ExploreVAE:
 
 
 @dataclass
+class ExploreGW:
+    domain: str = MISSING
+    checkpoint: Path = MISSING
+    num_samples: int = 9
+    range_start: int = -3
+    range_end: int = 3
+    wandb_name: str | None = None
+
+
+@dataclass
 class Visualization:
     explore_vae: ExploreVAE = field(default_factory=ExploreVAE)
-    explore_gw: ExploreVAE = field(default_factory=ExploreVAE)
+    explore_gw: ExploreGW = field(default_factory=ExploreGW)

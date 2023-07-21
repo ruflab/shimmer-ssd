@@ -23,7 +23,7 @@ def main() -> None:
     config = load_structured_config(
         PROJECT_DIR / "config",
         Config,
-        load_dirs=["viz-vae-attr"],
+        load_dirs=["viz_vae_attr"],
         debug_mode=debug_mode,
     )
 
