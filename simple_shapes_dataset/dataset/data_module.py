@@ -176,6 +176,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 RepeatedDataset(dataset, max_sized_dataset, drop_last=False),
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
+                pin_memory=True,
                 shuffle=shuffle,
                 drop_last=drop_last,
                 **kwargs,
@@ -191,6 +192,7 @@ class SimpleShapesDataModule(LightningDataModule):
         for domain, dataset in self.val_dataset.items():
             dataloaders[domain] = DataLoader(
                 dataset,
+                pin_memory=True,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
             )
@@ -205,6 +207,7 @@ class SimpleShapesDataModule(LightningDataModule):
         for domain, dataset in self.test_dataset.items():
             dataloaders[domain] = DataLoader(
                 dataset,
+                pin_memory=True,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
             )
