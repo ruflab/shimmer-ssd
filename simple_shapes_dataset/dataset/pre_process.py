@@ -80,7 +80,9 @@ def attribute_to_tensor(attr: Attribute) -> list[torch.Tensor]:
     ]
 
 
-def nullify_rotation(attr: Sequence[torch.Tensor]) -> list[torch.Tensor]:
+def nullify_attribute_rotation(
+    attr: Sequence[torch.Tensor],
+) -> list[torch.Tensor]:
     new_attr = attr[1].clone()
     new_attr[3] = 0.0
     new_attr[4] = 1.0

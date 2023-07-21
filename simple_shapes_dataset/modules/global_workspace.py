@@ -80,7 +80,9 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
             domain_name = list(domains)[0]
             z = self.global_workspace.translate(latents, to=domain_name)
             losses[f"demi_cycle_{domain_name}"] = mse_loss(
-                z, latents[domain_name]
+                z,
+                latents[domain_name],
+                reduction="sum",
             )
         losses["demi_cycles"] = torch.stack(
             list(losses.values()), dim=0
@@ -119,7 +121,9 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
                     f"cycle_{domain_name_source}_through_{domain_name_target}"
                 )
                 losses[loss_name] = mse_loss(
-                    z[domain_name_source], latents_source[domain_name_source]
+                    z[domain_name_source],
+                    latents_source[domain_name_source],
+                    reduction="sum",
                 )
         losses["cycles"] = torch.stack(list(losses.values()), dim=0).mean()
         return losses
@@ -170,7 +174,9 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
                     if loss_name in losses.keys():
                         raise ValueError(f"{loss_name} is already computed.")
                     losses[loss_name] = mse_loss(
-                        prediction, latents[domain_name_target]
+                        prediction,
+                        latents[domain_name_target],
+                        reduction="sum",
                     )
         losses["translations"] = torch.stack(
             list(losses.values()), dim=0
@@ -206,7 +212,11 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
                     )
                     if loss_name in losses.keys():
                         raise ValueError(f"{loss_name} is already computed.")
-                    losses[loss_name] = info_nce(z_source, z_target)
+                    losses[loss_name] = info_nce(
+                        z_source,
+                        z_target,
+                        reduction="sum",
+                    )
         losses["contrastives"] = torch.stack(
             list(losses.values()), dim=0
         ).mean()
@@ -265,11 +275,11 @@ class DeterministicGlobalWorkspaceLightningModule(LightningModule):
         losses.update(self.translation_loss(domain_latents))
         losses.update(self.contrastive_loss(domain_latents))
 
+        for name, coef in self.loss_coefficients.items():
+            losses[name] *= coef
+
         losses["loss"] = torch.stack(
-            [
-                self.loss_coefficients[name] * losses[name]
-                for name in self.loss_coefficients.keys()
-            ],
+            [losses[name] for name in self.loss_coefficients.keys()],
             dim=0,
         ).mean()
 
