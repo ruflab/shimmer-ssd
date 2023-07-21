@@ -483,9 +483,13 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
             if len(domains) < 2:
                 continue
             for domain_name_source in domains:
-                z_source, (_, logvar_source) = self.global_workspace.encode(
+                _, (
+                    mean_source,
+                    logvar_source,
+                ) = self.global_workspace.encode(
                     {domain_name_source: latents[domain_name_source]}
                 )
+                z_source = mean_source[domain_name_source]
                 for domain_name_target in domains:
                     if domain_name_source == domain_name_target:
                         continue
@@ -493,12 +497,13 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
                     if selected_domains in done_domains:
                         continue
                     done_domains.append(selected_domains)
-                    z_target, (
-                        _,
+                    _, (
+                        mean_target,
                         logvar_target,
                     ) = self.global_workspace.encode(
                         {domain_name_target: latents[domain_name_target]}
                     )
+                    z_target = mean_target[domain_name_target]
                     loss_name = (
                         f"contrastive_{domain_name_source}"
                         f"_and_{domain_name_target}"
@@ -600,7 +605,7 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
         kl_scale_coef = self.loss_coefficients["demi_cycles"] * (
             len(dcy_losses) - 1
         )
-        kl_scale_coef = self.loss_coefficients["translations"] * (
+        kl_scale_coef += self.loss_coefficients["translations"] * (
             len(tr_losses) - 1
         )
         kl_scale_coef += self.loss_coefficients["cycles"] * (
@@ -610,11 +615,11 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
         kl_losses["kl"] *= kl_scale_coef
         losses.update(kl_losses)
 
+        for name, coef in self.loss_coefficients.items():
+            losses[name] *= coef
+
         losses["loss"] = torch.stack(
-            [
-                self.loss_coefficients[name] * losses[name]
-                for name in self.loss_coefficients.keys()
-            ],
+            [losses[name] for name in self.loss_coefficients.keys()],
             dim=0,
         ).mean()
 
@@ -633,6 +638,10 @@ class VariationalGlobalWorkspaceLightningModule(LightningModule):
         self, batch: Mapping[frozenset[str], Mapping[str, Any]], _
     ) -> torch.Tensor:
         return self.generic_step(batch, mode="train")
+
+    # def on_before_optimizer_step(self, _):
+    #     norms = grad_norm(self.global_workspace, norm_type=2)
+    #     self.log_dict(norms)
 
     def configure_optimizers(self) -> dict[str, Any]:
         optimizer = torch.optim.AdamW(
