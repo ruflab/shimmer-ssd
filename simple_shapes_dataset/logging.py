@@ -152,11 +152,10 @@ def get_attribute_figure_grid(
     return image
 
 
-def make_attribute_grid(
+def attribute_image_grid(
     samples: Sequence[torch.Tensor],
     image_size: int,
-    ncols: int = 8,
-    padding: float = 2,
+    ncols: int,
 ) -> Image.Image:
     unnormalizer = UnnormalizeAttributes(image_size=image_size)
     attributes = unnormalizer(tensor_to_attribute(samples))
@@ -188,7 +187,7 @@ def make_attribute_grid(
         colors,
         image_size,
         ncols,
-        padding,
+        padding=2,
     )
 
 
@@ -217,7 +216,7 @@ class LogAttributesCallback(LogSamplesCallback):
             logging.warning("Only logging to wandb is supported")
             return
 
-        image = make_attribute_grid(
+        image = attribute_image_grid(
             samples,
             image_size=self.image_size,
             ncols=self.ncols,
@@ -430,7 +429,7 @@ class LogGWImagesCallback(pl.Callback):
         samples: Any,
         mode: str,
     ) -> None:
-        image = make_attribute_grid(
+        image = attribute_image_grid(
             samples,
             image_size=self.image_size,
             ncols=self.ncols,

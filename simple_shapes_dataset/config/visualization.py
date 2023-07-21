@@ -16,3 +16,4 @@ class ExploreVAE:
 @dataclass
 class Visualization:
     explore_vae: ExploreVAE = field(default_factory=ExploreVAE)
+    explore_gw: ExploreVAE = field(default_factory=ExploreVAE)

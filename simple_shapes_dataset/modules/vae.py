@@ -1,7 +1,12 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from typing import Any, cast
 
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
-from shimmer.modules.vae import VAEDecoder, VAEEncoder
+from matplotlib.gridspec import GridSpec
+from PIL.Image import Image
+from shimmer.modules.vae import VAE, VAEDecoder, VAEEncoder
 from torch import nn
 
 
@@ -164,3 +169,89 @@ class RAEDecoder(VAEDecoder):
 
     def forward(self, z: torch.Tensor) -> list[torch.Tensor]:
         return [self.out_layer(self.layers(z[:, :, None, None]))]
+
+
+def dim_exploration_figure(
+    vae: VAE,
+    z_size: int,
+    device: torch.device,
+    ax_from_tensors: Callable[[Any, int, int], Image],
+    num_samples: int = 5,
+    range_start: int = -6,
+    range_end: int = 6,
+    image_size: int = 32,
+    plot_dims: Sequence[int] | None = None,
+    fig_dim: int = 5,
+) -> plt.Figure:
+    possible_dims = plot_dims or np.arange(z_size)
+
+    fig_size = (len(possible_dims) - 1) * fig_dim
+
+    fig = cast(
+        plt.Figure,
+        plt.figure(
+            constrained_layout=True, figsize=(fig_size, fig_size), dpi=1
+        ),
+    )
+    gs = GridSpec(len(possible_dims), len(possible_dims), figure=fig)
+    done_dims: list[set[int]] = []
+
+    for i, dim_i in enumerate(possible_dims):
+        for j, dim_j in enumerate(possible_dims):
+            if dim_i == dim_j or {dim_i, dim_j} in done_dims:
+                continue
+
+            done_dims.append({dim_i, dim_j})
+
+            ax = fig.add_subplot(gs[j, i])
+
+            z = (
+                torch.zeros(z_size)
+                .unsqueeze(0)
+                .unsqueeze(0)
+                .expand(num_samples, num_samples, -1)
+                .to(device)
+            )
+
+            for p in range(num_samples):
+                step = range_start + (range_end - range_start) * float(
+                    p
+                ) / float(num_samples - 1)
+                z[p, :, dim_i] = step
+            for q in range(num_samples):
+                step = range_start + (range_end - range_start) * float(
+                    q
+                ) / float(num_samples - 1)
+                z[:, q, dim_j] = step
+
+            decoded_x = vae.decoder(z.reshape(-1, z_size))
+
+            img_grid = ax_from_tensors(decoded_x, image_size, num_samples)
+
+            ax.imshow(img_grid)
+            ax.set_xlabel(f"dim {dim_j}")
+            ax.set_ylabel(f"dim {dim_i}")
+            ax.set_xticks(
+                image_size * np.arange(num_samples) + image_size // 2
+            )
+            ax.set_xticklabels(
+                list(
+                    map(
+                        lambda x: f"{x:.1f}",
+                        np.linspace(range_start, range_end, num_samples),
+                    )
+                )
+            )
+            ax.set_yticks(
+                image_size * np.arange(num_samples) + image_size // 2
+            )
+            ax.set_yticklabels(
+                list(
+                    map(
+                        lambda x: f"{x:.1f}",
+                        np.linspace(range_start, range_end, num_samples),
+                    )
+                )
+            )
+
+    return fig
