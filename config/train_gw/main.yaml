@@ -15,11 +15,11 @@ global_workspace:
 
 training:
     optim:
-        lr: 5e-3
-        max_lr: 5e-3
-        weight_decay: 1e-5
+        lr: 5e-5
+        max_lr: 5e-4
+        weight_decay: 1e-6
 
-    max_steps: 500_000
+    max_steps: 100_000
 
 logging:
     log_val_medias_every_n_epochs: 10

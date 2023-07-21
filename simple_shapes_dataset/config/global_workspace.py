@@ -32,10 +32,10 @@ class DomainProportion:
 
 @dataclass
 class LossCoeffients:
-    cycles: float = 1
-    demi_cycles: float = 1
-    translations: float = 1
-    contrastives: float = 0.05
+    cycles: float = 1.0
+    demi_cycles: float = 1.0
+    translations: float = 1.0
+    contrastives: float = 0.1
     kl: float = 0.01
 
 
