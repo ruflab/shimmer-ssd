@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +58,8 @@ class SimpleShapesDataModule(LightningDataModule):
         num_workers: int = 0,
         seed: int | None = None,
         domain_args: dict[str, Any] | None = None,
+        additional_transforms: Mapping[str, Sequence[Callable[[Any], Any]]]
+        | None = None,
     ) -> None:
         super().__init__()
 
@@ -65,6 +67,7 @@ class SimpleShapesDataModule(LightningDataModule):
         self.domain_proportions = domain_proportions
         self.seed = seed
         self.domain_args = domain_args or {}
+        self.additional_transforms = additional_transforms or {}
 
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -78,12 +81,21 @@ class SimpleShapesDataModule(LightningDataModule):
     ) -> dict[str, Callable[[Any], Any]]:
         transforms = {}
         for domain in domains:
+            domain_transforms: list[Callable[[Any], Any]] = []
             if domain == "attr":
-                transforms[domain] = Compose(
-                    [NormalizeAttributes(image_size=32), attribute_to_tensor]
+                domain_transforms.extend(
+                    [
+                        NormalizeAttributes(image_size=32),
+                        attribute_to_tensor,
+                    ]
                 )
+
             if domain == "v":
-                transforms[domain] = ToTensor()
+                domain_transforms.append(ToTensor())
+
+            if domain in self.additional_transforms:
+                domain_transforms.extend(self.additional_transforms[domain])
+            transforms[domain] = Compose(domain_transforms)
         return transforms
 
     def _require_aligned_dataset(self) -> bool:

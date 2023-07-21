@@ -80,6 +80,13 @@ def attribute_to_tensor(attr: Attribute) -> list[torch.Tensor]:
     ]
 
 
+def nullify_rotation(attr: Sequence[torch.Tensor]) -> list[torch.Tensor]:
+    new_attr = torch.zeros_like(attr[1])
+    new_attr[:4] = attr[1][:4]
+    new_attr[5:] = attr[1][5:]
+    return [attr[0], new_attr]
+
+
 def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
     category = tensor[0]
     attributes = tensor[1]

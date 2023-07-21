@@ -1,5 +1,7 @@
+import logging
 import os
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from lightning.pytorch import Callback, Trainer, seed_everything
 from lightning.pytorch.callbacks import (
@@ -20,6 +22,7 @@ from torch import set_float32_matmul_precision
 from simple_shapes_dataset import PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.pre_process import nullify_rotation
 from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 from simple_shapes_dataset.modules.global_workspace import (
@@ -87,6 +90,11 @@ def main():
         for item in config.global_workspace.domain_proportions
     }
 
+    additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
+    if config.domain_modules.attribute.nullify_rotation:
+        logging.info("Nullifying rotation in the attr domain.")
+        additional_transforms["attr"] = [nullify_rotation]
+
     data_module = SimpleShapesDataModule(
         config.dataset.path,
         domain_proportion,
@@ -94,6 +102,7 @@ def main():
         num_workers=config.training.num_workers,
         seed=config.seed,
         domain_args=config.global_workspace.domain_args,
+        additional_transforms=additional_transforms,
     )
 
     domain_modules = load_pretrained_domains(config.global_workspace.domains)

@@ -17,6 +17,8 @@ class AttributeModule:
     coef_categories: float = 1
     coef_attributes: float = 1
 
+    nullify_rotation: bool = False
+
 
 @dataclass
 class DomainModules:

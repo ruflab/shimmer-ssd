@@ -13,13 +13,17 @@ global_workspace:
         v_latents:
             presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy
 
+domain_modules:
+    attribute:
+        nullify_rotation: true
+
 training:
     optim:
         lr: 5e-5
-        max_lr: 5e-4
+        max_lr: 5e-3
         weight_decay: 1e-6
 
-    max_steps: 100_000
+    max_steps: 200_000
 
 logging:
     log_val_medias_every_n_epochs: 10
