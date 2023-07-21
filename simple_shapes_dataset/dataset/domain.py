@@ -94,13 +94,12 @@ class SimpleShapesImages(SimpleShapesDomain):
             return [self[i] for i in range(*determined_slice_indices)]
 
         path = self.image_path / f"{index}.png"
-        with open(path, "rb") as f:
-            image = Image.open(f)
+        with Image.open(path) as image:
             image = image.convert("RGB")
 
-        if self.transform is not None:
-            return self.transform(image)
-        return image
+            if self.transform is not None:
+                return self.transform(image)
+            return image
 
 
 class SimpleShapesPretrainedVisual(SimpleShapesDomain):
