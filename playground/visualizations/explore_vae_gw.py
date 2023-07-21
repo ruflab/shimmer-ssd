@@ -16,6 +16,9 @@ import wandb
 from simple_shapes_dataset import PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
+from simple_shapes_dataset.modules.domains.pretrained import (
+    load_pretrained_domains,
+)
 from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainModule,
 )
@@ -155,10 +158,15 @@ def main() -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    domain_description = load_pretrained_domains(
+        config.global_workspace.domains
+    )
+
     domain_module = cast(
         VariationalGlobalWorkspaceLightningModule,
         VariationalGlobalWorkspaceLightningModule.load_from_checkpoint(
-            config.visualization.explore_gw.checkpoint
+            config.visualization.explore_gw.checkpoint,
+            domain_description=domain_description,
         ),
     )
     domain_module.eval().freeze()
