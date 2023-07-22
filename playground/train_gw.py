@@ -14,7 +14,7 @@ from omegaconf import OmegaConf
 from shimmer import load_structured_config
 from shimmer.modules.lightning.global_workspace import (
     DeterministicGlobalWorkspaceLightningModule,
-    GlobalWorkspaceLightningModuleType,
+    GlobalWorkspaceLightningModule,
     VariationalGlobalWorkspaceLightningModule,
 )
 from torch import set_float32_matmul_precision
@@ -62,7 +62,7 @@ def main():
 
     domain_modules = load_pretrained_domains(config.global_workspace.domains)
 
-    module: GlobalWorkspaceLightningModuleType
+    module: GlobalWorkspaceLightningModule
     if config.global_workspace.is_variational:
         module = VariationalGlobalWorkspaceLightningModule(
             domain_modules,
@@ -71,11 +71,13 @@ def main():
             config.global_workspace.encoders.n_layers,
             config.global_workspace.decoders.hidden_dim,
             config.global_workspace.decoders.n_layers,
-            config.global_workspace.loss_coefficients.demi_cycles,
-            config.global_workspace.loss_coefficients.cycles,
-            config.global_workspace.loss_coefficients.translations,
-            config.global_workspace.loss_coefficients.contrastives,
-            config.global_workspace.loss_coefficients.kl,
+            {
+                "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+                "cycles": config.global_workspace.loss_coefficients.cycles,
+                "translations": config.global_workspace.loss_coefficients.translations,
+                "contrastives": config.global_workspace.loss_coefficients.contrastives,
+                "kl": config.global_workspace.loss_coefficients.kl,
+            },
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args={
@@ -91,10 +93,12 @@ def main():
             config.global_workspace.encoders.n_layers,
             config.global_workspace.decoders.hidden_dim,
             config.global_workspace.decoders.n_layers,
-            config.global_workspace.loss_coefficients.demi_cycles,
-            config.global_workspace.loss_coefficients.cycles,
-            config.global_workspace.loss_coefficients.translations,
-            config.global_workspace.loss_coefficients.contrastives,
+            {
+                "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+                "cycles": config.global_workspace.loss_coefficients.cycles,
+                "translations": config.global_workspace.loss_coefficients.translations,
+                "contrastives": config.global_workspace.loss_coefficients.contrastives,
+            },
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args={

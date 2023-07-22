@@ -14,7 +14,7 @@ from matplotlib import gridspec
 from PIL import Image
 from shimmer.modules.lightning.global_workspace import (
     DeterministicGlobalWorkspaceLightningModule,
-    GlobalWorkspaceLightningModuleType,
+    GlobalWorkspaceLightningModule,
     VariationalGlobalWorkspaceLightningModule,
 )
 from torchvision.utils import make_grid
@@ -288,7 +288,7 @@ class LogGWImagesCallback(pl.Callback):
         self,
         current_epoch: int,
         loggers: Sequence[Logger],
-        pl_module: GlobalWorkspaceLightningModuleType,
+        pl_module: GlobalWorkspaceLightningModule,
     ) -> None:
         if not (len(loggers)):
             return
@@ -389,7 +389,7 @@ class LogGWImagesCallback(pl.Callback):
     def log_samples(
         self,
         logger: Logger,
-        pl_module: GlobalWorkspaceLightningModuleType,
+        pl_module: GlobalWorkspaceLightningModule,
         samples: Any,
         domain: str,
         mode: str,
