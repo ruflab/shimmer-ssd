@@ -4,3 +4,4 @@ domain_checkpoint:
 
 presaved_latents_path:
     v: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy
+
