@@ -11,7 +11,7 @@ from simple_shapes_dataset.config.global_workspace import DomainType
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.modules.domains.pretrained import (
-    load_pretrained_domain,
+    load_pretrained_module,
 )
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 
@@ -42,7 +42,7 @@ def main():
 
     visual_domain = cast(
         VisualDomainModule,
-        load_pretrained_domain(config.domain_checkpoint).module,
+        load_pretrained_module(config.domain_checkpoint)[0],
     )
     visual_domain.to(device)
     visual_domain.freeze()

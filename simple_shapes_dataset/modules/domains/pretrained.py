@@ -1,6 +1,6 @@
 from typing import cast
 
-from shimmer.modules.domain import DomainDescription
+from shimmer.modules.domain import DomainDescription, DomainModule
 
 from simple_shapes_dataset.config.global_workspace import (
     DomainType,
@@ -16,13 +16,9 @@ from simple_shapes_dataset.modules.domains.visual import (
 from simple_shapes_dataset.modules.vae import RAEEncoder
 
 
-def load_pretrained_domain(
+def load_pretrained_module(
     domain: LoadedDomainConfig,
-    encoder_hidden_dim: int,
-    encoder_n_layers: int,
-    decoder_hidden_dim: int,
-    decoder_n_layers: int,
-) -> DomainDescription:
+) -> tuple[DomainModule, int]:
     match domain.domain_type:
         case DomainType.v:
             module = cast(
@@ -54,6 +50,17 @@ def load_pretrained_domain(
             latent_dim = module.latent_dim
         case _:
             raise NotImplementedError
+    return module, latent_dim
+
+
+def load_pretrained_domain(
+    domain: LoadedDomainConfig,
+    encoder_hidden_dim: int,
+    encoder_n_layers: int,
+    decoder_hidden_dim: int,
+    decoder_n_layers: int,
+) -> DomainDescription:
+    module, latent_dim = load_pretrained_module(domain)
 
     return DomainDescription(
         module=module,
