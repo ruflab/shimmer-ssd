@@ -12,10 +12,10 @@ from lightning.pytorch.callbacks import (
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer import load_structured_config
-from shimmer.modules.lightning.global_workspace import (
-    DeterministicGlobalWorkspaceLightningModule,
-    GlobalWorkspaceLightningModule,
-    VariationalGlobalWorkspaceLightningModule,
+from shimmer.modules.global_workspace import (
+    DeterministicGlobalWorkspace,
+    GlobalWorkspace,
+    VariationalGlobalWorkspace,
 )
 from torch import set_float32_matmul_precision
 
@@ -60,17 +60,19 @@ def main():
         additional_transforms=additional_transforms,
     )
 
-    domain_modules = load_pretrained_domains(config.global_workspace.domains)
+    domain_modules = load_pretrained_domains(
+        config.global_workspace.domains,
+        config.global_workspace.encoders.hidden_dim,
+        config.global_workspace.encoders.n_layers,
+        config.global_workspace.decoders.hidden_dim,
+        config.global_workspace.decoders.n_layers,
+    )
 
-    module: GlobalWorkspaceLightningModule
+    module: GlobalWorkspace
     if config.global_workspace.is_variational:
-        module = VariationalGlobalWorkspaceLightningModule(
+        module = VariationalGlobalWorkspace(
             domain_modules,
             config.global_workspace.latent_dim,
-            config.global_workspace.encoders.hidden_dim,
-            config.global_workspace.encoders.n_layers,
-            config.global_workspace.decoders.hidden_dim,
-            config.global_workspace.decoders.n_layers,
             {
                 "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
                 "cycles": config.global_workspace.loss_coefficients.cycles,
@@ -86,13 +88,9 @@ def main():
             },
         )
     else:
-        module = DeterministicGlobalWorkspaceLightningModule(
+        module = DeterministicGlobalWorkspace(
             domain_modules,
             config.global_workspace.latent_dim,
-            config.global_workspace.encoders.hidden_dim,
-            config.global_workspace.encoders.n_layers,
-            config.global_workspace.decoders.hidden_dim,
-            config.global_workspace.decoders.n_layers,
             {
                 "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
                 "cycles": config.global_workspace.loss_coefficients.cycles,

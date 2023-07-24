@@ -1,8 +1,6 @@
 from lightning.pytorch.loggers.wandb import WandbLogger
 from shimmer.modules.domain import DomainDescription
-from shimmer.modules.lightning.global_workspace import (
-    DeterministicGlobalWorkspaceLightningModule,
-)
+from shimmer.modules.global_workspace import DeterministicGlobalWorkspace
 from utils import PROJECT_DIR
 
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
@@ -51,27 +49,24 @@ def test_gw_logger():
 
     domains = {
         "v": DomainDescription(
-            module=VisualDomainModule(3, 4, 16), latent_dim=4
+            module=VisualDomainModule(3, 4, 16),
+            latent_dim=4,
+            encoder_hidden_dim=16,
+            encoder_n_layers=2,
+            decoder_hidden_dim=16,
+            decoder_n_layers=2,
         ),
         "attr": DomainDescription(
-            module=AttributeDomainModule(4, 16), latent_dim=4
+            module=AttributeDomainModule(4, 16),
+            latent_dim=4,
+            encoder_hidden_dim=16,
+            encoder_n_layers=2,
+            decoder_hidden_dim=16,
+            decoder_n_layers=2,
         ),
     }
 
-    module = DeterministicGlobalWorkspaceLightningModule(
-        domains,
-        4,
-        16,
-        2,
-        16,
-        2,
-        1,
-        1,
-        1,
-        1,
-        1e-3,
-        1e-6,
-    )
+    module = DeterministicGlobalWorkspace(domains, latent_dim=4)
     wandb_logger = WandbLogger(mode="disabled")
 
     val_samples = data_module.get_samples("val", 2)

@@ -12,10 +12,10 @@ from lightning.pytorch.loggers import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from PIL import Image
-from shimmer.modules.lightning.global_workspace import (
-    DeterministicGlobalWorkspaceLightningModule,
-    GlobalWorkspaceLightningModule,
-    VariationalGlobalWorkspaceLightningModule,
+from shimmer.modules.global_workspace import (
+    DeterministicGlobalWorkspace,
+    GlobalWorkspace,
+    VariationalGlobalWorkspace,
 )
 from torchvision.utils import make_grid
 
@@ -288,7 +288,7 @@ class LogGWImagesCallback(pl.Callback):
         self,
         current_epoch: int,
         loggers: Sequence[Logger],
-        pl_module: GlobalWorkspaceLightningModule,
+        pl_module: GlobalWorkspace,
     ) -> None:
         if not (len(loggers)):
             return
@@ -310,9 +310,9 @@ class LogGWImagesCallback(pl.Callback):
 
         with torch.no_grad():
             pl_module.eval()
-            prediction_demi_cycles = pl_module.demi_cycle(latents)
-            prediction_cycles = pl_module.cycle(latents)
-            prediction_translations = pl_module.translation(latents)
+            prediction_demi_cycles = pl_module.batch_demi_cycles(latents)
+            prediction_cycles = pl_module.batch_cycles(latents)
+            prediction_translations = pl_module.batch_translations(latents)
             pl_module.train()
 
         for logger in loggers:
@@ -352,8 +352,8 @@ class LogGWImagesCallback(pl.Callback):
         if not isinstance(
             pl_module,
             (
-                DeterministicGlobalWorkspaceLightningModule,
-                VariationalGlobalWorkspaceLightningModule,
+                DeterministicGlobalWorkspace,
+                VariationalGlobalWorkspace,
             ),
         ):
             return
@@ -376,8 +376,8 @@ class LogGWImagesCallback(pl.Callback):
         if not isinstance(
             pl_module,
             (
-                DeterministicGlobalWorkspaceLightningModule,
-                VariationalGlobalWorkspaceLightningModule,
+                DeterministicGlobalWorkspace,
+                VariationalGlobalWorkspace,
             ),
         ):
             return
@@ -389,7 +389,7 @@ class LogGWImagesCallback(pl.Callback):
     def log_samples(
         self,
         logger: Logger,
-        pl_module: GlobalWorkspaceLightningModule,
+        pl_module: GlobalWorkspace,
         samples: Any,
         domain: str,
         mode: str,

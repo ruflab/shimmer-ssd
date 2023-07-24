@@ -10,9 +10,7 @@ import torchvision.transforms.functional as F
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.config import load_structured_config
-from shimmer.modules.lightning.global_workspace import (
-    VariationalGlobalWorkspaceLightningModule,
-)
+from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 from torchvision.utils import make_grid
 
 import wandb
@@ -39,7 +37,7 @@ def image_grid_from_v_tensor(
 
 
 def dim_exploration_figure(
-    module: VariationalGlobalWorkspaceLightningModule,
+    module: VariationalGlobalWorkspace,
     z_size: int,
     device: torch.device,
     domain: str,
@@ -91,9 +89,7 @@ def dim_exploration_figure(
                 ) / float(num_samples - 1)
                 z[:, q, dim_j] = step
 
-            decoded_z = module.global_workspace.decode(z.reshape(-1, z_size))[
-                domain
-            ]
+            decoded_z = module.decode(z.reshape(-1, z_size))[domain]
             decoded_x = module.decode_domain(decoded_z, domain)
 
             match domain:
@@ -159,12 +155,16 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     domain_description = load_pretrained_domains(
-        config.global_workspace.domains
+        config.global_workspace.domains,
+        config.global_workspace.encoders.hidden_dim,
+        config.global_workspace.encoders.n_layers,
+        config.global_workspace.decoders.hidden_dim,
+        config.global_workspace.decoders.n_layers,
     )
 
     domain_module = cast(
-        VariationalGlobalWorkspaceLightningModule,
-        VariationalGlobalWorkspaceLightningModule.load_from_checkpoint(
+        VariationalGlobalWorkspace,
+        VariationalGlobalWorkspace.load_from_checkpoint(
             config.visualization.explore_gw.checkpoint,
             domain_description=domain_description,
         ),
@@ -176,7 +176,7 @@ def main() -> None:
     range_end = config.visualization.explore_gw.range_end
     fig = dim_exploration_figure(
         domain_module,
-        domain_module.global_workspace.latent_dim,
+        domain_module.latent_dim,
         device,
         config.visualization.explore_gw.domain,
         num_samples,
