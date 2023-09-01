@@ -1,3 +1,7 @@
+import logging
+from collections.abc import Callable
+from typing import Any
+
 import lightning.pytorch as pl
 import torch
 from lightning.pytorch.callbacks import (
@@ -12,6 +16,7 @@ from shimmer.config import load_structured_config
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
 from simple_shapes_dataset.logging import LogVisualCallback
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 
@@ -26,11 +31,17 @@ def main():
 
     pl.seed_everything(config.seed, workers=True)
 
+    additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
+    if config.domain_modules.visual.color_blind:
+        logging.info("v domain will be color blind.")
+        additional_transforms["v"] = [color_blind_visual_domain]
+
     data_module = SimpleShapesDataModule(
         config.dataset.path,
         {frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
         num_workers=config.training.num_workers,
+        additional_transforms=additional_transforms,
     )
 
     v_domain_module = VisualDomainModule(
