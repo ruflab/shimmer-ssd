@@ -36,4 +36,5 @@ __all__ = [
     "AVAILABLE_DOMAINS",
     "get_aligned_datasets",
     "PROJECT_DIR",
+    "DEBUG_MODE",
 ]

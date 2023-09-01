@@ -14,6 +14,7 @@ from shimmer import load_structured_config
 from shimmer.modules.global_workspace import (
     DeterministicGlobalWorkspace,
     GlobalWorkspace,
+    SchedulerArgs,
     VariationalGlobalWorkspace,
 )
 from torch import set_float32_matmul_precision
@@ -84,10 +85,10 @@ def main():
             },
             config.training.optim.lr,
             config.training.optim.weight_decay,
-            scheduler_args={
-                "max_lr": config.training.optim.max_lr,
-                "total_steps": config.training.max_steps,
-            },
+            scheduler_args=SchedulerArgs(
+                max_lr=config.training.optim.max_lr,
+                total_steps=config.training.max_steps,
+            ),
         )
     else:
         module = DeterministicGlobalWorkspace(
@@ -101,10 +102,10 @@ def main():
             },
             config.training.optim.lr,
             config.training.optim.weight_decay,
-            scheduler_args={
-                "max_lr": config.training.optim.max_lr,
-                "total_steps": config.training.max_steps,
-            },
+            scheduler_args=SchedulerArgs(
+                max_lr=config.training.optim.max_lr,
+                total_steps=config.training.max_steps,
+            ),
         )
 
     train_samples = data_module.get_samples("train", 32)
