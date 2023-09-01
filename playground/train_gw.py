@@ -1,5 +1,4 @@
 import logging
-import os
 from collections.abc import Callable
 from typing import Any
 
@@ -19,7 +18,7 @@ from shimmer.modules.global_workspace import (
 )
 from torch import set_float32_matmul_precision
 
-from simple_shapes_dataset import PROJECT_DIR
+from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
@@ -31,12 +30,11 @@ from simple_shapes_dataset.modules.domains import load_pretrained_domains
 
 
 def main():
-    debug_mode = bool(int(os.getenv("DEBUG", "0")))
     config = load_structured_config(
         PROJECT_DIR / "config",
         Config,
         load_dirs=["train_gw"],
-        debug_mode=debug_mode,
+        debug_mode=DEBUG_MODE,
     )
 
     seed_everything(config.seed, workers=True)

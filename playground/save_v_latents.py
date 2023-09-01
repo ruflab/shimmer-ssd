@@ -1,4 +1,3 @@
-import os
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -7,7 +6,7 @@ import torch
 from shimmer import load_structured_config
 from tqdm import tqdm
 
-from simple_shapes_dataset import PROJECT_DIR
+from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.global_workspace import DomainType
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
@@ -19,12 +18,11 @@ from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 
 
 def main():
-    debug_mode = bool(int(os.getenv("DEBUG", "0")))
     config = load_structured_config(
         PROJECT_DIR / "config",
         Config,
         load_dirs=["save_v_latents"],
-        debug_mode=debug_mode,
+        debug_mode=DEBUG_MODE,
     )
 
     additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}

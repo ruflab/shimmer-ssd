@@ -1,4 +1,3 @@
-import os
 from typing import cast
 
 import matplotlib
@@ -10,7 +9,7 @@ from shimmer.config import load_structured_config
 from torchvision.utils import make_grid
 
 import wandb
-from simple_shapes_dataset import PROJECT_DIR
+from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import get_pil_image
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
@@ -32,12 +31,11 @@ def image_grid_from_v_tensor(
 
 
 def main() -> None:
-    debug_mode = bool(int(os.getenv("DEBUG", "0")))
     config = load_structured_config(
         PROJECT_DIR / "config",
         Config,
         load_dirs=["viz_vae_v"],
-        debug_mode=debug_mode,
+        debug_mode=DEBUG_MODE,
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

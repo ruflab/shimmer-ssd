@@ -1,4 +1,3 @@
-import os
 from collections.abc import Sequence
 from typing import cast
 
@@ -14,7 +13,7 @@ from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 from torchvision.utils import make_grid
 
 import wandb
-from simple_shapes_dataset import PROJECT_DIR
+from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.pretrained import (
@@ -144,12 +143,11 @@ def dim_exploration_figure(
 
 
 def main() -> None:
-    debug_mode = bool(int(os.getenv("DEBUG", "0")))
     config = load_structured_config(
         PROJECT_DIR / "config",
         Config,
         load_dirs=["viz_vae_gw"],
-        debug_mode=debug_mode,
+        debug_mode=DEBUG_MODE,
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
