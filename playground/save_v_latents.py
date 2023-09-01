@@ -1,5 +1,6 @@
 import os
-from typing import cast
+from collections.abc import Callable
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -10,6 +11,7 @@ from simple_shapes_dataset import PROJECT_DIR
 from simple_shapes_dataset.config.global_workspace import DomainType
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
 from simple_shapes_dataset.modules.domains.pretrained import (
     load_pretrained_module,
 )
@@ -25,12 +27,17 @@ def main():
         debug_mode=debug_mode,
     )
 
+    additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
+    if config.domain_modules.visual.color_blind:
+        additional_transforms["v"] = [color_blind_visual_domain]
+
     data_module = SimpleShapesDataModule(
         config.dataset.path,
         {frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
         num_workers=config.training.num_workers,
         seed=config.seed,
+        additional_transforms=additional_transforms,
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -19,16 +19,11 @@ logging:
     log_val_medias_every_n_epochs: 10
     log_train_medias_every_n_epochs: 10
 
-domain_checkpoint:
-    checkpoint_path: ${default_root_dir}/shimmer-simple-shapes-z5ec9tmq/epoch=501.ckpt
-    domain_type: v
-
-presaved_latents_path:
-    v: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy
-
 domain_modules:
     attribute:
         nullify_rotation: false
+    visual:
+        color_blind: true
 
 global_workspace:
     is_variational: true
@@ -43,5 +38,5 @@ global_workspace:
 
     domain_args:
         v_latents:
-            presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy
+            presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501_color_blind.npy
 

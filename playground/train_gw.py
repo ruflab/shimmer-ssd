@@ -23,6 +23,7 @@ from simple_shapes_dataset import PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
+    color_blind_visual_domain,
     nullify_attribute_rotation,
 )
 from simple_shapes_dataset.logging import LogGWImagesCallback
@@ -49,6 +50,9 @@ def main():
     if config.domain_modules.attribute.nullify_rotation:
         logging.info("Nullifying rotation in the attr domain.")
         additional_transforms["attr"] = [nullify_attribute_rotation]
+    if config.domain_modules.visual.color_blind:
+        logging.info("v domain will be color blind.")
+        additional_transforms["v"] = [color_blind_visual_domain]
 
     data_module = SimpleShapesDataModule(
         config.dataset.path,

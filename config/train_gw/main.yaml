@@ -1,21 +1,3 @@
-global_workspace:
-    is_variational: true
-
-    domain_proportions: 
-        -   domains: ["v"]
-            proportion: 1.0
-        -   domains: ["attr"]
-            proportion: 1.0
-        -   domains: ["v", "attr"]
-            proportion: 1.0
-
-    domain_args:
-        v_latents:
-            presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy
-
-domain_modules:
-    attribute:
-        nullify_rotation: false
 
 training:
     optim:

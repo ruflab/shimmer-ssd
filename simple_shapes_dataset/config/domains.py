@@ -8,6 +8,8 @@ class VisualModule:
     latent_dim: int = 8
     beta: float = 0.1
 
+    color_blind: bool = False
+
 
 @dataclass
 class AttributeModule:

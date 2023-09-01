@@ -53,11 +53,11 @@ class SimpleShapesDataModule(LightningDataModule):
     def __init__(
         self,
         dataset_path: str | Path,
-        domain_proportions: dict[frozenset[str], float],
+        domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
         num_workers: int = 0,
         seed: int | None = None,
-        domain_args: dict[str, Any] | None = None,
+        domain_args: Mapping[str, Any] | None = None,
         additional_transforms: Mapping[str, Sequence[Callable[[Any], Any]]]
         | None = None,
     ) -> None:

@@ -103,3 +103,7 @@ def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
         color_g=attributes[:, 6],
         color_b=attributes[:, 7],
     )
+
+
+def color_blind_visual_domain(image: torch.Tensor) -> torch.Tensor:
+    return image.mean(dim=0, keepdim=True).expand(3, -1, -1)

@@ -14,8 +14,8 @@ def get_aligned_datasets(
     split: str,
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
-    transforms: dict[str, Callable[[Any], Any]] | None = None,
-    domain_args: dict[str, Any] | None = None,
+    transforms: Mapping[str, Callable[[Any], Any]] | None = None,
+    domain_args: Mapping[str, Any] | None = None,
 ) -> Mapping[frozenset[str], Subset]:
     assert split in ["train", "val", "test"]
 
