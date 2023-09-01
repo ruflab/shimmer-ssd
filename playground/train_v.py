@@ -1,5 +1,3 @@
-import os
-
 import lightning.pytorch as pl
 import torch
 from lightning.pytorch.callbacks import (
@@ -11,7 +9,7 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer.config import load_structured_config
 
-from simple_shapes_dataset import PROJECT_DIR
+from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogVisualCallback
@@ -19,12 +17,11 @@ from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 
 
 def main():
-    debug_mode = bool(int(os.getenv("DEBUG", "0")))
     config = load_structured_config(
         PROJECT_DIR / "config",
         Config,
         load_dirs=["train_v"],
-        debug_mode=debug_mode,
+        debug_mode=DEBUG_MODE,
     )
 
     pl.seed_everything(config.seed, workers=True)
@@ -116,6 +113,8 @@ def main():
     )
 
     trainer.fit(v_domain_module, data_module)
+    trainer.validate(v_domain_module, data_module, "best")
+    trainer.test(v_domain_module, data_module, "best")
 
 
 if __name__ == "__main__":
