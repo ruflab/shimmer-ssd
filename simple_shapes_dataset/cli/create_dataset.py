@@ -248,3 +248,35 @@ def add_alignment_split(
     assert dataset_location.exists()
 
     create_domain_split(seed, dataset_location, domain_alignment)
+
+
+@click.command(
+    "unpaired", help="Create an unpaired attribute for each domains"
+)
+@click.option("--seed", "-s", default=0, type=int, help="Random seed")
+@click.option(
+    "--dataset_path",
+    "-d",
+    default="./",
+    type=str,
+    help="Location to the dataset",
+)
+def create_unpaired_attributes(
+    seed: int,
+    dataset_path: str,
+) -> None:
+    dataset_location = Path(dataset_path)
+    assert dataset_location.exists()
+
+    num_train_ex = np.load(dataset_location / "train_labels.npy").shape[0]
+    num_val_ex = np.load(dataset_location / "val_labels.npy").shape[0]
+    num_test_ex = np.load(dataset_location / "test_labels.npy").shape[0]
+
+    np.random.seed(seed)
+    train_unpaired = np.random.rand(num_train_ex, 2)
+    val_unpaired = np.random.rand(num_val_ex, 2)
+    test_unpaired = np.random.rand(num_test_ex, 2)
+
+    np.save(dataset_location / "train_unpaired.npy", train_unpaired)
+    np.save(dataset_location / "val_unpaired.npy", val_unpaired)
+    np.save(dataset_location / "test_unpaired.npy", test_unpaired)
