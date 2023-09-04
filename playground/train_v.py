@@ -1,4 +1,3 @@
-import logging
 from collections.abc import Callable
 from typing import Any
 
@@ -13,7 +12,7 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer.config import load_structured_config
 
-from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset import DEBUG_MODE, LOGGER, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
@@ -22,6 +21,8 @@ from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 
 
 def main():
+    LOGGER.debug(f"DEBUG_MODE: {DEBUG_MODE}")
+
     config = load_structured_config(
         PROJECT_DIR / "config",
         Config,
@@ -33,7 +34,7 @@ def main():
 
     additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
     if config.domain_modules.visual.color_blind:
-        logging.info("v domain will be color blind.")
+        LOGGER.info("v domain will be color blind.")
         additional_transforms["v"] = [color_blind_visual_domain]
 
     data_module = SimpleShapesDataModule(
@@ -60,6 +61,9 @@ def main():
     val_samples = data_module.get_samples("val", 32)[frozenset(["v"])]["v"]
     train_samples = data_module.get_samples("train", 32)[frozenset(["v"])]["v"]
 
+    LOGGER.debug(
+        f"log_val_medias_every_n_epochs {config.logging.log_val_medias_every_n_epochs}"
+    )
     callbacks: list[pl.Callback] = [
         LearningRateMonitor(logging_interval="step"),
         LogVisualCallback(
@@ -106,6 +110,7 @@ def main():
                 save_top_k=1,
             )
         )
+    LOGGER.debug(f"wandb logger: {wandb_logger}")
 
     torch.set_float32_matmul_precision(
         config.training.float32_matmul_precision
@@ -125,7 +130,6 @@ def main():
 
     trainer.fit(v_domain_module, data_module)
     trainer.validate(v_domain_module, data_module, "best")
-    trainer.test(v_domain_module, data_module, "best")
 
 
 if __name__ == "__main__":

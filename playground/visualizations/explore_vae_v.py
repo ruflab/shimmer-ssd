@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import cast
 
 import matplotlib
@@ -22,11 +23,11 @@ matplotlib.use("Agg")
 
 
 def image_grid_from_v_tensor(
-    samples: torch.Tensor,
+    samples: Sequence[torch.Tensor],
     _: int,
     ncols: int,
 ) -> Image:
-    image = make_grid(samples, nrow=ncols, pad_value=1).detach()
+    image = make_grid(samples[0], nrow=ncols, pad_value=1).detach()
     return F.to_pil_image(image)
 
 

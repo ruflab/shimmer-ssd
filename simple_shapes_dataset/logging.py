@@ -1,5 +1,4 @@
 import io
-import logging
 from collections.abc import Mapping, Sequence
 from typing import Any, cast
 
@@ -19,6 +18,7 @@ from shimmer.modules.global_workspace import (
 )
 from torchvision.utils import make_grid
 
+from simple_shapes_dataset import LOGGER
 from simple_shapes_dataset.cli.utils import generate_image
 from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
@@ -54,7 +54,8 @@ class LogSamplesCallback(pl.Callback):
         loggers: Sequence[Logger],
         pl_module: pl.LightningModule,
     ) -> None:
-        if not (len(loggers)) is None:
+        if not len(loggers):
+            LOGGER.debug("[LOGGER] No logger found.")
             return
 
         samples = self.to(self.reference_samples, pl_module.device)
@@ -77,8 +78,10 @@ class LogSamplesCallback(pl.Callback):
             self.every_n_epochs is None
             or trainer.current_epoch % self.every_n_epochs != 0
         ):
+            LOGGER.debug("[LOGGER] on_train_epoch_end")
             return
 
+        LOGGER.debug("[LOGGER] on_train_epoch_end called")
         return self.on_callback(
             trainer.current_epoch, trainer.loggers, pl_module
         )
@@ -213,7 +216,7 @@ class LogAttributesCallback(LogSamplesCallback):
         self, logger: Logger, samples: Sequence[torch.Tensor], mode: str
     ) -> None:
         if not isinstance(logger, WandbLogger):
-            logging.warning("Only logging to wandb is supported")
+            LOGGER.warning("Only logging to wandb is supported")
             return
 
         image = attribute_image_grid(
@@ -239,9 +242,12 @@ class LogVisualCallback(LogSamplesCallback):
         self, logger: Logger, samples: torch.Tensor, mode: str
     ) -> None:
         if not isinstance(logger, WandbLogger):
-            logging.warning("Only logging to wandb is supported")
+            LOGGER.warning(
+                "[VISUAL LOGGER] Only logging to wandb is supported"
+            )
             return
 
+        LOGGER.debug("[VISUAL LOGGER] logging samples")
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
         logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
 
@@ -395,7 +401,7 @@ class LogGWImagesCallback(pl.Callback):
         mode: str,
     ) -> None:
         if not isinstance(logger, WandbLogger):
-            logging.warning("Only logging to wandb is supported")
+            LOGGER.warning("Only logging to wandb is supported")
             return
 
         match domain:
