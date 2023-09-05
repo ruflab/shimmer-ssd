@@ -4,6 +4,7 @@ from typing import Any
 import torch
 import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
+from shimmer.modules.global_workspace import SchedulerArgs
 from shimmer.modules.vae import (
     VAE,
     VAEDecoder,
@@ -88,7 +89,7 @@ class AttributeDomainModule(DomainModule):
         coef_attributes: float = 1,
         optim_lr: float = 1e-3,
         optim_weight_decay: float = 0,
-        scheduler_args: Mapping[str, Any] | None = None,
+        scheduler_args: SchedulerArgs | None = None,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -99,28 +100,32 @@ class AttributeDomainModule(DomainModule):
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
 
-        vae_encoder = Encoder(self.hidden_dim, self.latent_dim)
-        vae_decoder = Decoder(self.latent_dim, self.hidden_dim)
+        # -1 for the unpaired attribute that is artificially added to the latent space.
+        vae_encoder = Encoder(self.hidden_dim, self.latent_dim - 1)
+        vae_decoder = Decoder(self.latent_dim - 1, self.hidden_dim)
         self.vae = VAE(vae_encoder, vae_decoder, beta)
 
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
-        self.scheduler_args: dict[str, Any] = {
-            "max_lr": optim_lr,
-            "total_steps": 1,
-        }
+
+        self.scheduler_args = SchedulerArgs(
+            max_lr=optim_lr,
+            total_steps=1,
+        )
         self.scheduler_args.update(scheduler_args or {})
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
-        return self.vae.encode(x)
+        z = self.vae.encode(x[:-1])
+        return torch.cat([z, x[-1]], dim=-1)
 
-    def decode(self, z: torch.Tensor) -> Sequence[torch.Tensor]:
-        out = self.vae.decode(z)
+    def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
+        out = list(self.vae.decode(z[:, :-1]))
         if not isinstance(out, Sequence):
             raise ValueError("The output of vae.decode should be a sequence.")
+        out.append(z[:, -1])
         return out
 
-    def forward(self, x: Sequence[torch.Tensor]) -> Sequence[torch.Tensor]:
+    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
         return self.decode(self.encode(x))
 
     def generic_step(

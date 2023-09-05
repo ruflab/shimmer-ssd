@@ -408,11 +408,11 @@ class LogGWImagesCallback(pl.Callback):
             case "v":
                 self.log_visual_samples(logger, samples, mode)
             case "v_latents":
-                assert "v_latents" in pl_module.domain_modules
+                assert "v_latents" in pl_module.domain_mods
 
                 module = cast(
                     VisualLatentDomainModule,
-                    pl_module.domain_modules["v_latents"],
+                    pl_module.domain_mods["v_latents"],
                 )
                 self.log_visual_samples(
                     logger, module.decode_images(samples), mode

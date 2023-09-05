@@ -1,6 +1,6 @@
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, NamedTuple, overload
+from typing import Any, NamedTuple, TypedDict, overload
 
 import numpy as np
 import torch
@@ -102,13 +102,18 @@ class SimpleShapesImages(SimpleShapesDomain):
             return image
 
 
+class PretrainedVisualAdditionalArgs(TypedDict):
+    presaved_path: str
+    unpaired: bool
+
+
 class SimpleShapesPretrainedVisual(SimpleShapesDomain):
     def __init__(
         self,
         dataset_path: str | Path,
         split: str,
         transform: Callable[[Any], Any] | None = None,
-        additional_args: dict[str, Any] | None = None,
+        additional_args: PretrainedVisualAdditionalArgs | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
 
@@ -118,7 +123,6 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain):
         self.additional_args = additional_args
 
         assert self.additional_args is not None
-        assert "presaved_path" in self.additional_args
 
         self.presaved_path = (
             self.dataset_path
@@ -126,6 +130,14 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain):
         )
         self.latents = torch.from_numpy(np.load(self.presaved_path.resolve()))
         self.dataset_size = self.latents.size(0)
+
+        if self.additional_args["unpaired"]:
+            assert (self.dataset_path / f"{split}_unpaired.npy").exists()
+            self.unpaired = torch.from_numpy(
+                np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 1]
+            )
+        else:
+            self.unpaired = torch.zeros((self.dataset_size, 1))
 
     def __len__(self) -> int:
         return self.dataset_size
@@ -143,7 +155,7 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain):
             determined_slice_indices = index.indices(len(self))
             return [self[i] for i in range(*determined_slice_indices)]
 
-        x = self.latents[index]
+        x = torch.cat([self.latents[index], self.unpaired], dim=1)
 
         if self.transform is not None:
             return self.transform(x)
@@ -164,6 +176,11 @@ class Attribute(NamedTuple):
     color_r: torch.Tensor
     color_g: torch.Tensor
     color_b: torch.Tensor
+    unpaired: torch.Tensor
+
+
+class AttributesAdditionalArgs(TypedDict):
+    unpaired: bool
 
 
 class SimpleShapesAttributes(SimpleShapesDomain):
@@ -172,7 +189,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         dataset_path: str | Path,
         split: str,
         transform: Callable[[Any], Any] | None = None,
-        additional_args: dict[str, Any] | None = None,
+        additional_args: AttributesAdditionalArgs | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
 
@@ -182,8 +199,18 @@ class SimpleShapesAttributes(SimpleShapesDomain):
             np.load(self.dataset_path / f"{split}_labels.npy")
         )
         self.transform = transform
-        self.additional_args = additional_args
+
+        default_args = AttributesAdditionalArgs(unpaired=False)
+        self.additional_args = additional_args or default_args
         self.dataset_size = self.labels.size(0)
+
+        if self.additional_args["unpaired"]:
+            assert (self.dataset_path / f"{split}_unpaired.npy").exists()
+            self.unpaired = torch.from_numpy(
+                np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 0]
+            )
+        else:
+            self.unpaired = torch.zeros((self.dataset_size, 1))
 
     def __len__(self) -> int:
         return self.dataset_size
@@ -215,6 +242,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
             color_r=label[5] / 255,
             color_g=label[6] / 255,
             color_b=label[7] / 255,
+            unpaired=self.unpaired[index],
         )
 
         if self.transform is not None:

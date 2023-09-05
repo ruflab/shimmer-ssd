@@ -29,6 +29,7 @@ class NormalizeAttributes:
             color_r=(attr.color_r) * 2 - 1,
             color_g=(attr.color_g) * 2 - 1,
             color_b=(attr.color_b) * 2 - 1,
+            unpaired=(attr.unpaired) * 2 - 1,
         )
 
 
@@ -59,6 +60,7 @@ class UnnormalizeAttributes:
             color_r=to_unit_range(attr.color_r) * 255,
             color_g=to_unit_range(attr.color_g) * 255,
             color_b=to_unit_range(attr.color_b) * 255,
+            unpaired=to_unit_range(attr.color_b),
         )
 
 
@@ -77,6 +79,7 @@ def attribute_to_tensor(attr: Attribute) -> list[torch.Tensor]:
                 attr.color_b.unsqueeze(0),
             ]
         ),
+        attr.unpaired.unsqueeze(0),
     ]
 
 
@@ -86,12 +89,13 @@ def nullify_attribute_rotation(
     new_attr = attr[1].clone()
     new_attr[3] = 0.0
     new_attr[4] = 1.0
-    return [attr[0], new_attr]
+    return [attr[0], new_attr, attr[2]]
 
 
 def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
     category = tensor[0]
     attributes = tensor[1]
+    unpaired = tensor[2]
 
     return Attribute(
         category=category.argmax(dim=1),
@@ -102,6 +106,7 @@ def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
         color_r=attributes[:, 5],
         color_g=attributes[:, 6],
         color_b=attributes[:, 7],
+        unpaired=unpaired,
     )
 
 
