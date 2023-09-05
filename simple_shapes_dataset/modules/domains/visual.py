@@ -123,4 +123,4 @@ class VisualLatentDomainModule(DomainModule):
         return z
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
-        return self.visual_module.decode(z)
+        return self.visual_module.decode(z[:, :-1])
