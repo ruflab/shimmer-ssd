@@ -94,7 +94,7 @@ class AttributeDomainModule(DomainModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.latent_dim = latent_dim
+        self.latent_dim = latent_dim + 1
         self.in_dim = 11
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories

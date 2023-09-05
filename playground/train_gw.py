@@ -85,10 +85,10 @@ def main():
             },
             config.training.optim.lr,
             config.training.optim.weight_decay,
-            scheduler_args=SchedulerArgs(
-                max_lr=config.training.optim.max_lr,
-                total_steps=config.training.max_steps,
-            ),
+            scheduler_args={
+                "max_lr": config.training.optim.max_lr,
+                "total_steps": config.training.max_steps,
+            },
         )
     else:
         module = DeterministicGlobalWorkspace(

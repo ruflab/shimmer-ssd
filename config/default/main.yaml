@@ -23,7 +23,7 @@ domain_modules:
     attribute:
         nullify_rotation: false
     visual:
-        color_blind: true
+        color_blind: false
 
 global_workspace:
     is_variational: true
@@ -35,8 +35,4 @@ global_workspace:
             proportion: 1.0
         -   domains: ["v", "attr"]
             proportion: 1.0
-
-    domain_args:
-        v_latents:
-            presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501_color_blind.npy
 
