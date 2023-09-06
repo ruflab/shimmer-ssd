@@ -4,8 +4,10 @@ from typing import Any
 import torch
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
+from torch.nn.functional import mse_loss
 from torch.optim.lr_scheduler import OneCycleLR
 
+from simple_shapes_dataset import LOGGER
 from simple_shapes_dataset.modules.vae import RAEDecoder, RAEEncoder
 
 
@@ -122,5 +124,15 @@ class VisualLatentDomainModule(DomainModule):
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         return z
 
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
+        losses = super().compute_loss(pred, target)
+        losses["unpaired"] = mse_loss(pred[:, -1], target[:, -1])
+        return losses
+
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
+        LOGGER.debug(
+            f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}"
+        )
         return self.visual_module.decode(z[:, :-1])

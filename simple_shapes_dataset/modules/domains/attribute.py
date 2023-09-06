@@ -125,6 +125,13 @@ class AttributeDomainModule(DomainModule):
         out.append(z[:, -1])
         return out
 
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
+        losses = super().compute_loss(pred, target)
+        losses["unpaired"] = F.mse_loss(pred[:, -1], target[:, -1])
+        return losses
+
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
         return self.decode(self.encode(x))
 
