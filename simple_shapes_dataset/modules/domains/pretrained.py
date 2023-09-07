@@ -73,7 +73,7 @@ def load_pretrained_module(
             latent_dim = module.latent_dim
         case _:
             raise ConfigurationError(
-                f"Unknown domain type {domain.domain_type.key}"
+                f"Unknown domain type {domain.domain_type.name}"
             )
     return module, latent_dim
 
