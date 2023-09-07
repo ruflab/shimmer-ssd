@@ -1,15 +1,21 @@
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from omegaconf import MISSING
 
 
-class DomainType(StrEnum):
-    attr = "attr"
-    v = "v"
-    v_latents = "v_latents"
+class DomainType(Enum):
+    v = ("v", "default")
+    attr = ("attr", "default")
+    attr_unpaired = ("attr", "unpaired")
+    v_latents = ("v_latents", "default")
+    v_latents_unpaired = ("v_latents", "unpaired")
+
+    def __init__(self, kind: str, variant: str) -> None:
+        self.kind = kind
+        self.variant = variant
 
 
 @dataclass

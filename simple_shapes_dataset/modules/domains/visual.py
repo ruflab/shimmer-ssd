@@ -119,6 +119,24 @@ class VisualLatentDomainModule(DomainModule):
         self.visual_module = visual_module
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return x[:, :-1]
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return z[:, :-1]
+
+    def decode_images(self, z: torch.Tensor) -> torch.Tensor:
+        LOGGER.debug(
+            f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}"
+        )
+        return self.visual_module.decode(z[:, :-1])
+
+
+class VisualLatentDomainWithUnpairedModule(DomainModule):
+    def __init__(self, visual_module: VisualDomainModule):
+        super().__init__()
+        self.visual_module = visual_module
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:

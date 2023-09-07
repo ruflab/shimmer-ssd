@@ -115,22 +115,13 @@ class AttributeDomainModule(DomainModule):
         self.scheduler_args.update(scheduler_args or {})
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
-        z = self.vae.encode(x[:-1])
-        return torch.cat([z, x[-1]], dim=-1)
+        return self.vae.encode(x[:-1])
 
     def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
         out = list(self.vae.decode(z[:, :-1]))
         if not isinstance(out, Sequence):
             raise ValueError("The output of vae.decode should be a sequence.")
-        out.append(z[:, -1])
         return out
-
-    def compute_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        losses = super().compute_loss(pred, target)
-        losses["unpaired"] = F.mse_loss(pred[:, -1], target[:, -1])
-        return losses
 
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
         return self.decode(self.encode(x))
@@ -206,3 +197,23 @@ class AttributeDomainModule(DomainModule):
                 "interval": "step",
             },
         }
+
+
+class AttributeWithUnpairedDomainModule(AttributeDomainModule):
+    def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
+        z = self.vae.encode(x[:-1])
+        return torch.cat([z, x[-1]], dim=-1)
+
+    def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
+        out = list(self.vae.decode(z[:, :-1]))
+        if not isinstance(out, Sequence):
+            raise ValueError("The output of vae.decode should be a sequence.")
+        out.append(z[:, -1])
+        return out
+
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
+        losses = super().compute_loss(pred, target)
+        losses["unpaired"] = F.mse_loss(pred[:, -1], target[:, -1])
+        return losses
