@@ -20,8 +20,10 @@ def test_attr_preprocess():
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=2)
     item = next(iter(dataloader))
     assert isinstance(item["attr"], list)
-    assert len(item["attr"]) == 2
+    assert len(item["attr"]) == 3
     assert isinstance(item["attr"][0], torch.Tensor)
     assert item["attr"][0].shape == (2, 3)
     assert isinstance(item["attr"][1], torch.Tensor)
     assert item["attr"][1].shape == (2, 8)
+    assert isinstance(item["attr"][2], torch.Tensor)
+    assert item["attr"][2].shape == (2, 1)
