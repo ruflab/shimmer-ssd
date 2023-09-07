@@ -18,6 +18,26 @@ from .utils import (
 )
 
 
+def create_unpaired_attributes(
+    seed: int,
+    dataset_location: Path,
+) -> None:
+    assert dataset_location.exists()
+
+    num_train_ex = np.load(dataset_location / "train_labels.npy").shape[0]
+    num_val_ex = np.load(dataset_location / "val_labels.npy").shape[0]
+    num_test_ex = np.load(dataset_location / "test_labels.npy").shape[0]
+
+    np.random.seed(seed)
+    train_unpaired = np.random.rand(num_train_ex, 2)
+    val_unpaired = np.random.rand(num_val_ex, 2)
+    test_unpaired = np.random.rand(num_test_ex, 2)
+
+    np.save(dataset_location / "train_unpaired.npy", train_unpaired)
+    np.save(dataset_location / "val_unpaired.npy", val_unpaired)
+    np.save(dataset_location / "test_unpaired.npy", test_unpaired)
+
+
 @click.command("create", help="Create a Simple Shapes dataset")
 @click.option("--seed", "-s", default=0, type=int, help="Random seed")
 @click.option("--img_size", default=32, type=int, help="Size of the images")
@@ -183,6 +203,8 @@ def create_dataset(
             compute_statistics=(split == "train"),
         )
 
+    create_unpaired_attributes(seed, dataset_location)
+
 
 def create_domain_split(
     seed: int,
@@ -261,22 +283,8 @@ def add_alignment_split(
     type=str,
     help="Location to the dataset",
 )
-def create_unpaired_attributes(
+def unpaired_attributes_command(
     seed: int,
     dataset_path: str,
 ) -> None:
-    dataset_location = Path(dataset_path)
-    assert dataset_location.exists()
-
-    num_train_ex = np.load(dataset_location / "train_labels.npy").shape[0]
-    num_val_ex = np.load(dataset_location / "val_labels.npy").shape[0]
-    num_test_ex = np.load(dataset_location / "test_labels.npy").shape[0]
-
-    np.random.seed(seed)
-    train_unpaired = np.random.rand(num_train_ex, 2)
-    val_unpaired = np.random.rand(num_val_ex, 2)
-    test_unpaired = np.random.rand(num_test_ex, 2)
-
-    np.save(dataset_location / "train_unpaired.npy", train_unpaired)
-    np.save(dataset_location / "val_unpaired.npy", val_unpaired)
-    np.save(dataset_location / "test_unpaired.npy", test_unpaired)
+    create_unpaired_attributes(seed, Path(dataset_path))
