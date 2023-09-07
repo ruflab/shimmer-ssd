@@ -60,7 +60,7 @@ class UnnormalizeAttributes:
             color_r=to_unit_range(attr.color_r) * 255,
             color_g=to_unit_range(attr.color_g) * 255,
             color_b=to_unit_range(attr.color_b) * 255,
-            unpaired=to_unit_range(attr.color_b),
+            unpaired=to_unit_range(attr.unpaired),
         )
 
 
