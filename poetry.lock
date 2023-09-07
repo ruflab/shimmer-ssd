@@ -2469,7 +2469,7 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 
 [[package]]
 name = "shimmer"
-version = "0.1.0"
+version = "0.1.1"
 description = "A light GLoW"
 optional = false
 python-versions = "^3.11"
@@ -2490,8 +2490,8 @@ torchvision = "^0.15.2"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "main"
-resolved_reference = "68ae8a3106ca6e96d7a4ccfec226a73e1973b824"
+reference = "0.1.1"
+resolved_reference = "4f3e2a048df476975489643bfb6bfc4de81c8f58"
 
 [[package]]
 name = "six"
@@ -3287,4 +3287,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "a794d867b508096a85f2c6f18ada686ca15262bcc88b2eb672924f8fb8294cfd"
+content-hash = "51c1a7c17209dd6952d208a06b78f9941f5bc5c5c3449e050d1af9cdc6750985"

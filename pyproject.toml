@@ -19,7 +19,7 @@ torchdata = "^0.6.1"
 pillow = "^9.5.0"
 numpy = "^1.25"
 torch = "^2.0.1"
-shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "0.1.0"}
+shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "0.1.1"}
 wandb = "^0.15.4"
 lightning = "^2.0.4"
 pydantic = "<2.0.0"
