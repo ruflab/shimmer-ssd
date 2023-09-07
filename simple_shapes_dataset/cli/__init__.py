@@ -5,7 +5,7 @@ import simple_shapes_dataset.cli.utils as utils
 from .create_dataset import (
     add_alignment_split,
     create_dataset,
-    create_unpaired_attributes,
+    unpaired_attributes_command,
 )
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
     "cli",
     "create_dataset",
     "utils",
-    "create_unpaired_attributes",
+    "unpaired_attributes_command",
 ]
 
 
@@ -24,4 +24,4 @@ def cli():
 
 cli.add_command(create_dataset)
 cli.add_command(add_alignment_split)
-cli.add_command(create_unpaired_attributes)
+cli.add_command(unpaired_attributes_command)
