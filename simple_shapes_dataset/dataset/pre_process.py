@@ -29,7 +29,7 @@ class NormalizeAttributes:
             color_r=(attr.color_r) * 2 - 1,
             color_g=(attr.color_g) * 2 - 1,
             color_b=(attr.color_b) * 2 - 1,
-            unpaired=(attr.unpaired) * 2 - 1,
+            unpaired=attr.unpaired,
         )
 
 
@@ -60,7 +60,7 @@ class UnnormalizeAttributes:
             color_r=to_unit_range(attr.color_r) * 255,
             color_g=to_unit_range(attr.color_g) * 255,
             color_b=to_unit_range(attr.color_b) * 255,
-            unpaired=to_unit_range(attr.unpaired),
+            unpaired=attr.unpaired,
         )
 
 
