@@ -253,4 +253,5 @@ class AttributeWithUnpairedDomainModule(DomainModule):
     ) -> dict[str, torch.Tensor]:
         losses = super().compute_loss(pred, target)
         losses["unpaired"] = F.mse_loss(pred[:, -1], target[:, -1])
+        losses["other"] = F.mse_loss(pred[:, 0], target[:, 0])
         return losses

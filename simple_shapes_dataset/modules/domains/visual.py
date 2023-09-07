@@ -147,6 +147,7 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     ) -> dict[str, torch.Tensor]:
         losses = super().compute_loss(pred, target)
         losses["unpaired"] = mse_loss(pred[:, -1], target[:, -1])
+        losses["other"] = mse_loss(pred[:, 0], target[:, 0])
         return losses
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
