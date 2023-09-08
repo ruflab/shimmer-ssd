@@ -123,7 +123,8 @@ class VisualLatentDomainModule(DomainModule):
         return x[:, :-1]
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
-        return z[:, :-1]
+        extra = torch.zeros_like(z[:, -1]).unsqueeze(1)
+        return torch.cat([z, extra], dim=1)
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
         LOGGER.debug(
