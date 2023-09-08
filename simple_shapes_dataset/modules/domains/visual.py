@@ -37,7 +37,7 @@ class VisualDomainModule(DomainModule):
             ae_dim,
         )
         self.vae = VAE(vae_encoder, vae_decoder, beta)
-
+        self.latent_dim = latent_dim
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
         self.scheduler_args: dict[str, Any] = {
@@ -117,6 +117,7 @@ class VisualLatentDomainModule(DomainModule):
     def __init__(self, visual_module: VisualDomainModule):
         super().__init__()
         self.visual_module = visual_module
+        self.latent_dim = self.visual_module.latent_dim
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x[:, :-1]
@@ -135,6 +136,7 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     def __init__(self, visual_module: VisualDomainModule):
         super().__init__()
         self.visual_module = visual_module
+        self.latent_dim = self.visual_module.latent_dim + 1
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x

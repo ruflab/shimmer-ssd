@@ -40,8 +40,7 @@ def load_pretrained_module(
                 ),
             )
             module = VisualLatentDomainModule(v_module)
-
-            latent_dim = cast(RAEEncoder, v_module.vae.encoder).z_dim
+            latent_dim = module.latent_dim
 
         case DomainType.v_latents_unpaired:
             v_module = cast(
@@ -51,8 +50,7 @@ def load_pretrained_module(
                 ),
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
-
-            latent_dim = cast(RAEEncoder, v_module.vae.encoder).z_dim + 1
+            latent_dim = module.latent_dim
 
         case DomainType.attr:
             module = cast(
