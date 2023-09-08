@@ -104,7 +104,6 @@ class SimpleShapesImages(SimpleShapesDomain):
 
 class PretrainedVisualAdditionalArgs(TypedDict):
     presaved_path: str
-    unpaired: bool
 
 
 class SimpleShapesPretrainedVisual(SimpleShapesDomain):
@@ -131,13 +130,10 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain):
         self.latents = torch.from_numpy(np.load(self.presaved_path.resolve()))
         self.dataset_size = self.latents.size(0)
 
-        if self.additional_args["unpaired"]:
-            assert (self.dataset_path / f"{split}_unpaired.npy").exists()
-            self.unpaired = torch.from_numpy(
-                np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 1]
-            ).float()
-        else:
-            self.unpaired = torch.zeros((self.dataset_size,)).float()
+        assert (self.dataset_path / f"{split}_unpaired.npy").exists()
+        self.unpaired = torch.from_numpy(
+            np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 1]
+        ).float()
 
     def __len__(self) -> int:
         return self.dataset_size
@@ -182,7 +178,7 @@ class Attribute(NamedTuple):
 
 
 class AttributesAdditionalArgs(TypedDict):
-    unpaired: bool
+    pass
 
 
 class SimpleShapesAttributes(SimpleShapesDomain):
@@ -202,17 +198,14 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         )
         self.transform = transform
 
-        default_args = AttributesAdditionalArgs(unpaired=False)
+        default_args = AttributesAdditionalArgs()
         self.additional_args = additional_args or default_args
         self.dataset_size = self.labels.size(0)
 
-        if self.additional_args["unpaired"]:
-            assert (self.dataset_path / f"{split}_unpaired.npy").exists()
-            self.unpaired = torch.from_numpy(
-                np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 0]
-            ).float()
-        else:
-            self.unpaired = torch.zeros((self.dataset_size,)).float()
+        assert (self.dataset_path / f"{split}_unpaired.npy").exists()
+        self.unpaired = torch.from_numpy(
+            np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 0]
+        ).float()
 
     def __len__(self) -> int:
         return self.dataset_size
