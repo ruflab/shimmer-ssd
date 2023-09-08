@@ -234,6 +234,11 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         )
         self.scheduler_args.update(scheduler_args or {})
 
+    def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
+        out = x.clone()
+        out[:, -1] = 0
+        return out
+
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         z = self.vae.encode(x[:-1])
         return torch.cat([z, x[-1]], dim=-1)
@@ -251,7 +256,17 @@ class AttributeWithUnpairedDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor
     ) -> dict[str, torch.Tensor]:
-        losses = super().compute_loss(pred, target)
-        losses["unpaired"] = F.mse_loss(pred[:, -1], target[:, -1])
-        losses["other"] = F.mse_loss(pred[:, 0], target[:, 0])
-        return losses
+        return {
+            "loss": F.mse_loss(pred, target, reduction="sum"),
+            "unpaired": F.mse_loss(pred[:, -1], target[:, -1]),
+            "other": F.mse_loss(pred[:, 0], target[:, 0]),
+        }
+
+    def compute_tr_loss(
+        self, pred: torch.Tensor, target: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
+        return {
+            "loss": F.mse_loss(pred[:, :-1], target[:, :-1], reduction="sum"),
+            "unpaired": F.mse_loss(pred[:, -1], target[:, -1]),
+            "other": F.mse_loss(pred[:, 0], target[:, 0]),
+        }

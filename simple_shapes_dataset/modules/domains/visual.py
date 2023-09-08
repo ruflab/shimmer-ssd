@@ -139,6 +139,11 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
         self.visual_module = visual_module
         self.latent_dim = self.visual_module.latent_dim + 1
 
+    def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
+        out = x.clone()
+        out[:, -1] = 0
+        return out
+
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x
 
@@ -148,10 +153,20 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor
     ) -> dict[str, torch.Tensor]:
-        losses = super().compute_loss(pred, target)
-        losses["unpaired"] = mse_loss(pred[:, -1], target[:, -1])
-        losses["other"] = mse_loss(pred[:, 0], target[:, 0])
-        return losses
+        return {
+            "loss": mse_loss(pred, target, reduction="sum"),
+            "unpaired": mse_loss(pred[:, -1], target[:, -1]),
+            "other": mse_loss(pred[:, 0], target[:, 0]),
+        }
+
+    def compute_tr_loss(
+        self, pred: torch.Tensor, target: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
+        return {
+            "loss": mse_loss(pred[:, :-1], target[:, :-1], reduction="sum"),
+            "unpaired": mse_loss(pred[:, -1], target[:, -1]),
+            "other": mse_loss(pred[:, 0], target[:, 0]),
+        }
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
         LOGGER.debug(
