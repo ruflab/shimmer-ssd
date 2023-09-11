@@ -274,7 +274,7 @@ class AttributeWithUnpairedDomainModule(DomainModule):
             reduction="none",
         )
         return {
-            "loss": loss[:, :-1].sum(),
+            "loss": loss.sum(),
             "unpaired": loss[:, -1].sum(),
             "other": loss[:, 0].sum(),
         }
