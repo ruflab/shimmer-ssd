@@ -15,6 +15,8 @@ from shimmer.modules.vae import (
 from torch import nn
 from torch.optim.lr_scheduler import OneCycleLR
 
+from simple_shapes_dataset.modules.losses import margin_loss
+
 
 class Encoder(VAEEncoder):
     def __init__(
@@ -265,8 +267,14 @@ class AttributeWithUnpairedDomainModule(DomainModule):
     def compute_tr_loss(
         self, pred: torch.Tensor, target: torch.Tensor
     ) -> dict[str, torch.Tensor]:
+        loss = margin_loss(
+            pred,
+            target,
+            margin=1.0 / 11.0,
+            reduction="none",
+        )
         return {
-            "loss": F.mse_loss(pred[:, :-1], target[:, :-1], reduction="sum"),
-            "unpaired": F.mse_loss(pred[:, -1], target[:, -1]),
-            "other": F.mse_loss(pred[:, 0], target[:, 0]),
+            "loss": loss[:, :-1].sum(),
+            "unpaired": loss[:, -1].sum(),
+            "other": loss[:, 0].sum(),
         }

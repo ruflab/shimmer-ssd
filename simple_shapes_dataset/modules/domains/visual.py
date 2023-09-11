@@ -8,6 +8,7 @@ from torch.nn.functional import mse_loss
 from torch.optim.lr_scheduler import OneCycleLR
 
 from simple_shapes_dataset import LOGGER
+from simple_shapes_dataset.modules.losses import margin_loss
 from simple_shapes_dataset.modules.vae import RAEDecoder, RAEEncoder
 
 
@@ -162,10 +163,16 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     def compute_tr_loss(
         self, pred: torch.Tensor, target: torch.Tensor
     ) -> dict[str, torch.Tensor]:
+        loss = margin_loss(
+            pred,
+            target,
+            margin=1.0 / 11.0,
+            reduction="none",
+        )
         return {
-            "loss": mse_loss(pred[:, :-1], target[:, :-1], reduction="sum"),
-            "unpaired": mse_loss(pred[:, -1], target[:, -1]),
-            "other": mse_loss(pred[:, 0], target[:, 0]),
+            "loss": loss[:, :-1].sum(),
+            "unpaired": loss[:, -1].sum(),
+            "other": loss[:, 0].sum(),
         }
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
