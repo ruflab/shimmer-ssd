@@ -11,6 +11,7 @@ from simple_shapes_dataset.config.global_workspace import (
     LoadedDomainConfig,
 )
 from simple_shapes_dataset.config.logging import Logging
+from simple_shapes_dataset.config.slurm import Slurm
 from simple_shapes_dataset.config.training import Training
 from simple_shapes_dataset.config.visualization import Visualization
 from simple_shapes_dataset.config.wandb import WanDB
@@ -29,4 +30,5 @@ class Config:
     domain_modules: DomainModules = field(default_factory=DomainModules)
     global_workspace: GlobalWorkspace = field(default_factory=GlobalWorkspace)
     visualization: Visualization = field(default_factory=Visualization)
+    slurm: Slurm = field(default_factory=Slurm)
     __shimmer__: ShimmerInfoConfig | None = None
