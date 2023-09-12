@@ -25,7 +25,7 @@ def main():
         pre_modules=config.slurm.pre_modules,
         run_modules=config.slurm.run_modules,
         setup_experiment=False,
-        exclude_in_rsync=["tests"],
+        exclude_in_rsync=["tests", "sample_dataset", ".vscode", ".github"],
     )
 
     grid_search = None
