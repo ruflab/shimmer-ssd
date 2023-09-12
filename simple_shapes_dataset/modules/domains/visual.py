@@ -2,9 +2,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import torch
-import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
-from shimmer.modules.losses import info_nce
 from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
 from torch.nn.functional import mse_loss
 from torch.optim.lr_scheduler import OneCycleLR
@@ -159,18 +157,6 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
             "loss": mse_loss(pred, target, reduction="sum"),
             "unpaired": mse_loss(pred[:, -1], target[:, -1]),
             "other": mse_loss(pred[:, 0], target[:, 0]),
-        }
-
-    def compute_tr_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        loss = info_nce(pred, target, reduction="none")
-        mse_loss = F.mse_loss(pred, target, reduction="none")
-        return {
-            "loss": loss.sum(),
-            "mse_loss": mse_loss.sum(),
-            "unpaired": mse_loss[:, -1].sum(),
-            "other": mse_loss[:, 0].sum(),
         }
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
