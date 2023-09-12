@@ -2,13 +2,14 @@ from collections.abc import Mapping
 from typing import Any
 
 import torch
+import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
+from shimmer.modules.losses import info_nce
 from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
 from torch.nn.functional import mse_loss
 from torch.optim.lr_scheduler import OneCycleLR
 
 from simple_shapes_dataset import LOGGER
-from simple_shapes_dataset.modules.losses import margin_loss
 from simple_shapes_dataset.modules.vae import RAEDecoder, RAEEncoder
 
 
@@ -140,10 +141,10 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
         self.visual_module = visual_module
         self.latent_dim = self.visual_module.latent_dim + 1
 
-    def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
-        out = x.clone()
-        out[:, -1] = 0
-        return out
+    # def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
+    #     out = x.clone()
+    #     out[:, -1] = 0
+    #     return out
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x
@@ -163,16 +164,13 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     def compute_tr_loss(
         self, pred: torch.Tensor, target: torch.Tensor
     ) -> dict[str, torch.Tensor]:
-        loss = margin_loss(
-            pred,
-            target,
-            margin=1.0 / 11.0,
-            reduction="none",
-        )
+        loss = info_nce(pred, target, reduction="none")
+        mse_loss = F.mse_loss(pred, target, reduction="none")
         return {
             "loss": loss.sum(),
-            "unpaired": loss[:, -1].sum(),
-            "other": loss[:, 0].sum(),
+            "mse_loss": mse_loss.sum(),
+            "unpaired": mse_loss[:, -1].sum(),
+            "other": mse_loss[:, 0].sum(),
         }
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:

@@ -5,6 +5,7 @@ import torch
 import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.global_workspace import SchedulerArgs
+from shimmer.modules.losses import info_nce
 from shimmer.modules.vae import (
     VAE,
     VAEDecoder,
@@ -14,8 +15,6 @@ from shimmer.modules.vae import (
 )
 from torch import nn
 from torch.optim.lr_scheduler import OneCycleLR
-
-from simple_shapes_dataset.modules.losses import margin_loss
 
 
 class Encoder(VAEEncoder):
@@ -236,10 +235,10 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         )
         self.scheduler_args.update(scheduler_args or {})
 
-    def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
-        out = x.clone()
-        out[:, -1] = 0
-        return out
+    # def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
+    #     out = x.clone()
+    #     out[:, -1] = 0
+    #     return out
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         z = self.vae.encode(x[:-1])
@@ -267,14 +266,11 @@ class AttributeWithUnpairedDomainModule(DomainModule):
     def compute_tr_loss(
         self, pred: torch.Tensor, target: torch.Tensor
     ) -> dict[str, torch.Tensor]:
-        loss = margin_loss(
-            pred,
-            target,
-            margin=1.0 / 11.0,
-            reduction="none",
-        )
+        loss = info_nce(pred, target, reduction="none")
+        mse_loss = F.mse_loss(pred, target, reduction="none")
         return {
             "loss": loss.sum(),
-            "unpaired": loss[:, -1].sum(),
-            "other": loss[:, 0].sum(),
+            "mse_loss": mse_loss.sum(),
+            "unpaired": mse_loss[:, -1].sum(),
+            "other": mse_loss[:, 0].sum(),
         }
