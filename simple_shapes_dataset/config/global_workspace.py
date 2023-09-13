@@ -52,6 +52,7 @@ class GlobalWorkspace:
     domains: list[LoadedDomainConfig] = field(default_factory=list)
     encoders: EncodersConfig = field(default_factory=EncodersConfig)
     decoders: EncodersConfig = field(default_factory=EncodersConfig)
+    sync_prop: float = 1.0
     domain_proportions: list[DomainProportion] = field(default_factory=list)
     loss_coefficients: LossCoeffients = field(default_factory=LossCoeffients)
     domain_args: dict[str, Any] = field(default_factory=dict)

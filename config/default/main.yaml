@@ -28,11 +28,12 @@ domain_modules:
 global_workspace:
     is_variational: true
 
+    sync_prop: 1.0
     domain_proportions: 
         -   domains: ["v"]
             proportion: 1.0
         -   domains: ["attr"]
             proportion: 1.0
         -   domains: ["v", "attr"]
-            proportion: 1.0
+            proportion: ${global_workspace.sync_prop}
 
