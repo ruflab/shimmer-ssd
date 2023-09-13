@@ -3,7 +3,6 @@ from omegaconf import OmegaConf
 from shimmer import load_config
 
 from simple_shapes_dataset import DEBUG_MODE, LOGGER, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
 
 
 def main():
@@ -11,7 +10,6 @@ def main():
 
     config = load_config(
         PROJECT_DIR / "config",
-        Config,
         debug_mode=DEBUG_MODE,
     )
 
