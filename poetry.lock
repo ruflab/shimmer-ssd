@@ -1117,13 +1117,13 @@ ui = ["panel (>=1.0.0,<2.0)", "streamlit (>=1.13.0,<2.0)"]
 
 [[package]]
 name = "lightning-cloud"
-version = "0.5.37"
+version = "0.5.38"
 description = "Lightning Cloud"
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "lightning_cloud-0.5.37-py3-none-any.whl", hash = "sha256:2556d1294b23f3cc3f047acd62cd0a26c2daa84896b0c34e46fa6b2a142848db"},
-    {file = "lightning_cloud-0.5.37.tar.gz", hash = "sha256:1e0d577e1696e3aef974c589c4bd1ed22c70a332750863a393ec3949166137e0"},
+    {file = "lightning_cloud-0.5.38-py3-none-any.whl", hash = "sha256:cd783977f46cfa41791747307f0b1f7772d6a6315b3a5bbef565b3537d0b5070"},
+    {file = "lightning_cloud-0.5.38.tar.gz", hash = "sha256:86fd5144b721bb289e9fd863604a67d55515688ccbadf0d858adfca1cefaf78f"},
 ]
 
 [package.dependencies]
@@ -2345,13 +2345,13 @@ torch = ["numpy (>=1.21.6)", "torch (>=1.10)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "1.30.0"
+version = "1.31.0"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = "*"
 files = [
-    {file = "sentry-sdk-1.30.0.tar.gz", hash = "sha256:7dc873b87e1faf4d00614afd1058bfa1522942f33daef8a59f90de8ed75cd10c"},
-    {file = "sentry_sdk-1.30.0-py2.py3-none-any.whl", hash = "sha256:2e53ad63f96bb9da6570ba2e755c267e529edcf58580a2c0d2a11ef26e1e678b"},
+    {file = "sentry-sdk-1.31.0.tar.gz", hash = "sha256:6de2e88304873484207fed836388e422aeff000609b104c802749fd89d56ba5b"},
+    {file = "sentry_sdk-1.31.0-py2.py3-none-any.whl", hash = "sha256:64a7141005fb775b9db298a30de93e3b83e0ddd1232dc6f36eb38aebc1553291"},
 ]
 
 [package.dependencies]
@@ -2361,10 +2361,12 @@ urllib3 = {version = ">=1.26.11", markers = "python_version >= \"3.6\""}
 [package.extras]
 aiohttp = ["aiohttp (>=3.5)"]
 arq = ["arq (>=0.23)"]
+asyncpg = ["asyncpg (>=0.23)"]
 beam = ["apache-beam (>=2.12)"]
 bottle = ["bottle (>=0.12.13)"]
 celery = ["celery (>=3)"]
 chalice = ["chalice (>=1.16.0)"]
+clickhouse-driver = ["clickhouse-driver (>=0.2.0)"]
 django = ["django (>=1.8)"]
 falcon = ["falcon (>=1.4)"]
 fastapi = ["fastapi (>=0.79.0)"]
@@ -2472,13 +2474,13 @@ test = ["pytest"]
 
 [[package]]
 name = "setuptools"
-version = "68.2.1"
+version = "68.2.2"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-68.2.1-py3-none-any.whl", hash = "sha256:eff96148eb336377ab11beee0c73ed84f1709a40c0b870298b0d058828761bae"},
-    {file = "setuptools-68.2.1.tar.gz", hash = "sha256:56ee14884fd8d0cd015411f4a13f40b4356775a0aefd9ebc1d3bfb9a1acb32f1"},
+    {file = "setuptools-68.2.2-py3-none-any.whl", hash = "sha256:b454a35605876da60632df1a60f736524eb73cc47bbc9f3f1ef1b644de74fd2a"},
+    {file = "setuptools-68.2.2.tar.gz", hash = "sha256:4ac1475276d2f1c48684874089fefcd83bd7162ddaafb81fac866ba0db282a87"},
 ]
 
 [package.extras]
@@ -2529,7 +2531,7 @@ torchvision = "^0.15.2"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "6186ec630c9abdb18868309cf3f1d08d64a900ae"
+resolved_reference = "9e72f9cd6a7bce578a7dc477b2c7b5f642cf71e1"
 
 [[package]]
 name = "six"
