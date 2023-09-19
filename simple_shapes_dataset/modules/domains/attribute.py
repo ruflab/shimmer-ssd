@@ -113,6 +113,11 @@ class AttributeDomainModule(DomainModule):
         )
         self.scheduler_args.update(scheduler_args or {})
 
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
+        return {"loss": F.mse_loss(pred, target, reduction="mean")}
+
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         return self.vae.encode(x[:-1])
 
