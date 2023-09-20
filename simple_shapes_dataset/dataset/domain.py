@@ -261,6 +261,7 @@ class Text(NamedTuple):
     caption: str
     bert: torch.Tensor
     choice: Choice
+    attr: Attribute
 
 
 class SimpleShapesRawText(SimpleShapesDomain):
@@ -334,6 +335,7 @@ class SimpleShapesText(SimpleShapesDomain):
         )
 
         self.raw_text = SimpleShapesRawText(self.dataset_path, self.split)
+        self.attributes = SimpleShapesAttributes(self.dataset_path, self.split)
 
         self.bert_mean = torch.from_numpy(
             np.load(self.dataset_path / f"{self.latent_filename}_mean.npy")
@@ -345,7 +347,7 @@ class SimpleShapesText(SimpleShapesDomain):
         bert_data = torch.from_numpy(
             np.load(
                 self.dataset_path / f"{self.split}_{self.latent_filename}.npy"
-            )[0]
+            )
         )
         self.bert_data = (bert_data - self.bert_mean) / self.bert_std
         self.transform = transform
@@ -371,6 +373,7 @@ class SimpleShapesText(SimpleShapesDomain):
             caption=self.raw_text[index].caption,
             bert=self.bert_data[index],
             choice=self.raw_text[index].choice,
+            attr=self.attributes[index],
         )
 
         if self.transform is not None:

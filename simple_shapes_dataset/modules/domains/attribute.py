@@ -80,6 +80,8 @@ class Decoder(VAEDecoder):
 
 
 class AttributeDomainModule(DomainModule):
+    in_dim = 11
+
     def __init__(
         self,
         latent_dim: int,
@@ -95,7 +97,6 @@ class AttributeDomainModule(DomainModule):
         self.save_hyperparameters()
 
         self.latent_dim = latent_dim
-        self.in_dim = 11
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
@@ -205,6 +206,8 @@ class AttributeDomainModule(DomainModule):
 
 
 class AttributeWithUnpairedDomainModule(DomainModule):
+    in_dim = 11
+
     def __init__(
         self,
         latent_dim: int,
@@ -220,7 +223,6 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         self.save_hyperparameters()
 
         self.latent_dim = latent_dim + 1
-        self.in_dim = 11
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes

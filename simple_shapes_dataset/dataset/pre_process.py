@@ -3,7 +3,7 @@ from collections.abc import Sequence
 import torch
 import torch.nn.functional as F
 
-from simple_shapes_dataset.dataset.domain import Attribute
+from simple_shapes_dataset.dataset.domain import Attribute, Text
 
 
 class NormalizeAttributes:
@@ -112,3 +112,21 @@ def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
 
 def color_blind_visual_domain(image: torch.Tensor) -> torch.Tensor:
     return image.mean(dim=0, keepdim=True).expand(3, -1, -1)
+
+
+def text_to_bert(text: Text) -> torch.Tensor:
+    return text.bert
+
+
+class TextAndAttrs:
+    def __init__(
+        self, min_size: int = 7, max_size: int = 14, image_size: int = 32
+    ):
+        self.normalize = NormalizeAttributes(min_size, max_size, image_size)
+
+    def __call__(self, x: Text) -> list[torch.Tensor]:
+        text = [x.bert]
+        attr = self.normalize(x.attr)
+        attr = attribute_to_tensor(attr)
+        text.extend(attr)
+        return text

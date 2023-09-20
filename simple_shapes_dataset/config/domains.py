@@ -23,6 +23,16 @@ class AttributeModule:
 
 
 @dataclass
+class TextModule:
+    latent_filename: str = "latent"
+
+    latent_dim: int = 10
+    hidden_dim: int = 64
+    beta: float = 0.05
+
+
+@dataclass
 class DomainModules:
     visual: VisualModule = field(default_factory=VisualModule)
     attribute: AttributeModule = field(default_factory=AttributeModule)
+    text: TextModule = field(default_factory=TextModule)

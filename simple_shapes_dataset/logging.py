@@ -227,6 +227,32 @@ class LogAttributesCallback(LogSamplesCallback):
         logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
 
+class LogTextCallback(LogSamplesCallback):
+    def __init__(
+        self,
+        reference_samples: torch.Tensor,
+        log_key: str,
+        image_size: int,
+        every_n_epochs: int | None = 1,
+        ncols: int = 8,
+    ) -> None:
+        super().__init__(reference_samples, log_key, every_n_epochs)
+        self.image_size = image_size
+        self.ncols = ncols
+
+    def to(
+        self, samples: Sequence[torch.Tensor], device: torch.device
+    ) -> list[torch.Tensor]:
+        return [x.to(device) for x in samples]
+
+    def log_samples(
+        self, logger: Logger, samples: Sequence[torch.Tensor], mode: str
+    ) -> None:
+        if not isinstance(logger, WandbLogger):
+            LOGGER.warning("Only logging to wandb is supported")
+            return
+
+
 class LogVisualCallback(LogSamplesCallback):
     def __init__(
         self,
