@@ -1,7 +1,24 @@
 import math
 import re
+from itertools import permutations
 
 from attributes_to_language.composer import Composer
+
+from simple_shapes_dataset.dataset.domain import Choice
+
+
+def inspect_writers(composer: Composer) -> dict[str, int]:
+    choices: dict[str, int] = {}
+    for writer_name, writers in composer.writers.items():
+        if len(writers) > 1:
+            choices[f"writer_{writer_name}"] = len(writers)
+        for k, writer in enumerate(writers):
+            for variant_name, variant in writer.variants.items():
+                if len(variant) > 1:
+                    choices[f"writer_{writer_name}_{k}_{variant_name}"] = len(
+                        variant
+                    )
+    return choices
 
 
 def inspect_all_choices(composer: Composer) -> dict[str, int]:
@@ -17,13 +34,92 @@ def inspect_all_choices(composer: Composer) -> dict[str, int]:
         if len(variant) > 1:
             choices[f"variant_{variant_name}"] = len(variant)
 
-    for writer_name, writers in composer.writers.items():
-        if len(writers) > 1:
-            choices[f"writer_{writer_name}"] = len(writers)
-        for k, writer in enumerate(writers):
-            for variant_name, variant in writer.variants.items():
-                if len(variant) > 1:
-                    choices[f"writer_{writer_name}_{k}_{variant_name}"] = len(
-                        variant
-                    )
+    choices.update(inspect_writers(composer))
     return choices
+
+
+def structure_category_from_choice(
+    composer: Composer, choice: Choice
+) -> dict[str, int]:
+    categories: dict[str, int] = {}
+    # structure
+    class_val = 0
+    for k, structure in enumerate(composer.script_structures):
+        groups = re.findall(r"<[^>]+>", structure)
+        if choice.structure != k:
+            class_val += math.factorial(len(groups))
+        else:
+            for permutation in permutations(range(len(groups))):
+                if choice.groups == list(permutation):
+                    categories["structure"] = class_val
+                    break
+                class_val += 1
+    # variants
+    for name in composer.variants.keys():
+        if name in choice.variants:
+            categories[f"variant_{name}"] = choice.variants[name]
+        else:
+            categories[f"variant_{name}"] = 0
+    # writers
+    for name in inspect_writers(composer).keys():
+        split_name = name.split("_")
+        writer_name = split_name[1]
+        categories[name] = 0
+        if len(split_name) == 2:
+            categories[name] = choice.writers[writer_name]["_writer"]
+        elif writer_name in choice.writers:
+            variant_name = split_name[3]
+            variant_choice = int(split_name[2])
+            if (
+                variant_name in choice.writers[writer_name]
+                and choice.writers[writer_name]["_writer"] == variant_choice
+            ):
+                categories[name] = choice.writers[writer_name][variant_name]
+    return categories
+
+
+def choices_from_structure_categories(
+    composer: Composer, grammar_predictions: dict[str, list[int]]
+) -> list[Choice]:
+    all_choices: list[Choice] = []
+    for i in range(len(grammar_predictions["structure"])):
+        choices = {
+            "variants": {
+                name.replace("variant_", ""): variant[i]
+                for name, variant in grammar_predictions.items()
+                if "variant_" in name
+            },
+            "writers": {},
+        }
+        # writers
+        for name, variant in grammar_predictions.items():
+            if "writer_" in name:
+                split_name = name.split("_")
+                writer_name = split_name[1]
+                if writer_name not in choices["writers"]:
+                    choices["writers"][writer_name] = {}
+                if len(split_name) == 2:
+                    choices["writers"][writer_name]["_writer"] = variant[i]
+                else:
+                    variant_choice = int(split_name[2])
+                    if (
+                        grammar_predictions[f"writer_{writer_name}"][i]
+                        == variant_choice
+                    ):
+                        variant_name = split_name[3]
+                        choices["writers"][writer_name][
+                            variant_name
+                        ] = variant[i]
+        # structure
+        category = grammar_predictions["structure"][i]
+        for k, structure in enumerate(composer.script_structures):
+            groups = re.findall(r"<[^>]+>", structure)
+            if category < math.factorial(len(groups)):
+                choices["structure"] = k
+                choices["groups"] = list(
+                    list(permutations(range(len(groups))))[category]
+                )
+                all_choices.append(Choice(**choices))
+                break
+            category -= math.factorial(len(groups))
+    return all_choices

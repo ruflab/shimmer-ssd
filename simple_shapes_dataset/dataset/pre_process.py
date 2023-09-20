@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 from simple_shapes_dataset.dataset.domain import Attribute, Text
 from simple_shapes_dataset.text import composer
+from simple_shapes_dataset.text.utils import structure_category_from_choice
 
 
 class NormalizeAttributes:
@@ -125,11 +126,20 @@ class TextAndAttrs:
     ):
         self.normalize = NormalizeAttributes(min_size, max_size, image_size)
 
-    def __call__(self, x: Text) -> list[torch.Tensor]:
-        text = [x.bert]
+    def __call__(self, x: Text) -> dict[str, torch.Tensor]:
+        text: dict[str, torch.Tensor] = {"bert": x.bert}
         attr = self.normalize(x.attr)
         attr = attribute_to_tensor(attr)
-        text.extend(attr)
+        text["cls"] = attr[0]
+        text["attr"] = attr[1]
+        text["unpaired"] = attr[2]
+        grammar_categories = structure_category_from_choice(composer, x.choice)
+        text.update(
+            {
+                name: torch.Tensor([category])
+                for name, category in grammar_categories.items()
+            }
+        )
         return text
 
 

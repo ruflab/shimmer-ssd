@@ -243,26 +243,27 @@ class LogTextCallback(LogSamplesCallback):
         self.ncols = ncols
 
     def to(
-        self, samples: Sequence[torch.Tensor], device: torch.device
-    ) -> list[torch.Tensor]:
-        return [x.to(device) for x in samples]
+        self, samples: Mapping[str, torch.Tensor], device: torch.device
+    ) -> dict[str, torch.Tensor]:
+        return {x: samples[x].to(device) for x in samples}
 
     def log_samples(
-        self, logger: Logger, samples: Sequence[torch.Tensor], mode: str
+        self, logger: Logger, samples: Mapping[str, torch.Tensor], mode: str
     ) -> None:
         if not isinstance(logger, WandbLogger):
             LOGGER.warning("Only logging to wandb is supported")
             return
 
+        attr_samples = [samples["cls"], samples["attr"], samples["unpaired"]]
         image = attribute_image_grid(
-            samples[1:],
+            attr_samples,
             image_size=self.image_size,
             ncols=self.ncols,
         )
         logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
         unnormalizer = UnnormalizeAttributes(image_size=self.image_size)
-        attributes = unnormalizer(tensor_to_attribute(samples[1:]))
+        attributes = unnormalizer(tensor_to_attribute(attr_samples))
         text = [[t] for t in attr_to_str(attributes)]
         logger.log_text(
             key=f"{self.log_key}_{mode}_str", columns=["text"], data=text

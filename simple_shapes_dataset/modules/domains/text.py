@@ -138,15 +138,16 @@ class TextDomainModule(DomainModule):
     ) -> dict[str, torch.Tensor]:
         return {"loss": F.mse_loss(pred, target, reduction="mean")}
 
-    def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
-        return self.vae.encode((x[0],))
+    def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
+        return self.vae.encode((x["bert"],))
 
-    def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
-        text = [self.vae.decode(z)[0]]
+    def decode(self, z: torch.Tensor) -> dict[str, torch.Tensor]:
+        text: dict[str, torch.Tensor] = {"bert": self.vae.decode(z)[0]}
         attr_pred_cat, attr_pred_attr = self.predict_attr(z)
-        text.append(attr_pred_cat)
-        text.append(attr_pred_attr)
-        text.append(torch.zeros_like(z[:, -1]))
+        text["cls"] = attr_pred_cat
+        text["attr"] = attr_pred_attr
+        text["unpaired"] = torch.zeros_like(z[:, -1])
+        # TODO: add grammar
         return text
 
     def predict_attr(
@@ -164,25 +165,29 @@ class TextDomainModule(DomainModule):
             for name, head in self.grammar_heads.items()
         }
 
-    def grammar_losses(self, mean: torch.Tensor) -> dict[str, torch.Tensor]:
+    def grammar_losses(
+        self, mean: torch.Tensor, targets
+    ) -> dict[str, torch.Tensor]:
         grammar_pred = self.predict_grammar(mean)
         return {
-            f"{name}_ce": F.cross_entropy(pred, target.argmax(dim=1))
-            for name, (pred, target) in grammar_pred.items()
+            f"{name}_ce": F.cross_entropy(pred, targets[name].argmax(dim=1))
+            for name, pred in grammar_pred.items()
         }
 
-    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
+    def forward(
+        self, x: Mapping[str, torch.Tensor]
+    ) -> dict[str, torch.Tensor]:
         return self.decode(self.encode(x))
 
     def generic_step(
         self,
-        x: Sequence[torch.Tensor],
+        x: Mapping[str, torch.Tensor],
         mode: str = "train",
     ) -> torch.Tensor:
-        (mean, logvar), reconstruction = self.vae((x[0],))
+        (mean, logvar), reconstruction = self.vae((x["bert"],))
 
         reconstruction_loss = gaussian_nll(
-            reconstruction[0], torch.tensor(0), x[0]
+            reconstruction[0], torch.tensor(0), x["bert"]
         ).sum()
 
         kl_loss = kl_divergence_loss(mean, logvar)
@@ -190,10 +195,13 @@ class TextDomainModule(DomainModule):
         attr_pred_cat, attr_pred_attr = self.predict_attr(mean)
 
         loss_attr_cat = F.cross_entropy(
-            attr_pred_cat, x[1].argmax(dim=1), reduction="sum"
+            attr_pred_cat, x["cls"].argmax(dim=1), reduction="sum"
         )
-        loss_attr = F.mse_loss(attr_pred_attr, x[2], reduction="sum")
-        grammar_losses = self.grammar_losses(mean)
+        loss_attr = F.mse_loss(attr_pred_attr, x["attr"], reduction="sum")
+        grammar_targets = {
+            name: x[name] for name in self.composer_grammar_options
+        }
+        grammar_losses = self.grammar_losses(mean, grammar_targets)
 
         total_loss = (
             reconstruction_loss
@@ -214,14 +222,16 @@ class TextDomainModule(DomainModule):
         return total_loss
 
     def validation_step(
-        self, batch: Mapping[str, Sequence[torch.Tensor]], _
+        self, batch: Mapping[str, Mapping[str, torch.Tensor]], _
     ) -> torch.Tensor:
         x = batch["t"]
         return self.generic_step(x, "val")
 
     def training_step(
         self,
-        batch: Mapping[frozenset[str], Mapping[str, Sequence[torch.Tensor]]],
+        batch: Mapping[
+            frozenset[str], Mapping[str, Mapping[str, torch.Tensor]]
+        ],
         _,
     ) -> torch.Tensor:
         x = batch[frozenset(["t"])]["t"]
