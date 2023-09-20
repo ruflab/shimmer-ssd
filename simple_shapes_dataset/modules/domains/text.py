@@ -15,6 +15,9 @@ from shimmer.modules.vae import (
 from torch import nn
 from torch.optim.lr_scheduler import OneCycleLR
 
+from simple_shapes_dataset.text import composer
+from simple_shapes_dataset.text.utils import inspect_all_choices
+
 
 class Encoder(VAEEncoder):
     def __init__(
@@ -107,6 +110,20 @@ class TextDomainModule(DomainModule):
             nn.Linear(self.hidden_dim, 8), nn.Tanh()
         )
 
+        self.composer_grammar_options = inspect_all_choices(composer)
+
+        self.grammar_cls = nn.Sequential(
+            nn.Linear(self.latent_dim, self.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(self.hidden_dim, self.hidden_dim),
+        )
+        self.grammar_heads = nn.ModuleDict(
+            {
+                name: nn.Linear(self.hidden_dim, n_outputs)
+                for name, n_outputs in self.composer_grammar_options.items()
+            }
+        )
+
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
 
@@ -122,10 +139,37 @@ class TextDomainModule(DomainModule):
         return {"loss": F.mse_loss(pred, target, reduction="mean")}
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
-        return self.vae.encode(x)
+        return self.vae.encode((x[0],))
 
     def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
-        return list(self.vae.decode(z))
+        text = [self.vae.decode(z)[0]]
+        attr_pred_cat, attr_pred_attr = self.predict_attr(z)
+        text.append(attr_pred_cat)
+        text.append(attr_pred_attr)
+        text.append(torch.zeros_like(z[:, -1]))
+        return text
+
+    def predict_attr(
+        self, mean: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        attr_pred = self.attribute_cls(mean.detach())
+        attr_pred_cat = self.attribute_cls_cat(attr_pred)
+        attr_pred_attr = self.attribute_cls_attr(attr_pred)
+        return attr_pred_cat, attr_pred_attr
+
+    def predict_grammar(self, mean: torch.Tensor) -> dict[str, torch.Tensor]:
+        grammar_pred = self.grammar_cls(mean.detach())
+        return {
+            name: head(grammar_pred)
+            for name, head in self.grammar_heads.items()
+        }
+
+    def grammar_losses(self, mean: torch.Tensor) -> dict[str, torch.Tensor]:
+        grammar_pred = self.predict_grammar(mean)
+        return {
+            f"{name}_ce": F.cross_entropy(pred, target.argmax(dim=1))
+            for name, (pred, target) in grammar_pred.items()
+        }
 
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
         return self.decode(self.encode(x))
@@ -143,12 +187,13 @@ class TextDomainModule(DomainModule):
 
         kl_loss = kl_divergence_loss(mean, logvar)
 
-        attr_pred = self.attribute_cls(mean.detach())
-        attr_pred_cat = self.attribute_cls_cat(attr_pred)
-        attr_pred_attr = self.attribute_cls_attr(attr_pred)
+        attr_pred_cat, attr_pred_attr = self.predict_attr(mean)
 
-        loss_attr_cat = F.cross_entropy(attr_pred_cat, x[1].argmax(dim=1))
-        loss_attr = F.mse_loss(attr_pred_attr, x[2])
+        loss_attr_cat = F.cross_entropy(
+            attr_pred_cat, x[1].argmax(dim=1), reduction="sum"
+        )
+        loss_attr = F.mse_loss(attr_pred_attr, x[2], reduction="sum")
+        grammar_losses = self.grammar_losses(mean)
 
         total_loss = (
             reconstruction_loss
@@ -156,6 +201,10 @@ class TextDomainModule(DomainModule):
             + loss_attr_cat
             + loss_attr
         )
+
+        for grammar_loss_name, grammar_loss in grammar_losses.items():
+            total_loss += grammar_loss
+            self.log(f"{mode}/{grammar_loss_name}", grammar_loss)
 
         self.log(f"{mode}/reconstruction_loss", reconstruction_loss)
         self.log(f"{mode}/kl_loss", kl_loss)

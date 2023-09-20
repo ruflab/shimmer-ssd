@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from simple_shapes_dataset.dataset.domain import Attribute, Text
+from simple_shapes_dataset.text import composer
 
 
 class NormalizeAttributes:
@@ -130,3 +131,26 @@ class TextAndAttrs:
         attr = attribute_to_tensor(attr)
         text.extend(attr)
         return text
+
+
+def attr_to_str(attr: Attribute) -> list[str]:
+    captions: list[str] = []
+    for k in range(attr.category.size(0)):
+        caption, _ = composer(
+            {
+                "shape": attr.category[k].detach().cpu().item(),
+                "rotation": attr.rotation[k].detach().cpu().item(),
+                "color": (
+                    attr.color_r[k].detach().cpu().item(),
+                    attr.color_g[k].detach().cpu().item(),
+                    attr.color_b[k].detach().cpu().item(),
+                ),
+                "size": attr.size[k].detach().cpu().item(),
+                "location": (
+                    attr.x[k].detach().cpu().item(),
+                    attr.y[k].detach().cpu().item(),
+                ),
+            }
+        )
+        captions.append(caption)
+    return captions

@@ -26,8 +26,8 @@ class AttributeModule:
 class TextModule:
     latent_filename: str = "latent"
 
-    latent_dim: int = 10
-    hidden_dim: int = 64
+    latent_dim: int = 128
+    hidden_dim: int = 256
     beta: float = 0.05
 
 

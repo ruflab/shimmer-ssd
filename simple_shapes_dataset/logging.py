@@ -10,6 +10,7 @@ import torch
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
+from matplotlib.figure import Figure
 from PIL import Image
 from shimmer.modules.global_workspace import (
     DeterministicGlobalWorkspace,
@@ -22,6 +23,7 @@ from simple_shapes_dataset import LOGGER
 from simple_shapes_dataset.cli.utils import generate_image
 from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
+    attr_to_str,
     tensor_to_attribute,
 )
 from simple_shapes_dataset.modules.domains.visual import (
@@ -97,7 +99,7 @@ class LogSamplesCallback(pl.Callback):
         raise NotImplementedError
 
 
-def get_pil_image(figure: plt.Figure) -> Image.Image:
+def get_pil_image(figure: Figure) -> Image.Image:
     buf = io.BytesIO()
     figure.savefig(buf)
     buf.seek(0)
@@ -251,6 +253,20 @@ class LogTextCallback(LogSamplesCallback):
         if not isinstance(logger, WandbLogger):
             LOGGER.warning("Only logging to wandb is supported")
             return
+
+        image = attribute_image_grid(
+            samples[1:],
+            image_size=self.image_size,
+            ncols=self.ncols,
+        )
+        logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
+
+        unnormalizer = UnnormalizeAttributes(image_size=self.image_size)
+        attributes = unnormalizer(tensor_to_attribute(samples[1:]))
+        text = [[t] for t in attr_to_str(attributes)]
+        logger.log_text(
+            key=f"{self.log_key}_{mode}_str", columns=["text"], data=text
+        )
 
 
 class LogVisualCallback(LogSamplesCallback):
