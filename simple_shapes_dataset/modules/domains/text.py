@@ -170,7 +170,9 @@ class TextDomainModule(DomainModule):
     ) -> dict[str, torch.Tensor]:
         grammar_pred = self.predict_grammar(mean)
         return {
-            f"{name}_ce": F.cross_entropy(pred, targets[name].argmax(dim=1))
+            f"{name}_ce": F.cross_entropy(
+                pred, targets[name][:, 0].long(), reduction="sum"
+            )
             for name, pred in grammar_pred.items()
         }
 
