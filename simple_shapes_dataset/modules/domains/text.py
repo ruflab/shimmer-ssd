@@ -147,7 +147,7 @@ class TextDomainModule(DomainModule):
         text["cls"] = attr_pred_cat
         text["attr"] = attr_pred_attr
         text["unpaired"] = torch.zeros_like(z[:, -1])
-        # TODO: add grammar
+        text.update(self.predict_grammar(z))
         return text
 
     def predict_attr(

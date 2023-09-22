@@ -5,7 +5,10 @@ import torch.nn.functional as F
 
 from simple_shapes_dataset.dataset.domain import Attribute, Text
 from simple_shapes_dataset.text import composer
-from simple_shapes_dataset.text.utils import structure_category_from_choice
+from simple_shapes_dataset.text.utils import (
+    choices_from_structure_categories,
+    structure_category_from_choice,
+)
 
 
 class NormalizeAttributes:
@@ -143,8 +146,11 @@ class TextAndAttrs:
         return text
 
 
-def attr_to_str(attr: Attribute) -> list[str]:
+def attr_to_str(
+    attr: Attribute, grammar_predictions: dict[str, list[int]]
+) -> list[str]:
     captions: list[str] = []
+    choices = choices_from_structure_categories(composer, grammar_predictions)
     for k in range(attr.category.size(0)):
         caption, _ = composer(
             {
@@ -160,7 +166,8 @@ def attr_to_str(attr: Attribute) -> list[str]:
                     attr.x[k].detach().cpu().item(),
                     attr.y[k].detach().cpu().item(),
                 ),
-            }
+            },
+            choices[k],
         )
         captions.append(caption)
     return captions

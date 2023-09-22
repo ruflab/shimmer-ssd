@@ -255,6 +255,11 @@ class LogTextCallback(LogSamplesCallback):
             return
 
         attr_samples = [samples["cls"], samples["attr"], samples["unpaired"]]
+        grammar_predictions: dict[str, list[int]] = {
+            n: samples[n].argmax(dim=-1).detach().cpu().tolist()
+            for n in samples.keys()
+            if n not in ["bert", "cls", "attr", "unpaired"]
+        }
         image = attribute_image_grid(
             attr_samples,
             image_size=self.image_size,
@@ -264,7 +269,7 @@ class LogTextCallback(LogSamplesCallback):
 
         unnormalizer = UnnormalizeAttributes(image_size=self.image_size)
         attributes = unnormalizer(tensor_to_attribute(attr_samples))
-        text = [[t] for t in attr_to_str(attributes)]
+        text = [[t] for t in attr_to_str(attributes, grammar_predictions)]
         logger.log_text(
             key=f"{self.log_key}_{mode}_str", columns=["text"], data=text
         )

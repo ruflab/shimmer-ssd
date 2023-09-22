@@ -1,6 +1,7 @@
 import math
 import re
 from itertools import permutations
+from typing import Any
 
 from attributes_to_language.composer import Composer
 
@@ -80,8 +81,8 @@ def structure_category_from_choice(
 
 def choices_from_structure_categories(
     composer: Composer, grammar_predictions: dict[str, list[int]]
-) -> list[Choice]:
-    all_choices: list[Choice] = []
+) -> list[dict[str, dict[str, Any]]]:
+    all_choices: list[dict[str, dict[str, Any]]] = []
     for i in range(len(grammar_predictions["structure"])):
         choices = {
             "variants": {
@@ -119,7 +120,7 @@ def choices_from_structure_categories(
                 choices["groups"] = list(
                     list(permutations(range(len(groups))))[category]
                 )
-                all_choices.append(Choice(**choices))
+                all_choices.append(choices)
                 break
             category -= math.factorial(len(groups))
     return all_choices
