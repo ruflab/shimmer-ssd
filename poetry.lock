@@ -2648,7 +2648,7 @@ torchvision = "^0.15.2"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "9027ac28014b6b4539490c8689f610d14d8046ce"
+resolved_reference = "5c5a2b105c564b6c65818fbaa3580960195e02ed"
 
 [[package]]
 name = "six"
