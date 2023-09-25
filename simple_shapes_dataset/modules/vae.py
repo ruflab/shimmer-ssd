@@ -1,9 +1,10 @@
 from collections.abc import Callable, Sequence
-from typing import Any, cast
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.modules.vae import VAE, VAEDecoder, VAEEncoder
@@ -182,17 +183,15 @@ def dim_exploration_figure(
     image_size: int = 32,
     plot_dims: Sequence[int] | None = None,
     fig_dim: int = 5,
-) -> plt.Figure:
+) -> Figure:
     possible_dims = plot_dims or np.arange(z_size)
 
     fig_size = (len(possible_dims) - 1) * fig_dim
 
-    fig = cast(
-        plt.Figure,
-        plt.figure(
-            constrained_layout=True, figsize=(fig_size, fig_size), dpi=1
-        ),
+    fig = plt.figure(
+        constrained_layout=True, figsize=(fig_size, fig_size), dpi=1
     )
+
     gs = GridSpec(len(possible_dims), len(possible_dims), figure=fig)
     done_dims: list[set[int]] = []
 
