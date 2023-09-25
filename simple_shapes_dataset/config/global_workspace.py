@@ -55,5 +55,4 @@ class GlobalWorkspace:
     sync_prop: float = 1.0
     domain_proportions: list[DomainProportion] = field(default_factory=list)
     loss_coefficients: LossCoeffients = field(default_factory=LossCoeffients)
-    learnable_coefs: bool = True
     domain_args: dict[str, Any] = field(default_factory=dict)

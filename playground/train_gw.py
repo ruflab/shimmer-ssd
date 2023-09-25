@@ -17,7 +17,7 @@ from shimmer.modules.global_workspace import (
     SchedulerArgs,
     VariationalGlobalWorkspace,
 )
-from shimmer.modules.losses import LearnableCoefs, LossCoefs, ManualLossCoefs
+from shimmer.modules.losses import ManualLossCoefs
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
@@ -83,19 +83,15 @@ def main():
     else:
         module_class = DeterministicGlobalWorkspace
 
-    coefs: LossCoefs
-    if not config.global_workspace.learnable_coefs:
-        loss_coefs.update(
-            {
-                "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-                "cycles": config.global_workspace.loss_coefficients.cycles,
-                "translations": config.global_workspace.loss_coefficients.translations,
-                "contrastives": config.global_workspace.loss_coefficients.contrastives,
-            }
-        )
-        coefs = ManualLossCoefs(loss_coefs)
-    else:
-        coefs = LearnableCoefs(loss_coefs)
+    loss_coefs.update(
+        {
+            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+            "cycles": config.global_workspace.loss_coefficients.cycles,
+            "translations": config.global_workspace.loss_coefficients.translations,
+            "contrastives": config.global_workspace.loss_coefficients.contrastives,
+        }
+    )
+    coefs = ManualLossCoefs(loss_coefs)
 
     module = module_class(
         domain_modules,
