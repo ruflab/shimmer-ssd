@@ -17,6 +17,7 @@ from shimmer.modules.global_workspace import (
     SchedulerArgs,
     VariationalGlobalWorkspace,
 )
+from shimmer.modules.losses import LearnableCoefs, LossCoefs, ManualLossCoefs
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
@@ -71,42 +72,42 @@ def main():
         config.global_workspace.decoders.n_layers,
     )
 
-    module: GlobalWorkspace
+    loss_coefs = {
+        "contrastives": config.global_workspace.loss_coefficients.contrastives,
+    }
+
+    module_class: type[GlobalWorkspace]
     if config.global_workspace.is_variational:
-        module = VariationalGlobalWorkspace(
-            domain_modules,
-            config.global_workspace.latent_dim,
-            {
-                "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-                "cycles": config.global_workspace.loss_coefficients.cycles,
-                "translations": config.global_workspace.loss_coefficients.translations,
-                "contrastives": config.global_workspace.loss_coefficients.contrastives,
-                "kl": config.global_workspace.loss_coefficients.kl,
-            },
-            config.training.optim.lr,
-            config.training.optim.weight_decay,
-            scheduler_args={
-                "max_lr": config.training.optim.max_lr,
-                "total_steps": config.training.max_steps,
-            },
-        )
+        loss_coefs["kl"] = config.global_workspace.loss_coefficients.kl
+        module_class = VariationalGlobalWorkspace
     else:
-        module = DeterministicGlobalWorkspace(
-            domain_modules,
-            config.global_workspace.latent_dim,
+        module_class = DeterministicGlobalWorkspace
+
+    coefs: LossCoefs
+    if not config.global_workspace.learnable_coefs:
+        loss_coefs.update(
             {
                 "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
                 "cycles": config.global_workspace.loss_coefficients.cycles,
                 "translations": config.global_workspace.loss_coefficients.translations,
                 "contrastives": config.global_workspace.loss_coefficients.contrastives,
-            },
-            config.training.optim.lr,
-            config.training.optim.weight_decay,
-            scheduler_args=SchedulerArgs(
-                max_lr=config.training.optim.max_lr,
-                total_steps=config.training.max_steps,
-            ),
+            }
         )
+        coefs = ManualLossCoefs(loss_coefs)
+    else:
+        coefs = LearnableCoefs(loss_coefs)
+
+    module = module_class(
+        domain_modules,
+        config.global_workspace.latent_dim,
+        coefs,
+        config.training.optim.lr,
+        config.training.optim.weight_decay,
+        scheduler_args=SchedulerArgs(
+            max_lr=config.training.optim.max_lr,
+            total_steps=config.training.max_steps,
+        ),
+    )
 
     train_samples = data_module.get_samples("train", 32)
     val_samples = data_module.get_samples("val", 32)
