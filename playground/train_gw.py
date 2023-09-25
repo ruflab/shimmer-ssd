@@ -17,7 +17,7 @@ from shimmer.modules.global_workspace import (
     SchedulerArgs,
     VariationalGlobalWorkspace,
 )
-from shimmer.modules.losses import ManualLossCoefs
+from shimmer.modules.losses import LossCoefs
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
@@ -91,7 +91,7 @@ def main():
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
         }
     )
-    coefs = ManualLossCoefs(loss_coefs)
+    coefs = LossCoefs(loss_coefs)
 
     module = module_class(
         domain_modules,
