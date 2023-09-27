@@ -13,7 +13,6 @@ from omegaconf import OmegaConf
 from shimmer import load_structured_config
 from shimmer.modules.global_workspace import (
     DeterministicGlobalWorkspace,
-    GlobalWorkspace,
     SchedulerArgs,
     VariationalGlobalWorkspace,
 )
@@ -72,16 +71,12 @@ def main():
         config.global_workspace.decoders.n_layers,
     )
 
-    loss_coefs = {
+    loss_coefs: dict[str, float] = {
         "contrastives": config.global_workspace.loss_coefficients.contrastives,
     }
 
-    module_class: type[GlobalWorkspace]
     if config.global_workspace.is_variational:
         loss_coefs["kl"] = config.global_workspace.loss_coefficients.kl
-        module_class = VariationalGlobalWorkspace
-    else:
-        module_class = DeterministicGlobalWorkspace
 
     loss_coefs.update(
         {
@@ -93,17 +88,31 @@ def main():
     )
     coefs = LossCoefs(loss_coefs)
 
-    module = module_class(
-        domain_modules,
-        config.global_workspace.latent_dim,
-        coefs,
-        config.training.optim.lr,
-        config.training.optim.weight_decay,
-        scheduler_args=SchedulerArgs(
-            max_lr=config.training.optim.max_lr,
-            total_steps=config.training.max_steps,
-        ),
-    )
+    if config.global_workspace.is_variational:
+        module = VariationalGlobalWorkspace(
+            domain_modules,
+            config.global_workspace.latent_dim,
+            coefs,
+            config.global_workspace.var_contrastive_loss,
+            config.training.optim.lr,
+            config.training.optim.weight_decay,
+            scheduler_args=SchedulerArgs(
+                max_lr=config.training.optim.max_lr,
+                total_steps=config.training.max_steps,
+            ),
+        )
+    else:
+        module = DeterministicGlobalWorkspace(
+            domain_modules,
+            config.global_workspace.latent_dim,
+            coefs,
+            config.training.optim.lr,
+            config.training.optim.weight_decay,
+            scheduler_args=SchedulerArgs(
+                max_lr=config.training.optim.max_lr,
+                total_steps=config.training.max_steps,
+            ),
+        )
 
     train_samples = data_module.get_samples("train", 32)
     val_samples = data_module.get_samples("val", 32)

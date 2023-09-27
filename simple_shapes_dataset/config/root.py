@@ -6,6 +6,7 @@ from shimmer import ShimmerInfoConfig
 
 from simple_shapes_dataset.config.dataset import Dataset
 from simple_shapes_dataset.config.domains import DomainModules
+from simple_shapes_dataset.config.exploration import Exploration
 from simple_shapes_dataset.config.global_workspace import (
     GlobalWorkspace,
     LoadedDomainConfig,
@@ -30,5 +31,6 @@ class Config:
     domain_modules: DomainModules = field(default_factory=DomainModules)
     global_workspace: GlobalWorkspace = field(default_factory=GlobalWorkspace)
     visualization: Visualization = field(default_factory=Visualization)
+    exploration: Exploration = field(default_factory=Exploration)
     slurm: Slurm = field(default_factory=Slurm)
     __shimmer__: ShimmerInfoConfig | None = None

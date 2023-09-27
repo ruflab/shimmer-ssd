@@ -264,7 +264,7 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         self, pred: torch.Tensor, target: torch.Tensor
     ) -> dict[str, torch.Tensor]:
         return {
-            "loss": F.mse_loss(pred, target, reduction="sum"),
+            "loss": F.mse_loss(pred, target, reduction="mean"),
             "unpaired": F.mse_loss(pred[:, -1], target[:, -1]),
             "other": F.mse_loss(pred[:, 0], target[:, 0]),
         }

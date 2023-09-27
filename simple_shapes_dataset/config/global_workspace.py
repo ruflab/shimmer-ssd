@@ -40,15 +40,16 @@ class DomainProportion:
 class LossCoeffients:
     cycles: float = 1.0
     demi_cycles: float = 1.0
-    translations: float = 1.0
-    contrastives: float = 0.1
-    kl: float = 0.01
+    translations: float = 0.0
+    contrastives: float = 1.0
+    kl: float = 0.0
 
 
 @dataclass
 class GlobalWorkspace:
     latent_dim: int = 12
     is_variational: bool = False
+    var_contrastive_loss: bool = True
     domains: list[LoadedDomainConfig] = field(default_factory=list)
     encoders: EncodersConfig = field(default_factory=EncodersConfig)
     decoders: EncodersConfig = field(default_factory=EncodersConfig)
