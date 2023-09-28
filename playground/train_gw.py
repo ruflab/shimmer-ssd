@@ -16,7 +16,6 @@ from shimmer.modules.global_workspace import (
     SchedulerArgs,
     VariationalGlobalWorkspace,
 )
-from shimmer.modules.losses import LossCoefs
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
@@ -86,13 +85,12 @@ def main():
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
         }
     )
-    coefs = LossCoefs(loss_coefs)
 
     if config.global_workspace.is_variational:
         module = VariationalGlobalWorkspace(
             domain_modules,
             config.global_workspace.latent_dim,
-            coefs,
+            loss_coefs,
             config.global_workspace.var_contrastive_loss,
             config.training.optim.lr,
             config.training.optim.weight_decay,
@@ -105,7 +103,7 @@ def main():
         module = DeterministicGlobalWorkspace(
             domain_modules,
             config.global_workspace.latent_dim,
-            coefs,
+            loss_coefs,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(

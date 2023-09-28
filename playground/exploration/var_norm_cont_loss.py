@@ -6,7 +6,6 @@ import torch
 from shimmer import load_structured_config
 from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 from shimmer.modules.gw_module import VariationalGWModule
-from shimmer.modules.losses import LossCoefs
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
@@ -93,14 +92,13 @@ def main():
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
         }
     )
-    coefs = LossCoefs(loss_coefs)
 
     domain_module = cast(
         VariationalGlobalWorkspace,
         VariationalGlobalWorkspace.load_from_checkpoint(
             config.exploration.gw_checkpoint,
             domain_descriptions=domain_description,
-            loss_coefs=coefs,
+            loss_coefs=loss_coefs,
         ),
     )
     domain_module.eval().freeze()
