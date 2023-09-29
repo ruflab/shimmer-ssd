@@ -26,9 +26,9 @@ domain_modules:
         color_blind: false
 
 global_workspace:
-    is_variational: true
+    is_variational: false
 
-    sync_prop: 1.0
+    sync_prop: 0.002
     domain_proportions: 
         -   domains: ["v"]
             proportion: 1.0
