@@ -182,6 +182,8 @@ def main():
     )
 
     trainer.fit(module, data_module)
+    trainer.validate(module, data_module, "best")
+    trainer.test(module, data_module, "best")
 
 
 if __name__ == "__main__":
