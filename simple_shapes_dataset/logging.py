@@ -103,7 +103,7 @@ class LogSamplesCallback(pl.Callback):
             trainer.current_epoch, trainer.loggers, pl_module
         )
 
-    def on_val_epoch_end(
+    def on_validation_epoch_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
     ) -> None:
         if self.mode != "val":
@@ -464,7 +464,7 @@ class LogGWImagesCallback(pl.Callback):
             trainer.current_epoch, trainer.loggers, pl_module
         )
 
-    def on_val_epoch_end(
+    def on_validation_epoch_end(
         self,
         trainer: pl.Trainer,
         pl_module: pl.LightningModule,
