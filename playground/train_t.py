@@ -58,6 +58,7 @@ def main():
         LogTextCallback(
             val_samples,
             log_key="images/val_t",
+            mode="val",
             every_n_epochs=config.logging.log_val_medias_every_n_epochs,
             image_size=32,
             ncols=8,
@@ -65,6 +66,7 @@ def main():
         LogTextCallback(
             train_samples,
             log_key="images/train_t",
+            mode="train",
             every_n_epochs=config.logging.log_train_medias_every_n_epochs,
             image_size=32,
             ncols=8,

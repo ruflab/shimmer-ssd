@@ -1,6 +1,6 @@
 import io
 from collections.abc import Mapping, Sequence
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import lightning.pytorch as pl
 import matplotlib
@@ -38,12 +38,14 @@ class LogSamplesCallback(pl.Callback):
         self,
         reference_samples: Any,
         log_key: str,
+        mode: Literal["train", "val", "test"],
         every_n_epochs: int | None = 1,
     ) -> None:
         super().__init__()
         self.reference_samples = reference_samples
         self.every_n_epochs = every_n_epochs
         self.log_key = log_key
+        self.mode = mode
 
     def to(self, samples: Any, device: torch.device) -> Any:
         if isinstance(samples, torch.Tensor):
@@ -76,6 +78,9 @@ class LogSamplesCallback(pl.Callback):
     def on_train_epoch_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
     ) -> None:
+        if self.mode != "train":
+            return
+
         if (
             self.every_n_epochs is None
             or trainer.current_epoch % self.every_n_epochs != 0
@@ -91,6 +96,35 @@ class LogSamplesCallback(pl.Callback):
     def on_fit_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
     ) -> None:
+        if self.mode == "test":
+            return
+
+        return self.on_callback(
+            trainer.current_epoch, trainer.loggers, pl_module
+        )
+
+    def on_val_epoch_end(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule
+    ) -> None:
+        if self.mode != "val":
+            return
+
+        if (
+            self.every_n_epochs is None
+            or trainer.current_epoch % self.every_n_epochs != 0
+        ):
+            return
+
+        return self.on_callback(
+            trainer.current_epoch, trainer.loggers, pl_module
+        )
+
+    def on_test_epoch_end(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule
+    ) -> None:
+        if self.mode != "test":
+            return
+
         return self.on_callback(
             trainer.current_epoch, trainer.loggers, pl_module
         )
@@ -201,11 +235,12 @@ class LogAttributesCallback(LogSamplesCallback):
         self,
         reference_samples: Sequence[torch.Tensor],
         log_key: str,
+        mode: Literal["train", "val", "test"],
         image_size: int,
         every_n_epochs: int | None = 1,
         ncols: int = 8,
     ) -> None:
-        super().__init__(reference_samples, log_key, every_n_epochs)
+        super().__init__(reference_samples, log_key, mode, every_n_epochs)
         self.image_size = image_size
         self.ncols = ncols
 
@@ -234,11 +269,12 @@ class LogTextCallback(LogSamplesCallback):
         self,
         reference_samples: torch.Tensor,
         log_key: str,
+        mode: Literal["train", "val", "test"],
         image_size: int,
         every_n_epochs: int | None = 1,
         ncols: int = 8,
     ) -> None:
-        super().__init__(reference_samples, log_key, every_n_epochs)
+        super().__init__(reference_samples, log_key, mode, every_n_epochs)
         self.image_size = image_size
         self.ncols = ncols
 
@@ -280,10 +316,11 @@ class LogVisualCallback(LogSamplesCallback):
         self,
         reference_samples: torch.Tensor,
         log_key: str,
+        mode: Literal["train", "val", "test"],
         every_n_epochs: int | None = 1,
         ncols: int = 8,
     ) -> None:
-        super().__init__(reference_samples, log_key, every_n_epochs)
+        super().__init__(reference_samples, log_key, mode, every_n_epochs)
         self.ncols = ncols
 
     def log_samples(
@@ -305,11 +342,13 @@ class LogGWImagesCallback(pl.Callback):
         self,
         reference_samples: Mapping[frozenset[str], Mapping[str, Any]],
         log_key: str,
+        mode: Literal["train", "val", "test"],
         every_n_epochs: int | None = 1,
         image_size: int = 32,
         ncols: int = 8,
     ) -> None:
         super().__init__()
+        self.mode = mode
         self.reference_samples = reference_samples
         self.every_n_epochs = every_n_epochs
         self.log_key = log_key
@@ -403,6 +442,9 @@ class LogGWImagesCallback(pl.Callback):
         trainer: pl.Trainer,
         pl_module: pl.LightningModule,
     ) -> None:
+        if self.mode != "train":
+            return
+
         if not isinstance(
             pl_module,
             (
@@ -422,11 +464,62 @@ class LogGWImagesCallback(pl.Callback):
             trainer.current_epoch, trainer.loggers, pl_module
         )
 
+    def on_val_epoch_end(
+        self,
+        trainer: pl.Trainer,
+        pl_module: pl.LightningModule,
+    ) -> None:
+        if self.mode != "val":
+            return
+
+        if not isinstance(
+            pl_module,
+            (
+                DeterministicGlobalWorkspace,
+                VariationalGlobalWorkspace,
+            ),
+        ):
+            return
+
+        if (
+            self.every_n_epochs is None
+            or trainer.current_epoch % self.every_n_epochs != 0
+        ):
+            return
+
+        return self.on_callback(
+            trainer.current_epoch, trainer.loggers, pl_module
+        )
+
+    def on_test_epoch_end(
+        self,
+        trainer: pl.Trainer,
+        pl_module: pl.LightningModule,
+    ) -> None:
+        if self.mode != "test":
+            return
+
+        if not isinstance(
+            pl_module,
+            (
+                DeterministicGlobalWorkspace,
+                VariationalGlobalWorkspace,
+            ),
+        ):
+            return
+
+        return self.on_callback(
+            trainer.current_epoch, trainer.loggers, pl_module
+        )
+
     def on_fit_end(
         self,
         trainer: pl.Trainer,
         pl_module: pl.LightningModule,
     ) -> None:
+        if self.mode == "test":
+            return
+
         if not isinstance(
             pl_module,
             (

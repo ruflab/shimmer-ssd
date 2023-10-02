@@ -69,12 +69,14 @@ def main():
         LogVisualCallback(
             val_samples,
             log_key="images/val_attr",
+            mode="val",
             every_n_epochs=config.logging.log_val_medias_every_n_epochs,
             ncols=8,
         ),
         LogVisualCallback(
             train_samples,
             log_key="images/train_attr",
+            mode="train",
             every_n_epochs=config.logging.log_train_medias_every_n_epochs,
             ncols=8,
         ),

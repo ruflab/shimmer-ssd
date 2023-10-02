@@ -2,6 +2,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
+import torch
 from lightning.pytorch import Callback, Trainer, seed_everything
 from lightning.pytorch.callbacks import (
     LearningRateMonitor,
@@ -70,19 +71,31 @@ def main():
         config.global_workspace.decoders.n_layers,
     )
 
-    loss_coefs: dict[str, float] = {
-        "contrastives": config.global_workspace.loss_coefficients.contrastives,
+    loss_coefs: dict[str, torch.Tensor] = {
+        "contrastives": torch.Tensor(
+            [config.global_workspace.loss_coefficients.contrastives]
+        ),
     }
 
     if config.global_workspace.is_variational:
-        loss_coefs["kl"] = config.global_workspace.loss_coefficients.kl
+        loss_coefs["kl"] = torch.Tensor(
+            [config.global_workspace.loss_coefficients.kl]
+        )
 
     loss_coefs.update(
         {
-            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-            "cycles": config.global_workspace.loss_coefficients.cycles,
-            "translations": config.global_workspace.loss_coefficients.translations,
-            "contrastives": config.global_workspace.loss_coefficients.contrastives,
+            "demi_cycles": torch.Tensor(
+                [config.global_workspace.loss_coefficients.demi_cycles]
+            ),
+            "cycles": torch.Tensor(
+                [config.global_workspace.loss_coefficients.cycles]
+            ),
+            "translations": torch.Tensor(
+                [config.global_workspace.loss_coefficients.translations]
+            ),
+            "contrastives": torch.Tensor(
+                [config.global_workspace.loss_coefficients.contrastives]
+            ),
         }
     )
 
@@ -114,10 +127,14 @@ def main():
 
     train_samples = data_module.get_samples("train", 32)
     val_samples = data_module.get_samples("val", 32)
+    test_samples = data_module.get_samples("test", 32)
     for domains in val_samples.keys():
         for domain in domains:
             val_samples[frozenset([domain])] = {
                 domain: val_samples[domains][domain]
+            }
+            test_samples[frozenset([domain])] = {
+                domain: test_samples[domains][domain]
             }
         break
 
@@ -126,11 +143,19 @@ def main():
         LogGWImagesCallback(
             val_samples,
             log_key="images/val",
+            mode="val",
             every_n_epochs=config.logging.log_val_medias_every_n_epochs,
+        ),
+        LogGWImagesCallback(
+            val_samples,
+            log_key="images/test",
+            mode="test",
+            every_n_epochs=None,
         ),
         LogGWImagesCallback(
             train_samples,
             log_key="images/train",
+            mode="train",
             every_n_epochs=config.logging.log_train_medias_every_n_epochs,
         ),
     ]
