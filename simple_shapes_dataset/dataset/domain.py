@@ -131,9 +131,8 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain):
         self.dataset_size = self.latents.size(0)
 
         assert (self.dataset_path / f"{split}_unpaired.npy").exists()
-        self.unpaired = torch.from_numpy(
-            np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 1]
-        ).float()
+        unpaired = np.load(self.dataset_path / f"{split}_unpaired.npy")
+        self.unpaired = torch.from_numpy(unpaired[:, 1]).float()
 
     def __len__(self) -> int:
         return self.dataset_size
@@ -204,7 +203,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
 
         assert (self.dataset_path / f"{split}_unpaired.npy").exists()
         self.unpaired = torch.from_numpy(
-            np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 0]
+            np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 2:10]
         ).float()
 
     def __len__(self) -> int:

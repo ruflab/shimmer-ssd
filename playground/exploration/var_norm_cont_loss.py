@@ -10,13 +10,9 @@ from shimmer.modules.gw_module import VariationalGWModule
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (
-    color_blind_visual_domain,
-    nullify_attribute_rotation,
-)
-from simple_shapes_dataset.modules.domains.pretrained import (
-    load_pretrained_domains,
-)
+from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
+                                                       nullify_attribute_rotation)
+from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 
 
 def put_on_device(
@@ -77,28 +73,11 @@ def main():
         config.global_workspace.decoders.n_layers,
     )
 
-    loss_coefs: dict[str, float] = {
-        "contrastives": config.global_workspace.loss_coefficients.contrastives,
-    }
-
-    if config.global_workspace.is_variational:
-        loss_coefs["kl"] = config.global_workspace.loss_coefficients.kl
-
-    loss_coefs.update(
-        {
-            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-            "cycles": config.global_workspace.loss_coefficients.cycles,
-            "translations": config.global_workspace.loss_coefficients.translations,
-            "contrastives": config.global_workspace.loss_coefficients.contrastives,
-        }
-    )
-
     domain_module = cast(
         VariationalGlobalWorkspace,
         VariationalGlobalWorkspace.load_from_checkpoint(
             config.exploration.gw_checkpoint,
             domain_descriptions=domain_description,
-            loss_coefs=loss_coefs,
         ),
     )
     domain_module.eval().freeze()

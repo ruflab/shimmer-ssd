@@ -9,11 +9,9 @@ from torchvision.transforms import Compose, ToTensor
 
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
-from simple_shapes_dataset.dataset.pre_process import (
-    NormalizeAttributes,
-    TextAndAttrs,
-    attribute_to_tensor,
-)
+from simple_shapes_dataset.dataset.pre_process import (NormalizeAttributes,
+                                                       TextAndAttrs,
+                                                       attribute_to_tensor)
 
 DatasetT = SimpleShapesDataset | Subset[SimpleShapesDataset]
 
@@ -223,6 +221,20 @@ class SimpleShapesDataModule(LightningDataModule):
         for domain, dataset in self.test_dataset.items():
             dataloaders[domain] = DataLoader(
                 dataset,
+                pin_memory=True,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+            )
+        return CombinedLoader(dataloaders, mode="sequential")
+
+    def predict_dataloader(self):
+        assert self.val_dataset is not None
+
+        dataloaders = {}
+        for domain, dataset in self.val_dataset.items():
+            dataloaders[domain] = DataLoader(
+                Subset(dataset, range(self.batch_size)),
+                drop_last=False,
                 pin_memory=True,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,

@@ -147,6 +147,7 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     def __init__(self, visual_module: VisualDomainModule):
         super().__init__()
         self.visual_module = visual_module
+        self.paired_dim = self.visual_module.latent_dim
         self.latent_dim = self.visual_module.latent_dim + 1
 
     # def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
@@ -166,7 +167,9 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
         return {
             "loss": mse_loss(pred, target, reduction="mean"),
             "unpaired": mse_loss(pred[:, -1], target[:, -1]),
-            "other": mse_loss(pred[:, 0], target[:, 0]),
+            "other": mse_loss(
+                pred[:, self.paired_dim :], target[:, self.paired_dim :]
+            ),
         }
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:

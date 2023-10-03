@@ -5,13 +5,8 @@ import torch
 import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.global_workspace import SchedulerArgs
-from shimmer.modules.vae import (
-    VAE,
-    VAEDecoder,
-    VAEEncoder,
-    gaussian_nll,
-    kl_divergence_loss,
-)
+from shimmer.modules.vae import (VAE, VAEDecoder, VAEEncoder, gaussian_nll,
+                                 kl_divergence_loss)
 from torch import nn
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -222,14 +217,15 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.latent_dim = latent_dim + 1
+        self.paired_dim = latent_dim
+        self.latent_dim = latent_dim + 8
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
 
         # -1 for the unpaired attribute that is artificially added to the latent space.
-        vae_encoder = Encoder(self.hidden_dim, self.latent_dim - 1)
-        vae_decoder = Decoder(self.latent_dim - 1, self.hidden_dim)
+        vae_encoder = Encoder(self.hidden_dim, self.latent_dim - 8)
+        vae_decoder = Decoder(self.latent_dim - 8, self.hidden_dim)
         self.vae = VAE(vae_encoder, vae_decoder, beta)
 
         self.optim_lr = optim_lr
@@ -251,10 +247,12 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         return torch.cat([z, x[-1]], dim=-1)
 
     def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
-        out = list(self.vae.decode(z[:, :-1]))
+        paired = z[:, : self.paired_dim]
+        unpaired = z[:, self.paired_dim :]
+        out = list(self.vae.decode(paired))
         if not isinstance(out, Sequence):
             raise ValueError("The output of vae.decode should be a sequence.")
-        out.append(z[:, -1])
+        out.append(unpaired)
         return out
 
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
@@ -265,6 +263,10 @@ class AttributeWithUnpairedDomainModule(DomainModule):
     ) -> dict[str, torch.Tensor]:
         return {
             "loss": F.mse_loss(pred, target, reduction="mean"),
-            "unpaired": F.mse_loss(pred[:, -1], target[:, -1]),
-            "other": F.mse_loss(pred[:, 0], target[:, 0]),
+            "unpaired": F.mse_loss(
+                pred[:, self.paired_dim :], target[:, self.paired_dim :]
+            ),
+            "other": F.mse_loss(
+                pred[:, : self.paired_dim], target[:, : self.paired_dim]
+            ),
         }
