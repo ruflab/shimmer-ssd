@@ -218,14 +218,19 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         self.save_hyperparameters()
 
         self.paired_dim = latent_dim
-        self.latent_dim = latent_dim + 8
+        self.n_unpaired = 8
+        self.latent_dim = latent_dim + self.n_unpaired
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
 
         # -1 for the unpaired attribute that is artificially added to the latent space.
-        vae_encoder = Encoder(self.hidden_dim, self.latent_dim - 8)
-        vae_decoder = Decoder(self.latent_dim - 8, self.hidden_dim)
+        vae_encoder = Encoder(
+            self.hidden_dim, self.latent_dim - self.n_unpaired
+        )
+        vae_decoder = Decoder(
+            self.latent_dim - self.n_unpaired, self.hidden_dim
+        )
         self.vae = VAE(vae_encoder, vae_decoder, beta)
 
         self.optim_lr = optim_lr

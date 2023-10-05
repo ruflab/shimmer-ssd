@@ -47,7 +47,7 @@ class LossCoeffients:
 
 @dataclass
 class GlobalWorkspace:
-    latent_dim: int = 18
+    latent_dim: int = 12
     is_variational: bool = False
     var_contrastive_loss: bool = False
     domains: list[LoadedDomainConfig] = field(default_factory=list)

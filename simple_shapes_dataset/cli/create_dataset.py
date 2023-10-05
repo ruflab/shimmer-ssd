@@ -1,3 +1,4 @@
+import csv
 import logging
 from pathlib import Path
 
@@ -6,10 +7,11 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+from simple_shapes_dataset.cli.ood_splits import filter_dataset, ood_split
 from simple_shapes_dataset.text import composer
 
 from .utils import (generate_dataset, get_deterministic_name, get_domain_alignment,
-                    save_bert_latents, save_dataset, save_labels)
+                    load_labels, save_bert_latents, save_dataset, save_labels)
 
 
 def create_unpaired_attributes(
@@ -282,3 +284,64 @@ def unpaired_attributes_command(
     dataset_path: str,
 ) -> None:
     create_unpaired_attributes(seed, Path(dataset_path))
+
+
+@click.command(
+    "ood", help="Create Out-Of-Distribution splits for the dataset."
+)
+@click.option("--seed", "-s", default=0, type=int, help="Random seed")
+@click.option(
+    "--dataset_path",
+    "-d",
+    default="./",
+    type=str,
+    help="Location to the dataset",
+)
+@click.option(
+    "--min_scale",
+    default=7,
+    type=int,
+    help="Minimum size of the shapes (in pixels)",
+)
+@click.option(
+    "--max_scale",
+    default=14,
+    type=int,
+    help="Maximum size of the shapes (in pixels)",
+)
+def create_ood_split(
+    seed: int,
+    dataset_path: str,
+    min_scale: int,
+    max_scale: int,
+) -> None:
+    dataset_location = Path(dataset_path)
+    assert dataset_location.exists()
+    split_location = dataset_location / "ood_splits"
+    split_location.mkdir(exist_ok=True)
+
+    np.random.seed(seed)
+
+    boundaries = ood_split(32, min_scale, max_scale)
+    with open(split_location / f"boundaries_{seed}.csv", "w") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(
+            ["kind", "low_bound", "high_bound", "min_val", "max_val"]
+        )
+        for boundary in boundaries:
+            writer.writerow(boundary)
+
+    train_set = load_labels(dataset_location / "train_labels.npy")
+    train_in_dist, train_ood = filter_dataset(train_set, boundaries)
+    np.save(split_location / f"train_in_dist_{seed}.npy", train_in_dist)
+    np.save(split_location / f"train_ood_{seed}.npy", train_ood)
+
+    val_set = load_labels(dataset_location / "val_labels.npy")
+    val_in_dist, val_ood = filter_dataset(val_set, boundaries)
+    np.save(split_location / f"val_in_dist_{seed}.npy", val_in_dist)
+    np.save(split_location / f"val_ood_{seed}.npy", val_ood)
+
+    test_set = load_labels(dataset_location / "test_labels.npy")
+    test_in_dist, test_ood = filter_dataset(test_set, boundaries)
+    np.save(split_location / f"test_in_dist_{seed}.npy", test_in_dist)
+    np.save(split_location / f"test_ood_{seed}.npy", test_ood)

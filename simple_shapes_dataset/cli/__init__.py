@@ -1,16 +1,14 @@
 import click
 
-from .create_dataset import (
-    add_alignment_split,
-    create_dataset,
-    unpaired_attributes_command,
-)
+from .create_dataset import (add_alignment_split, create_dataset, create_ood_split,
+                             unpaired_attributes_command)
 
 __all__ = [
     "add_alignment_split",
     "cli",
     "create_dataset",
     "unpaired_attributes_command",
+    "create_ood_split",
 ]
 
 
@@ -22,3 +20,4 @@ def cli():
 cli.add_command(create_dataset)
 cli.add_command(add_alignment_split)
 cli.add_command(unpaired_attributes_command)
+cli.add_command(create_ood_split)
