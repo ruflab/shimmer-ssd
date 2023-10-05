@@ -97,10 +97,10 @@ def main():
     attr2 = attr1[:]
     v2[:, -1] = v_unpaired[:, 0]
     attr2[:, -1] = attr_unpaired[:, 0]
-    gw_states_means1, gw_stats_std1 = gw_mod.encoded_distribution(
+    gw_states_means1, gw_states_std1 = gw_mod.encoded_distribution(
         {"v_latents": v1, "attr": attr1}
     )
-    gw_states_means2, gw_stats_std2 = gw_mod.encoded_distribution(
+    gw_states_means2, gw_states_std2 = gw_mod.encoded_distribution(
         {"v_latents": v2, "attr": attr2}
     )
     lossv1 = contrastive_loss(
