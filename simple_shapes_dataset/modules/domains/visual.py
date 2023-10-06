@@ -166,9 +166,11 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     ) -> dict[str, torch.Tensor]:
         return {
             "loss": mse_loss(pred, target, reduction="mean"),
-            "unpaired": mse_loss(pred[:, -1], target[:, -1]),
-            "other": mse_loss(
+            "unpaired": mse_loss(
                 pred[:, self.paired_dim :], target[:, self.paired_dim :]
+            ),
+            "paired": mse_loss(
+                pred[:, : self.paired_dim], target[:, : self.paired_dim]
             ),
         }
 

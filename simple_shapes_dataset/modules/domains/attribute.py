@@ -271,7 +271,7 @@ class AttributeWithUnpairedDomainModule(DomainModule):
             "unpaired": F.mse_loss(
                 pred[:, self.paired_dim :], target[:, self.paired_dim :]
             ),
-            "other": F.mse_loss(
+            "paired": F.mse_loss(
                 pred[:, : self.paired_dim], target[:, : self.paired_dim]
             ),
         }

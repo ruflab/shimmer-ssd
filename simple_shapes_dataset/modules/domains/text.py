@@ -5,13 +5,8 @@ import torch
 import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.global_workspace import SchedulerArgs
-from shimmer.modules.vae import (
-    VAE,
-    VAEDecoder,
-    VAEEncoder,
-    gaussian_nll,
-    kl_divergence_loss,
-)
+from shimmer.modules.vae import (VAE, VAEDecoder, VAEEncoder, gaussian_nll,
+                                 kl_divergence_loss)
 from torch import nn
 from torch.optim.lr_scheduler import OneCycleLR
 
