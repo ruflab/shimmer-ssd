@@ -4,28 +4,20 @@ from typing import Any
 
 import torch
 from lightning.pytorch import Callback, Trainer, seed_everything
-from lightning.pytorch.callbacks import (
-    LearningRateMonitor,
-    ModelCheckpoint,
-    RichProgressBar,
-)
+from lightning.pytorch.callbacks import (LearningRateMonitor, ModelCheckpoint,
+                                         RichProgressBar)
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer import load_structured_config
-from shimmer.modules.global_workspace import (
-    DeterministicGlobalWorkspace,
-    SchedulerArgs,
-    VariationalGlobalWorkspace,
-)
+from shimmer.modules.global_workspace import (DeterministicGlobalWorkspace,
+                                              SchedulerArgs, VariationalGlobalWorkspace)
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (
-    color_blind_visual_domain,
-    nullify_attribute_rotation,
-)
+from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
+                                                       nullify_attribute_rotation)
 from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 
@@ -72,32 +64,24 @@ def main():
     )
 
     loss_coefs: dict[str, torch.Tensor] = {
+        "demi_cycles": torch.Tensor(
+            [config.global_workspace.loss_coefficients.demi_cycles]
+        ),
+        "cycles": torch.Tensor(
+            [config.global_workspace.loss_coefficients.cycles]
+        ),
+        "translations": torch.Tensor(
+            [config.global_workspace.loss_coefficients.translations]
+        ),
         "contrastives": torch.Tensor(
             [config.global_workspace.loss_coefficients.contrastives]
         ),
     }
 
-    if config.global_workspace.is_variational:
-        loss_coefs["kl"] = torch.Tensor(
-            [config.global_workspace.loss_coefficients.kl]
-        )
-
-    loss_coefs.update(
-        {
-            "demi_cycles": torch.Tensor(
-                [config.global_workspace.loss_coefficients.demi_cycles]
-            ),
-            "cycles": torch.Tensor(
-                [config.global_workspace.loss_coefficients.cycles]
-            ),
-            "translations": torch.Tensor(
-                [config.global_workspace.loss_coefficients.translations]
-            ),
-            "contrastives": torch.Tensor(
-                [config.global_workspace.loss_coefficients.contrastives]
-            ),
-        }
-    )
+    # if config.global_workspace.is_variational:
+    #     loss_coefs["kl"] = torch.Tensor(
+    #         [config.global_workspace.loss_coefficients.kl]
+    #     )
 
     if config.global_workspace.is_variational:
         module = VariationalGlobalWorkspace(
