@@ -28,6 +28,7 @@ class EncodersConfig:
 class LoadedDomainConfig:
     checkpoint_path: Path = MISSING
     domain_type: DomainType = MISSING
+    args: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -47,7 +48,7 @@ class LossCoeffients:
 
 @dataclass
 class GlobalWorkspace:
-    latent_dim: int = 24
+    latent_dim: int = 12
     is_variational: bool = False
     var_contrastive_loss: bool = False
     domains: list[LoadedDomainConfig] = field(default_factory=list)

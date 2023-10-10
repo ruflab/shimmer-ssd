@@ -2,20 +2,12 @@ from typing import cast
 
 from shimmer.modules.domain import DomainDescription, DomainModule
 
-from simple_shapes_dataset.config.global_workspace import (
-    DomainType,
-    LoadedDomainConfig,
-)
+from simple_shapes_dataset.config.global_workspace import DomainType, LoadedDomainConfig
 from simple_shapes_dataset.errors import ConfigurationError
 from simple_shapes_dataset.modules.domains.attribute import (
-    AttributeDomainModule,
-    AttributeWithUnpairedDomainModule,
-)
+    AttributeDomainModule, AttributeWithUnpairedDomainModule)
 from simple_shapes_dataset.modules.domains.visual import (
-    VisualDomainModule,
-    VisualLatentDomainModule,
-    VisualLatentDomainWithUnpairedModule,
-)
+    VisualDomainModule, VisualLatentDomainModule, VisualLatentDomainWithUnpairedModule)
 from simple_shapes_dataset.modules.vae import RAEEncoder
 
 
@@ -27,7 +19,7 @@ def load_pretrained_module(
             module = cast(
                 VisualDomainModule,
                 VisualDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path
+                    domain.checkpoint_path, **domain.args
                 ),
             )
             latent_dim = cast(RAEEncoder, module.vae.encoder).z_dim
@@ -36,7 +28,7 @@ def load_pretrained_module(
             v_module = cast(
                 VisualDomainModule,
                 VisualDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path
+                    domain.checkpoint_path, **domain.args
                 ),
             )
             module = VisualLatentDomainModule(v_module)
@@ -46,7 +38,7 @@ def load_pretrained_module(
             v_module = cast(
                 VisualDomainModule,
                 VisualDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path
+                    domain.checkpoint_path, **domain.args
                 ),
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
@@ -56,7 +48,7 @@ def load_pretrained_module(
             module = cast(
                 AttributeDomainModule,
                 AttributeDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path
+                    domain.checkpoint_path, **domain.args
                 ),
             )
             latent_dim = module.latent_dim
@@ -65,7 +57,7 @@ def load_pretrained_module(
             module = cast(
                 AttributeWithUnpairedDomainModule,
                 AttributeWithUnpairedDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path
+                    domain.checkpoint_path, **domain.args
                 ),
             )
             latent_dim = module.latent_dim

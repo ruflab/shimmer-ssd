@@ -210,6 +210,7 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         beta: float = 1,
         coef_categories: float = 1,
         coef_attributes: float = 1,
+        n_unpaired: int = 1,
         optim_lr: float = 1e-3,
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
@@ -218,13 +219,12 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         self.save_hyperparameters()
 
         self.paired_dim = latent_dim
-        self.n_unpaired = 8
+        self.n_unpaired = n_unpaired
         self.latent_dim = latent_dim + self.n_unpaired
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
 
-        # -1 for the unpaired attribute that is artificially added to the latent space.
         vae_encoder = Encoder(
             self.hidden_dim, self.latent_dim - self.n_unpaired
         )
@@ -241,11 +241,6 @@ class AttributeWithUnpairedDomainModule(DomainModule):
             total_steps=1,
         )
         self.scheduler_args.update(scheduler_args or {})
-
-    # def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
-    #     out = x.clone()
-    #     out[:, -1] = 0
-    #     return out
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         z = self.vae.encode(x[:-1])

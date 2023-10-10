@@ -177,7 +177,7 @@ class Attribute(NamedTuple):
 
 
 class AttributesAdditionalArgs(TypedDict):
-    pass
+    n_unpaired: int
 
 
 class SimpleShapesAttributes(SimpleShapesDomain):
@@ -197,13 +197,18 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         )
         self.transform = transform
 
-        default_args = AttributesAdditionalArgs()
+        default_args = AttributesAdditionalArgs(n_unpaired=1)
         self.additional_args = additional_args or default_args
         self.dataset_size = self.labels.size(0)
 
         assert (self.dataset_path / f"{split}_unpaired.npy").exists()
+        assert (
+            self.additional_args["n_unpaired"] >= 1
+        ), "n_unpaired should be >= 1"
         self.unpaired = torch.from_numpy(
-            np.load(self.dataset_path / f"{split}_unpaired.npy")[:, 2:10]
+            np.load(self.dataset_path / f"{split}_unpaired.npy")[
+                :, 2 : 2 + self.additional_args["n_unpaired"]
+            ]
         ).float()
 
     def __len__(self) -> int:
