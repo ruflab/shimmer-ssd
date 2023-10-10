@@ -148,13 +148,13 @@ class TextDomainModule(DomainModule):
     def predict_attr(
         self, mean: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        attr_pred = self.attribute_cls(mean.detach())
+        attr_pred = self.attribute_cls(mean)
         attr_pred_cat = self.attribute_cls_cat(attr_pred)
         attr_pred_attr = self.attribute_cls_attr(attr_pred)
         return attr_pred_cat, attr_pred_attr
 
     def predict_grammar(self, mean: torch.Tensor) -> dict[str, torch.Tensor]:
-        grammar_pred = self.grammar_cls(mean.detach())
+        grammar_pred = self.grammar_cls(mean)
         return {
             name: head(grammar_pred)
             for name, head in self.grammar_heads.items()
