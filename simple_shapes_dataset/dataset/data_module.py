@@ -78,7 +78,7 @@ class SimpleShapesDataModule(LightningDataModule):
     def _get_transforms(
         self, domains: Iterable[str]
     ) -> dict[str, Callable[[Any], Any]]:
-        transforms = {}
+        transforms: dict[str, Callable[[Any], Any]] = {}
         for domain in domains:
             domain_transforms: list[Callable[[Any], Any]] = []
             if domain == "attr":
