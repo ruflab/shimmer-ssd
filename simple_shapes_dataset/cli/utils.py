@@ -307,7 +307,7 @@ def save_bert_latents(
         z = transformer(**tokens)["last_hidden_state"][:, 0]  # type: ignore
         latents.append(z.cpu().numpy())
     all_latents = np.concatenate(latents, axis=0)
-    np.save(output_path / f"{split}_latent.npy", latents)
+    np.save(output_path / f"{split}_latent.npy", all_latents)
 
     if compute_statistics:
         mean = all_latents.mean(axis=0)
