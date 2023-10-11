@@ -12,23 +12,16 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
-from shimmer.modules.global_workspace import (
-    DeterministicGlobalWorkspace,
-    GlobalWorkspace,
-    VariationalGlobalWorkspace,
-)
+from shimmer.modules.global_workspace import (DeterministicGlobalWorkspace,
+                                              GlobalWorkspace,
+                                              VariationalGlobalWorkspace)
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import LOGGER
 from simple_shapes_dataset.cli.utils import generate_image
-from simple_shapes_dataset.dataset.pre_process import (
-    UnnormalizeAttributes,
-    attr_to_str,
-    tensor_to_attribute,
-)
-from simple_shapes_dataset.modules.domains.visual import (
-    VisualLatentDomainModule,
-)
+from simple_shapes_dataset.dataset.pre_process import (UnnormalizeAttributes,
+                                                       attr_to_str, tensor_to_attribute)
+from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
 
 matplotlib.use("Agg")
 
@@ -291,11 +284,18 @@ class LogTextCallback(LogSamplesCallback):
             return
 
         attr_samples = [samples["cls"], samples["attr"], samples["unpaired"]]
-        grammar_predictions: dict[str, list[int]] = {
-            n: samples[n].argmax(dim=-1).detach().cpu().tolist()
-            for n in samples.keys()
-            if n not in ["bert", "cls", "attr", "unpaired"]
-        }
+        if mode == "reference":
+            grammar_predictions: dict[str, list[int]] = {
+                n: samples[n].long()[:, 0].detach().cpu().tolist()
+                for n in samples.keys()
+                if n not in ["bert", "cls", "attr", "unpaired"]
+            }
+        else:
+            grammar_predictions: dict[str, list[int]] = {
+                n: samples[n].argmax(dim=-1).detach().cpu().tolist()
+                for n in samples.keys()
+                if n not in ["bert", "cls", "attr", "unpaired"]
+            }
         image = attribute_image_grid(
             attr_samples,
             image_size=self.image_size,
@@ -487,6 +487,7 @@ class LogGWImagesCallback(pl.Callback):
         ):
             return
 
+        print("ok")
         return self.on_callback(
             trainer.current_epoch, trainer.loggers, pl_module
         )
