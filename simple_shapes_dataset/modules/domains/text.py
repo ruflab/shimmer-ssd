@@ -99,6 +99,7 @@ class TextDomainModule(DomainModule):
             nn.Linear(self.latent_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, self.hidden_dim),
+            nn.ReLU(),
         )
         self.attribute_cls_cat = nn.Linear(self.hidden_dim, 3)
         self.attribute_cls_attr = nn.Sequential(
@@ -111,6 +112,7 @@ class TextDomainModule(DomainModule):
             nn.Linear(self.latent_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, self.hidden_dim),
+            nn.ReLU(),
         )
         self.grammar_heads = nn.ModuleDict(
             {

@@ -1,10 +1,7 @@
 import lightning.pytorch as pl
 import torch
-from lightning.pytorch.callbacks import (
-    LearningRateMonitor,
-    ModelCheckpoint,
-    RichProgressBar,
-)
+from lightning.pytorch.callbacks import (LearningRateMonitor, ModelCheckpoint,
+                                         RichProgressBar)
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer.config import load_structured_config
