@@ -487,7 +487,6 @@ class LogGWImagesCallback(pl.Callback):
         ):
             return
 
-        print("ok")
         return self.on_callback(
             trainer.current_epoch, trainer.loggers, pl_module
         )
