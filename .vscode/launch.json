@@ -52,8 +52,8 @@
         {
             "type": "python",
             "request": "launch",
-            "name": "Exp cont",
-            "program": "${workspaceFolder}/playground/exploration/var_norm_cont.py",
+            "name": "Exp cont var",
+            "program": "${workspaceFolder}/playground/exploration/contrastive_var.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",

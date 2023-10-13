@@ -1,13 +1,16 @@
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+import torch
 import torch.utils.data as torchdata
+from torch.utils.data.dataset import Subset
 
 from simple_shapes_dataset.dataset.domain import AVAILABLE_DOMAINS, SimpleShapesDomain
 
 
-class SimpleShapesDataset(Sequence, torchdata.Dataset):
+class OddOneOutDataset(Subset, torchdata.Dataset):
     """
     Dataset class to obtain a SimpleShapesDataset.
     """
@@ -36,6 +39,10 @@ class SimpleShapesDataset(Sequence, torchdata.Dataset):
         self.dataset_path = Path(dataset_path)
         self.split = split
 
+        self.labels = np.load(
+            str(self.dataset_path / f"{self.split}_odd_one_out_labels.npy")
+        )
+
         self.domains: dict[str, SimpleShapesDomain] = {}
         self.domain_args = domain_args or {}
 
@@ -62,11 +69,11 @@ class SimpleShapesDataset(Sequence, torchdata.Dataset):
         All domains should be the same length.
         Returns the length of the first domain.
         """
-        for domain in self.domains.values():
-            return len(domain)
-        return 0
+        return self.labels.shape[0]
 
-    def __getitem__(self, index: int) -> dict[str, Any]:
+    def __getitem__(
+        self, index: int
+    ) -> dict[str, tuple[Any, Any, Any] | torch.Tensor]:
         """
         Params:
             index (int): Index of the item to get.
@@ -75,7 +82,17 @@ class SimpleShapesDataset(Sequence, torchdata.Dataset):
             domain names, the values are the domains as given by the domain model at
             the given index.
         """
-        return {
-            domain_name: domain[index]
+        label = self.labels[index]
+
+        out: dict[str, tuple[Any, Any, Any] | torch.Tensor] = {
+            domain_name: (
+                domain[label[0]],
+                domain[label[1]],
+                domain[label[2]],
+            )
             for domain_name, domain in self.domains.items()
         }
+
+        out["target"] = torch.tensor([label[3]])
+
+        return out

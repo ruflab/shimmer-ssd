@@ -31,46 +31,80 @@ def normalize_labels(labels):
 @click.command("ooo", help="Create the odd-one-out dataset.")
 @click.option("--seed", "-s", default=0, type=int, help="Random seed")
 @click.option(
+    "--train_dataset_path",
+    default=None,
+    type=str,
+    help="Location to the dataset",
+)
+@click.option(
     "--dataset_path",
     "-d",
     default="./",
     type=str,
     help="Location to the dataset",
 )
+@click.option(
+    "--num_train_examples",
+    "--ntrain",
+    default=500_000,
+    type=int,
+    help="Number of training examples",
+)
+@click.option(
+    "--num_val_examples",
+    "--nval",
+    default=1_000,
+    type=int,
+    help="Number of validation examples",
+)
+@click.option(
+    "--num_test_examples",
+    "--ntest",
+    default=1_000,
+    type=int,
+    help="Number of test examples",
+)
 def create_odd_one_out_dataset(
     seed: int,
+    train_dataset_path: str | None,
     dataset_path: str,
+    num_train_examples: int,
+    num_val_examples: int,
+    num_test_examples: int,
 ) -> None:
     dataset_location = Path(dataset_path)
     assert dataset_location.exists()
 
     np.random.seed(seed)
 
-    split = "train"
-
     possible_keys = [[0], [1, 2], [3], [4], [5, 6, 7]]
-    all_labels = np.load(str(dataset_location / f"{split}_labels.npy"))[:, :8]
-    all_labels = normalize_labels(all_labels)
+
+    n_examples = {
+        "train": num_train_examples,
+        "val": num_val_examples,
+        "test": num_test_examples,
+    }
 
     for split in ["train", "val", "test"]:
-        dataset = []
-        if split == "train":
-            n_examples = 500_000
-            labels = all_labels[:500_000]
-        elif split == "val":
-            n_examples = 1000
-            labels = all_labels[500_000:750_000]
+        if split == "train" and train_dataset_path is not None:
+            labels = normalize_labels(
+                np.load(str(Path(train_dataset_path) / f"{split}_labels.npy"))[
+                    :, :8
+                ]
+            )
         else:
-            n_examples = 1000
-            labels = all_labels[750_000:]
+            labels = normalize_labels(
+                np.load(str(dataset_location / f"{split}_labels.npy"))[:, :8]
+            )
+        dataset = []
 
-        for i in tqdm(range(n_examples), total=n_examples):
+        for i in tqdm(range(n_examples[split]), total=n_examples[split]):
             ref = labels[i]
             key = random.choice(possible_keys)
             closest_key = closest_shape(ref, labels, key)
-            rd = select_odd_one_out(ref, labels[closest_key], labels)
+            odd_one_out = select_odd_one_out(ref, labels[closest_key], labels)
             order = np.random.permutation(3)
-            idx = [i, closest_key, rd]
+            idx = [i, closest_key, odd_one_out]
             dataset.append(
                 [
                     idx[order[0]],
@@ -80,5 +114,5 @@ def create_odd_one_out_dataset(
                 ]
             )
         np.save(
-            str(dataset_location / f"{split}_odd_image_labels.npy"), dataset
+            str(dataset_location / f"{split}_odd_one_out_labels.npy"), dataset
         )

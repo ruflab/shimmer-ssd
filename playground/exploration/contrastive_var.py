@@ -6,7 +6,8 @@ import torch
 from shimmer import load_structured_config
 from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 from shimmer.modules.gw_module import VariationalGWModule
-from shimmer.modules.losses import contrastive_loss
+from shimmer.modules.losses import (VariationalGWLosses,
+                                    contrastive_loss_with_uncertainty)
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
@@ -85,47 +86,84 @@ def main():
     domain_module.to(device)
     gw_mod = cast(VariationalGWModule, domain_module.gw_mod)
 
-    val_samples = put_on_device(data_module.get_samples("val", 2048), device)
+    batch_size = 128
+    n_rep = 128
+    n_unpaired = 8
+
+    val_samples = put_on_device(
+        data_module.get_samples("val", batch_size), device
+    )
     encoded_samples = domain_module.encode_domains(val_samples)[
         frozenset(["v_latents", "attr"])
     ]
-    v1 = encoded_samples["v_latents"]
-    attr1 = encoded_samples["attr"]
-    v_unpaired = torch.randn(2048, 1).to(device)
-    attr_unpaired = torch.randn(2048, 1).to(device)
+    v1 = (
+        encoded_samples["v_latents"]
+        .unsqueeze(1)
+        .expand((batch_size, n_rep, -1))
+        .clone()
+    )
+    attr1 = (
+        encoded_samples["attr"]
+        .unsqueeze(1)
+        .expand((batch_size, n_rep, -1))
+        .clone()
+    )
+    v_unpaired = torch.randn(batch_size, n_rep, n_unpaired).to(device)
+    attr_unpaired = torch.randn(batch_size, n_rep, n_unpaired).to(device)
     v2 = v1[:]
     attr2 = attr1[:]
-    v2[:, -1] = v_unpaired[:, 0]
-    attr2[:, -1] = attr_unpaired[:, 0]
-    gw_states_means1, gw_states_std1 = gw_mod.encoded_distribution(
-        {"v_latents": v1, "attr": attr1}
+    v2[:, :, -n_unpaired:] = v_unpaired
+    attr2[:, :, -n_unpaired:] = attr_unpaired
+    gw_states_means, gw_states_std = gw_mod.encoded_distribution(
+        {
+            "v_latents": v2.reshape(batch_size * n_rep, -1),
+            "attr": attr2.reshape(batch_size * n_rep, -1),
+        }
     )
-    gw_states_means2, gw_states_std2 = gw_mod.encoded_distribution(
-        {"v_latents": v2, "attr": attr2}
+
+    actual_std_attr = (
+        gw_states_means["attr"]
+        .reshape(batch_size, n_rep, -1)
+        .std(dim=1)
+        .mean(dim=0)
     )
-    lossv1 = contrastive_loss(
-        gw_states_means1["v_latents"],
-        gw_states_means2["v_latents"],
-        torch.tensor([0.0]),
+    actual_std_v = (
+        gw_states_means["v_latents"]
+        .reshape(batch_size, n_rep, -1)
+        .std(dim=1)
+        .mean(dim=0)
     )
-    lossattr1 = contrastive_loss(
-        gw_states_means1["attr"], gw_states_means2["attr"], torch.tensor([0.0])
+    print(f"Actual std attr: {actual_std_attr}")
+    print(f"Actual std v: {actual_std_v}")
+
+    predicted_std_attr = gw_states_std["attr"].exp().mean(dim=0)
+    predicted_std_v = gw_states_std["v_latents"].exp().mean(dim=0)
+
+    print(f"Predicted std attr: {predicted_std_attr}")
+    print(f"Predicted std v: {predicted_std_v}")
+
+    logit_scale = cast(VariationalGWLosses, domain_module.loss_mod).logit_scale
+
+    cont_loss1 = contrastive_loss_with_uncertainty(
+        gw_states_means["attr"],
+        gw_states_std["attr"],
+        gw_states_means["v_latents"],
+        gw_states_std["v_latents"],
+        logit_scale,
     )
-    print(lossv1)
-    print(lossattr1)
-    perm = torch.randperm(2048).to(device)
-    lossv2 = contrastive_loss(
-        gw_states_means1["v_latents"],
-        gw_states_means2["v_latents"][perm, :],
-        torch.tensor([0.0]),
+
+    cont_loss2 = contrastive_loss_with_uncertainty(
+        gw_states_means["attr"],
+        actual_std_attr,
+        gw_states_means["v_latents"],
+        actual_std_v,
+        logit_scale,
     )
-    lossattr2 = contrastive_loss(
-        gw_states_means1["attr"],
-        gw_states_means2["attr"][perm, :],
-        torch.tensor([0.0]),
-    )
-    print(lossv2)
-    print(lossattr2)
+
+    print(f"Contrastive loss 1: {cont_loss1}")
+    print(f"Contrastive loss 2: {cont_loss2}")
+
+    print("ok")
 
 
 if __name__ == "__main__":

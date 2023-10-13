@@ -7,17 +7,44 @@ from lightning.pytorch.utilities.combined_loader import CombinedLoader
 from torch.utils.data import DataLoader, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
-from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
-from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
+from simple_shapes_dataset.dataset.domain_alignment import get_alignment
+from simple_shapes_dataset.dataset.downstream.odd_one_out.dataset import \
+    OddOneOutDataset
 from simple_shapes_dataset.dataset.pre_process import (NormalizeAttributes,
                                                        TextAndAttrs,
                                                        attribute_to_tensor)
 from simple_shapes_dataset.dataset.repeated_dataset import RepeatedDataset
 
-DatasetT = SimpleShapesDataset | Subset[SimpleShapesDataset]
+DatasetT = OddOneOutDataset | Subset[OddOneOutDataset]
 
 
-class SimpleShapesDataModule(LightningDataModule):
+def get_aligned_datasets(
+    dataset_path: str | Path,
+    split: str,
+    domain_proportions: Mapping[frozenset[str], float],
+    seed: int,
+    transforms: Mapping[str, Callable[[Any], Any]] | None = None,
+    domain_args: Mapping[str, Any] | None = None,
+) -> dict[frozenset[str], Subset]:
+    domain_split = get_alignment(dataset_path, split, domain_proportions, seed)
+
+    datasets: dict[frozenset[str], Subset] = {}
+    for domain_group, indices in domain_split.items():
+        dataset = OddOneOutDataset(
+            dataset_path,
+            split,
+            list(domain_group),
+            transforms,
+            domain_args,
+        )
+        domains = frozenset(dataset.domains.keys())
+
+        datasets[domains] = Subset(dataset, indices.tolist())
+
+    return datasets
+
+
+class OddOneOutDataModule(LightningDataModule):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -106,7 +133,7 @@ class SimpleShapesDataModule(LightningDataModule):
 
         if split in ("val", "test"):
             return {
-                frozenset(domains): SimpleShapesDataset(
+                frozenset(domains): OddOneOutDataset(
                     self.dataset_path,
                     split=split,
                     selected_domains=domains,
@@ -115,7 +142,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 )
             }
         return {
-            frozenset([domain]): SimpleShapesDataset(
+            frozenset([domain]): OddOneOutDataset(
                 self.dataset_path,
                 split=split,
                 selected_domains=[domain],

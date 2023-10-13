@@ -9,14 +9,12 @@ from simple_shapes_dataset.cli.utils import get_deterministic_name
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 
 
-def get_aligned_datasets(
+def get_alignment(
     dataset_path: str | Path,
     split: str,
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
-    transforms: Mapping[str, Callable[[Any], Any]] | None = None,
-    domain_args: Mapping[str, Any] | None = None,
-) -> Mapping[frozenset[str], Subset]:
+) -> Mapping[frozenset[str], np.ndarray]:
     assert split in ["train", "val", "test"]
 
     dataset_path = Path(dataset_path)
@@ -42,7 +40,20 @@ def get_aligned_datasets(
         alignement_split_path, allow_pickle=True
     ).item()
 
-    datasets = {}
+    return domain_split
+
+
+def get_aligned_datasets(
+    dataset_path: str | Path,
+    split: str,
+    domain_proportions: Mapping[frozenset[str], float],
+    seed: int,
+    transforms: Mapping[str, Callable[[Any], Any]] | None = None,
+    domain_args: Mapping[str, Any] | None = None,
+) -> dict[frozenset[str], Subset]:
+    domain_split = get_alignment(dataset_path, split, domain_proportions, seed)
+
+    datasets: dict[frozenset[str], Subset] = {}
     for domain_group, indices in domain_split.items():
         dataset = SimpleShapesDataset(
             dataset_path,
@@ -53,6 +64,6 @@ def get_aligned_datasets(
         )
         domains = frozenset(dataset.domains.keys())
 
-        datasets[domains] = Subset(dataset, indices)  # type: ignore
+        datasets[domains] = Subset(dataset, indices.tolist())
 
     return datasets
