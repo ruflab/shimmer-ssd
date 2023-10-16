@@ -26,8 +26,8 @@ domain_modules:
         color_blind: false
 
 global_workspace:
-    is_variational: true
-    var_contrastive_loss: true
+    is_variational: false
+    var_contrastive_loss: false
 
     sync_prop: 0.002
     domain_proportions: 
