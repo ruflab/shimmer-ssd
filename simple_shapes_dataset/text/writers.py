@@ -2,7 +2,18 @@ import numpy as np
 from attributes_to_language.utils import COLORS_LARGE_SET, COLORS_SPARSE, COLORS_XKCD
 from attributes_to_language.writers import (Bins2dWriter, BinsWriter,
                                             ContinuousAngleWriter, OptionsWriter,
-                                            QuantizedWriter)
+                                            QuantizedWriter, Writer)
+
+
+class AngleWriter:
+    def __init__(self, writer: Writer):
+        self.writer = writer
+
+    def __call__(self, angle, choices=None):
+        if angle < 0:
+            angle += 2 * np.pi
+        return self.writer(angle, choices)
+
 
 shapes_writer = OptionsWriter(
     caption="{val}",
@@ -29,160 +40,168 @@ shapes_writer = OptionsWriter(
     },
 )
 
-cardinal_rotation_writer = QuantizedWriter(
-    quantized_values=np.array(
-        [
-            0,
-            np.pi / 4,
-            np.pi / 2,
-            3 * np.pi / 4,
-            np.pi,
-            5 * np.pi / 4,
-            3 * np.pi / 2,
-            7 * np.pi / 4,
-        ]
-    ),
-    caption="{rotated} {val}",
-    variants={
-        "of_image": ["", "of the image"],
-        "rotated": ["pointing to the", "pointing towards the", "pointing"],
-    },
-    labels=[
-        "north",
-        "northwest",
-        "west",
-        "southwest",
-        "south",
-        "southeast",
-        "east",
-        "northeast",
-    ],
+cardinal_rotation_writer = AngleWriter(
+    QuantizedWriter(
+        quantized_values=np.array(
+            [
+                0,
+                np.pi / 4,
+                np.pi / 2,
+                3 * np.pi / 4,
+                np.pi,
+                5 * np.pi / 4,
+                3 * np.pi / 2,
+                7 * np.pi / 4,
+            ]
+        ),
+        caption="{rotated} {val}",
+        variants={
+            "of_image": ["", "of the image"],
+            "rotated": ["pointing to the", "pointing towards the", "pointing"],
+        },
+        labels=[
+            "north",
+            "northwest",
+            "west",
+            "southwest",
+            "south",
+            "southeast",
+            "east",
+            "northeast",
+        ],
+    )
 )
 
-cardinal_rotation_preicions_writer = QuantizedWriter(
-    quantized_values=np.array(
-        [
-            0,
-            np.pi / 8,
-            np.pi / 4,
-            3 * np.pi / 8,
-            np.pi / 2,
-            5 * np.pi / 8,
-            3 * np.pi / 4,
-            7 * np.pi / 8,
-            np.pi,
-            9 * np.pi / 8,
-            5 * np.pi / 4,
-            11 * np.pi / 8,
-            3 * np.pi / 2,
-            13 * np.pi / 8,
-            7 * np.pi / 4,
-            15 * np.pi / 8,
-        ]
-    ),
-    caption="{rotated} {val}",
-    variants={
-        "of_image": ["", "of the image"],
-        "rotated": ["pointing to the", "pointing towards the", "pointing"],
-    },
-    labels=[
-        "north",
-        "north-northwest",
-        "northwest",
-        "west-northwest",
-        "west",
-        "west-southwest",
-        "southwest",
-        "south-southwest",
-        "south",
-        "south-southeast",
-        "southeast",
-        "east-southeast",
-        "east",
-        "east-northeast",
-        "northeast",
-        "north-northeast",
-    ],
+cardinal_rotation_preicions_writer = AngleWriter(
+    QuantizedWriter(
+        quantized_values=np.array(
+            [
+                0,
+                np.pi / 8,
+                np.pi / 4,
+                3 * np.pi / 8,
+                np.pi / 2,
+                5 * np.pi / 8,
+                3 * np.pi / 4,
+                7 * np.pi / 8,
+                np.pi,
+                9 * np.pi / 8,
+                5 * np.pi / 4,
+                11 * np.pi / 8,
+                3 * np.pi / 2,
+                13 * np.pi / 8,
+                7 * np.pi / 4,
+                15 * np.pi / 8,
+            ]
+        ),
+        caption="{rotated} {val}",
+        variants={
+            "of_image": ["", "of the image"],
+            "rotated": ["pointing to the", "pointing towards the", "pointing"],
+        },
+        labels=[
+            "north",
+            "north-northwest",
+            "northwest",
+            "west-northwest",
+            "west",
+            "west-southwest",
+            "southwest",
+            "south-southwest",
+            "south",
+            "south-southeast",
+            "southeast",
+            "east-southeast",
+            "east",
+            "east-northeast",
+            "northeast",
+            "north-northeast",
+        ],
+    )
 )
 
-corner_rotation_writer = QuantizedWriter(
-    quantized_values=np.array(
-        [
-            0,
-            np.pi / 4,
-            np.pi / 2,
-            3 * np.pi / 4,
-            np.pi,
-            5 * np.pi / 4,
-            3 * np.pi / 2,
-            7 * np.pi / 4,
-        ]
-    ),
-    caption="{rotated} the {val}",
-    variants={
-        "of_image": ["", "of the image"],
-        "rotated": ["pointing to", "pointing towards"],
-        "corner": ["", " corner"],
-        "side": ["", " side"],
-    },
-    labels=[
-        "top",
-        "top-left{corner}",
-        "left{side}",
-        "bottom-left{corner}",
-        "bottom",
-        "bottom-right{corner}",
-        "right{side}",
-        "top-right{corner}",
-    ],
+corner_rotation_writer = AngleWriter(
+    QuantizedWriter(
+        quantized_values=np.array(
+            [
+                0,
+                np.pi / 4,
+                np.pi / 2,
+                3 * np.pi / 4,
+                np.pi,
+                5 * np.pi / 4,
+                3 * np.pi / 2,
+                7 * np.pi / 4,
+            ]
+        ),
+        caption="{rotated} the {val}",
+        variants={
+            "of_image": ["", "of the image"],
+            "rotated": ["pointing to", "pointing towards"],
+            "corner": ["", " corner"],
+            "side": ["", " side"],
+        },
+        labels=[
+            "top",
+            "top-left{corner}",
+            "left{side}",
+            "bottom-left{corner}",
+            "bottom",
+            "bottom-right{corner}",
+            "right{side}",
+            "top-right{corner}",
+        ],
+    )
 )
 
-corner_rotation_precision_writer = QuantizedWriter(
-    quantized_values=np.array(
-        [
-            0,
-            np.pi / 8,
-            np.pi / 4,
-            3 * np.pi / 8,
-            np.pi / 2,
-            5 * np.pi / 8,
-            3 * np.pi / 4,
-            7 * np.pi / 8,
-            np.pi,
-            9 * np.pi / 8,
-            5 * np.pi / 4,
-            11 * np.pi / 8,
-            3 * np.pi / 2,
-            13 * np.pi / 8,
-            7 * np.pi / 4,
-            15 * np.pi / 8,
-        ]
-    ),
-    caption="{rotated} the {val}",
-    variants={
-        "of_image": ["", "of the image"],
-        "rotated": ["pointing to", "pointing towards"],
-        "corner": ["", " corner"],
-        "side": ["", " side"],
-    },
-    labels=[
-        "top",
-        "top top-left{corner}",
-        "top-left{corner}",
-        "left top-left{corner}",
-        "left{side}",
-        "left bottom-left{corner}",
-        "bottom-left{corner}",
-        "bottom bottom-left{corner}",
-        "bottom",
-        "bottom bottom-right{corner}",
-        "bottom-right{corner}",
-        "right bottom-right{corner}",
-        "right{side}",
-        "right top-right{corner}",
-        "top-right{corner}",
-        "top top-right{corner}",
-    ],
+corner_rotation_precision_writer = AngleWriter(
+    QuantizedWriter(
+        quantized_values=np.array(
+            [
+                0,
+                np.pi / 8,
+                np.pi / 4,
+                3 * np.pi / 8,
+                np.pi / 2,
+                5 * np.pi / 8,
+                3 * np.pi / 4,
+                7 * np.pi / 8,
+                np.pi,
+                9 * np.pi / 8,
+                5 * np.pi / 4,
+                11 * np.pi / 8,
+                3 * np.pi / 2,
+                13 * np.pi / 8,
+                7 * np.pi / 4,
+                15 * np.pi / 8,
+            ]
+        ),
+        caption="{rotated} the {val}",
+        variants={
+            "of_image": ["", "of the image"],
+            "rotated": ["pointing to", "pointing towards"],
+            "corner": ["", " corner"],
+            "side": ["", " side"],
+        },
+        labels=[
+            "top",
+            "top top-left{corner}",
+            "top-left{corner}",
+            "left top-left{corner}",
+            "left{side}",
+            "left bottom-left{corner}",
+            "bottom-left{corner}",
+            "bottom bottom-left{corner}",
+            "bottom",
+            "bottom bottom-right{corner}",
+            "bottom-right{corner}",
+            "right bottom-right{corner}",
+            "right{side}",
+            "right top-right{corner}",
+            "top-right{corner}",
+            "top top-right{corner}",
+        ],
+    )
 )
 
 continuous_rotation_writer = ContinuousAngleWriter(
