@@ -64,6 +64,18 @@
         {
             "type": "python",
             "request": "launch",
+            "name": "Exp test t",
+            "program": "${workspaceFolder}/playground/exploration/test_t.py",
+            "justMyCode": false,
+            "env": {
+                "DEBUG": "1",
+                "CUDA_VISIBLE_DEVICES": "1",
+                "CUDA_DEVICE_ORDER": "PCI_BUS_ID"
+            }
+        },
+        {
+            "type": "python",
+            "request": "launch",
             "name": "Slurm launch",
             "program": "${workspaceFolder}/slurm/launch.py",
             "justMyCode": false,

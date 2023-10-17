@@ -100,12 +100,17 @@ def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
     attributes = tensor[1]
     unpaired = tensor[2]
 
+    rotation = torch.atan2(attributes[:, 4], attributes[:, 3])
+    constrained_rotation = torch.where(
+        rotation < 0, rotation + 2 * torch.pi, rotation
+    )
+
     return Attribute(
         category=category.argmax(dim=1),
         x=attributes[:, 0],
         y=attributes[:, 1],
         size=attributes[:, 2],
-        rotation=torch.atan2(attributes[:, 4], attributes[:, 3]),
+        rotation=constrained_rotation,
         color_r=attributes[:, 5],
         color_g=attributes[:, 6],
         color_b=attributes[:, 7],

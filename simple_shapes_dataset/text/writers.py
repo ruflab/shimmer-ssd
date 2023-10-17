@@ -1,16 +1,8 @@
 import numpy as np
-from attributes_to_language.utils import (
-    COLORS_LARGE_SET,
-    COLORS_SPARSE,
-    COLORS_XKCD,
-)
-from attributes_to_language.writers import (
-    Bins2dWriter,
-    BinsWriter,
-    ContinuousAngleWriter,
-    OptionsWriter,
-    QuantizedWriter,
-)
+from attributes_to_language.utils import COLORS_LARGE_SET, COLORS_SPARSE, COLORS_XKCD
+from attributes_to_language.writers import (Bins2dWriter, BinsWriter,
+                                            ContinuousAngleWriter, OptionsWriter,
+                                            QuantizedWriter)
 
 shapes_writer = OptionsWriter(
     caption="{val}",
