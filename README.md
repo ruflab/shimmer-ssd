@@ -40,6 +40,21 @@ shapesd alignment --dataset_path "/path/to/dataset" --seed 0 --da t,v 0.01 --da 
 will create an alignment split where 0.01% of the example between domains "t" and "v" will
 be aligned, and that contains all data for "t" and "v".
 
+## Create an out of distribution split
+```
+shapesd ood --dataset_path "/path/to/dataset" --seed 0
+```
+will create an out-of-distribution/in-distribution split for all sets. The output will
+be in `/path/to/dataset/ood_splits`. It will also generate a `boundaries_{seed}.csv`
+with information about OOD boundaries.
+
+You can obtain different splits with different boundaries by changing the seed.
+
+For more configurations, see
+```
+shapesd ood --help
+```
+
 
 ## Use the dataset
 Load the dataset:
