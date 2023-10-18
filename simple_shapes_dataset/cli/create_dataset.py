@@ -322,26 +322,26 @@ def create_ood_split(
 
     np.random.seed(seed)
 
-    boundaries = ood_split(32, min_scale, max_scale)
+    boundary_infos = ood_split(32, min_scale, max_scale)
     with open(split_location / f"boundaries_{seed}.csv", "w") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(
-            ["kind", "low_bound", "high_bound", "min_val", "max_val"]
-        )
-        for boundary in boundaries:
-            writer.writerow(boundary)
+        writer.writerow(["kind", "min", "max"])
+        for bound_info in boundary_infos:
+            writer.writerow(
+                [bound_info.kind.value, *bound_info.boundary.description()]
+            )
 
     train_set = load_labels(dataset_location / "train_labels.npy")
-    train_in_dist, train_ood = filter_dataset(train_set, boundaries)
+    train_in_dist, train_ood = filter_dataset(train_set, boundary_infos)
     np.save(split_location / f"train_in_dist_{seed}.npy", train_in_dist)
     np.save(split_location / f"train_ood_{seed}.npy", train_ood)
 
     val_set = load_labels(dataset_location / "val_labels.npy")
-    val_in_dist, val_ood = filter_dataset(val_set, boundaries)
+    val_in_dist, val_ood = filter_dataset(val_set, boundary_infos)
     np.save(split_location / f"val_in_dist_{seed}.npy", val_in_dist)
     np.save(split_location / f"val_ood_{seed}.npy", val_ood)
 
     test_set = load_labels(dataset_location / "test_labels.npy")
-    test_in_dist, test_ood = filter_dataset(test_set, boundaries)
+    test_in_dist, test_ood = filter_dataset(test_set, boundary_infos)
     np.save(split_location / f"test_in_dist_{seed}.npy", test_in_dist)
     np.save(split_location / f"test_ood_{seed}.npy", test_ood)

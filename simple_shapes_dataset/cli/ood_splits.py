@@ -1,6 +1,8 @@
+from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import StrEnum
-from random import sample
-from typing import NamedTuple
+from random import randint, sample
+from typing import Any
 
 import numpy as np
 
@@ -12,123 +14,155 @@ class BoundaryKind(StrEnum):
     color = "color"
     size = "size"
     rotation = "rotation"
-    x = "x"
-    y = "y"
+    position = "position"
 
 
-class Boundary(NamedTuple):
+class BoundaryBase:
+    def choice(self) -> None:
+        raise NotImplementedError
+
+    def filter(self, x: Any) -> bool:
+        raise NotImplementedError
+
+    def description(self) -> list[str]:
+        raise NotImplementedError
+
+
+class ChoiceBoundary(BoundaryBase):
+    def __init__(self, choices: Sequence):
+        self.choices = choices
+
+        self.boundary = self.choice()
+
+    def choice(self):
+        return sample(self.choices, 1)[0]
+
+    def filter(self, x) -> bool:
+        return x == self.boundary
+
+    def description(self) -> list[str]:
+        return [str(self.boundary), str(self.boundary)]
+
+
+class BinsBoundary(BoundaryBase):
+    def __init__(self, bins: Sequence):
+        self.bins = bins
+
+        self.boundary = self.choice()
+
+    def choice(self):
+        k = randint(1, len(self.bins) - 1)
+        return k
+
+    def filter(self, x) -> bool:
+        return self.bins[self.boundary - 1] <= x < self.bins[self.boundary]
+
+    def description(self) -> list[str]:
+        return [
+            str(self.bins[self.boundary - 1]),
+            str(self.bins[self.boundary]),
+        ]
+
+
+class MultiBinsBoundary(BoundaryBase):
+    def __init__(self, bins: Sequence):
+        self.bins = [BinsBoundary(b) for b in bins]
+
+        self.choice()
+
+    def choice(self) -> list[Any]:
+        return [b.choice() for b in self.bins]
+
+    def filter(self, x) -> bool:
+        return all(b.filter(x) for b in self.bins)
+
+    def description(self) -> list[str]:
+        return [
+            "/".join(b.description()[0] for b in self.bins),
+            "/".join(b.description()[1] for b in self.bins),
+        ]
+
+
+@dataclass
+class BoundaryInfo:
     kind: BoundaryKind
-    low_bound: float
-    high_bound: float
-    min_val: float
-    max_val: float
+    boundary: BoundaryBase
 
 
 def attr_boundaries(
     imsize: int, min_size: int, max_size: int
-) -> list[Boundary]:
-    boundaries: list[Boundary] = []
-    shape_boundary = np.random.randint(0, 2)
-    color_boundary = np.random.randint(0, 255)
+) -> list[BoundaryInfo]:
     size_range = (max_size - min_size) / 3
-    size_boundary = np.random.randint(min_size, max_size)
-    rotation_boundary = np.random.rand() * 2 * np.pi
     margin = max_size // 2
     x_range = (imsize - 2 * margin) / 3
-    x_boundary = np.random.randint(margin, imsize - margin)
-    y_boundary = np.random.randint(margin, imsize - margin)
-    for k in range(3):
-        boundaries.append(
-            Boundary(
-                BoundaryKind.shape,
-                (shape_boundary + k) % 3,
-                (shape_boundary + k + 1) % 3,
-                0,
-                2,
-            )
-        )
 
-        boundaries.append(
-            Boundary(
-                BoundaryKind.color,
-                (color_boundary + k * 85) % 256,
-                (color_boundary + (k + 1) * 85) % 256,
-                0,
-                255,
-            )
-        )
-
-        boundaries.append(
-            Boundary(
-                BoundaryKind.size,
-                int(min_size + (size_boundary + k * size_range) % max_size),
-                int(
-                    min_size
-                    + (size_boundary + (k + 1) * size_range) % max_size
-                ),
-                min_size,
-                max_size,
-            )
-        )
-
-        boundaries.append(
-            Boundary(
-                BoundaryKind.rotation,
-                (rotation_boundary + 2 * k * np.pi / 3) % (2 * np.pi),
-                (rotation_boundary + 2 * (k + 1) * np.pi / 3) % (2 * np.pi),
-                0,
-                2 * np.pi,
-            )
-        )
-
-        boundaries.append(
-            Boundary(
-                BoundaryKind.x,
-                int(margin + (x_boundary + k * x_range) % imsize),
-                int(margin + (x_boundary + (k + 1) * x_range) % imsize),
-                margin,
-                imsize - margin,
-            )
-        )
-
-        boundaries.append(
-            Boundary(
-                BoundaryKind.y,
-                int(margin + (y_boundary + k * x_range) % imsize),
-                int(margin + (y_boundary + (k + 1) * x_range) % imsize),
-                margin,
-                imsize - margin,
-            )
-        )
-
+    boundaries: list[BoundaryInfo] = [
+        BoundaryInfo(
+            BoundaryKind.shape,
+            ChoiceBoundary([0, 1, 2]),
+        ),
+        BoundaryInfo(
+            BoundaryKind.color,
+            BinsBoundary([0, 85, 170, 255]),
+        ),
+        BoundaryInfo(
+            BoundaryKind.size,
+            BinsBoundary(
+                [
+                    min_size,
+                    min_size + size_range,
+                    min_size + 2 * size_range,
+                    max_size,
+                ]
+            ),
+        ),
+        BoundaryInfo(
+            BoundaryKind.rotation,
+            BinsBoundary(
+                [
+                    0,
+                    2 * np.pi / 3,
+                    4 * np.pi / 3,
+                    2 * np.pi,
+                ]
+            ),
+        ),
+        BoundaryInfo(
+            BoundaryKind.position,
+            MultiBinsBoundary(
+                [
+                    [
+                        margin,
+                        margin + x_range,
+                        margin + 2 * x_range,
+                        imsize - margin,
+                    ],
+                    [
+                        margin,
+                        margin + x_range,
+                        margin + 2 * x_range,
+                        imsize - margin,
+                    ],
+                ]
+            ),
+        ),
+    ]
     return boundaries
 
 
-def filter_value(
-    label: int,
-    low_bound: float,
-    high_bound: float,
-    min_val: float,
-    max_val: float,
-) -> bool:
-    if low_bound <= high_bound:
-        return low_bound <= label < high_bound
-    return low_bound <= label <= max_val or min_val <= label < high_bound
-
-
-def ood_split(imsize: int, min_size: int, max_size: int) -> list[Boundary]:
+def ood_split(imsize: int, min_size: int, max_size: int) -> list[BoundaryInfo]:
     boundaries = attr_boundaries(imsize, min_size, max_size)
     return sample(boundaries, 2)
 
 
 def filter_dataset(
-    dataset: Dataset, boundaries: list[Boundary]
+    dataset: Dataset, boundary_infos: list[BoundaryInfo]
 ) -> tuple[list[int], list[int]]:
     in_dist_idx: list[int] = []
     ood_idx: list[int] = []
     for k in range(dataset.classes.shape[0]):
-        for boundary in boundaries:
-            match boundary.kind:
+        for boundary_info in boundary_infos:
+            match boundary_info.kind:
                 case BoundaryKind.shape:
                     value = dataset.classes[k]
                 case BoundaryKind.color:
@@ -137,17 +171,9 @@ def filter_dataset(
                     value = dataset.sizes[k]
                 case BoundaryKind.rotation:
                     value = dataset.rotations[k]
-                case BoundaryKind.x:
-                    value = dataset.locations[k][0]
-                case BoundaryKind.y:
-                    value = dataset.locations[k][1]
-            if filter_value(
-                value,
-                boundary.low_bound,
-                boundary.high_bound,
-                boundary.min_val,
-                boundary.max_val,
-            ):
+                case BoundaryKind.position:
+                    value = (dataset.locations[k][0], dataset.locations[k][1])
+            if boundary_info.boundary.filter(value):
                 ood_idx.append(k)
                 break
         else:
