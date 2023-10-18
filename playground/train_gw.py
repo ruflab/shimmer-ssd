@@ -114,10 +114,6 @@ def main():
     val_samples = data_module.get_samples("val", 32)
     test_samples = data_module.get_samples("test", 32)
 
-    train_samples_ood = data_module.get_samples("train", 32, ood=True)
-    val_samples_ood = data_module.get_samples("val", 32, ood=True)
-    test_samples_ood = data_module.get_samples("test", 32, ood=True)
-
     for domains in val_samples.keys():
         for domain in domains:
             val_samples[frozenset([domain])] = {
@@ -125,12 +121,6 @@ def main():
             }
             test_samples[frozenset([domain])] = {
                 domain: test_samples[domains][domain]
-            }
-            val_samples_ood[frozenset([domain])] = {
-                domain: val_samples_ood[domains][domain]
-            }
-            test_samples_ood[frozenset([domain])] = {
-                domain: test_samples_ood[domains][domain]
             }
         break
 
@@ -154,25 +144,45 @@ def main():
             mode="train",
             every_n_epochs=config.logging.log_train_medias_every_n_epochs,
         ),
-        LogGWImagesCallback(
-            val_samples_ood,
-            log_key="images/val/ood",
-            mode="val",
-            every_n_epochs=config.logging.log_val_medias_every_n_epochs,
-        ),
-        LogGWImagesCallback(
-            val_samples_ood,
-            log_key="images/test/ood",
-            mode="test",
-            every_n_epochs=None,
-        ),
-        LogGWImagesCallback(
-            train_samples_ood,
-            log_key="images/train/ood",
-            mode="train",
-            every_n_epochs=config.logging.log_train_medias_every_n_epochs,
-        ),
     ]
+
+    if config.ood_seed is not None:
+        train_samples_ood = data_module.get_samples("train", 32, ood=True)
+        val_samples_ood = data_module.get_samples("val", 32, ood=True)
+        test_samples_ood = data_module.get_samples("test", 32, ood=True)
+
+        for domains in val_samples_ood.keys():
+            for domain in domains:
+                val_samples_ood[frozenset([domain])] = {
+                    domain: val_samples_ood[domains][domain]
+                }
+                test_samples_ood[frozenset([domain])] = {
+                    domain: test_samples_ood[domains][domain]
+                }
+            break
+
+        callbacks.extend(
+            [
+                LogGWImagesCallback(
+                    val_samples_ood,
+                    log_key="images/val/ood",
+                    mode="val",
+                    every_n_epochs=config.logging.log_val_medias_every_n_epochs,
+                ),
+                LogGWImagesCallback(
+                    val_samples_ood,
+                    log_key="images/test/ood",
+                    mode="test",
+                    every_n_epochs=None,
+                ),
+                LogGWImagesCallback(
+                    train_samples_ood,
+                    log_key="images/train/ood",
+                    mode="train",
+                    every_n_epochs=config.logging.log_train_medias_every_n_epochs,
+                ),
+            ]
+        )
 
     if config.training.enable_progress_bar:
         callbacks.append(RichProgressBar())
