@@ -1,20 +1,21 @@
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
+import numpy as np
 from lightning.pytorch import LightningDataModule
 from lightning.pytorch.utilities.combined_loader import CombinedLoader
 from torch.utils.data import DataLoader, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
-from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
+from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset, SizedDataset
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
 from simple_shapes_dataset.dataset.pre_process import (NormalizeAttributes,
                                                        TextAndAttrs,
                                                        attribute_to_tensor)
 from simple_shapes_dataset.dataset.repeated_dataset import RepeatedDataset
 
-DatasetT = SimpleShapesDataset | Subset[SimpleShapesDataset]
+DatasetT = SizedDataset | Subset
 
 
 class SimpleShapesDataModule(LightningDataModule):
@@ -25,15 +26,17 @@ class SimpleShapesDataModule(LightningDataModule):
         batch_size: int,
         num_workers: int = 0,
         seed: int | None = None,
+        ood_seed: int | None = None,
         domain_args: Mapping[str, Any] | None = None,
         additional_transforms: Mapping[str, Sequence[Callable[[Any], Any]]]
         | None = None,
     ) -> None:
         super().__init__()
 
-        self.dataset_path = dataset_path
+        self.dataset_path = Path(dataset_path)
         self.domain_proportions = domain_proportions
         self.seed = seed
+        self.ood_seed = ood_seed
         self.domain_args = domain_args or {}
         self.additional_transforms = additional_transforms or {}
 
@@ -43,6 +46,10 @@ class SimpleShapesDataModule(LightningDataModule):
         self.train_dataset: Mapping[frozenset[str], DatasetT] | None = None
         self.val_dataset: Mapping[frozenset[str], DatasetT] | None = None
         self.test_dataset: Mapping[frozenset[str], DatasetT] | None = None
+
+        self.train_dataset_ood: Mapping[frozenset[str], DatasetT] | None = None
+        self.val_dataset_ood: Mapping[frozenset[str], DatasetT] | None = None
+        self.test_dataset_ood: Mapping[frozenset[str], DatasetT] | None = None
 
     def _get_transforms(
         self, domains: Iterable[str]
@@ -125,17 +132,62 @@ class SimpleShapesDataModule(LightningDataModule):
             for domain in domains
         }
 
+    def _filter_ood(
+        self,
+        dataset: Mapping[frozenset[str], DatasetT],
+        split: Literal["train", "val", "test"],
+    ) -> tuple[
+        Mapping[frozenset[str], DatasetT],
+        Mapping[frozenset[str], Subset] | None,
+    ]:
+        if self.ood_seed is None:
+            return dataset, None
+        split_path = self.dataset_path / "ood_splits"
+        assert (split_path / f"boundaries_{self.ood_seed}.csv").exists()
+        in_dist: list[int] = np.load(
+            split_path / f"{split}_in_dist_{self.ood_seed}.npy"
+        )
+        ood: list[int] = np.load(
+            split_path / f"{split}_ood_{self.ood_seed}.npy"
+        )
+        dataset_in_dist: dict[frozenset[str], Subset] = {}
+        for k, d in dataset.items():
+            if isinstance(d, Subset):
+                indices = list(set(d.indices).intersection(set(in_dist)))
+                dataset_in_dist[k] = Subset(d.dataset, indices)
+            else:
+                dataset_in_dist[k] = Subset(d, in_dist)
+        dataset_ood = {k: Subset(dataset[k], ood) for k in dataset.keys()}
+        return (dataset_in_dist, dataset_ood)
+
     def setup(self, stage: str | None = None) -> None:
         if stage == "fit" or stage is None:
             self.train_dataset = self._get_dataset("train")
+            self.train_dataset, self.train_dataset_ood = self._filter_ood(
+                self.train_dataset, "train"
+            )
 
         self.val_dataset = self._get_dataset("val")
         self.test_dataset = self._get_dataset("test")
 
+        self.val_dataset, self.val_dataset_ood = self._filter_ood(
+            self.val_dataset, "val"
+        )
+        self.test_dataset, self.test_dataset_ood = self._filter_ood(
+            self.test_dataset, "test"
+        )
+
     def get_samples(
-        self, split: str, amount: int
+        self,
+        split: Literal["train", "val", "test"],
+        amount: int,
+        ood: bool = False,
     ) -> dict[frozenset[str], dict[str, Any]]:
         datasets = self._get_dataset(split)
+
+        if ood:
+            _, datasets = self._filter_ood(datasets, split)
+            assert datasets is not None
 
         return {
             domain: default_collate([dataset[k] for k in range(amount)])
@@ -179,6 +231,14 @@ class SimpleShapesDataModule(LightningDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
             )
+            if self.val_dataset_ood is not None:
+                ood_domains = frozenset({d + "_ood" for d in domain})
+                dataloaders[ood_domains] = DataLoader(
+                    self.val_dataset_ood[domain],
+                    pin_memory=True,
+                    batch_size=self.batch_size,
+                    num_workers=self.num_workers,
+                )
         return CombinedLoader(dataloaders, mode="sequential")
 
     def test_dataloader(
@@ -194,6 +254,14 @@ class SimpleShapesDataModule(LightningDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
             )
+            if self.test_dataset_ood is not None:
+                ood_domains = frozenset({d + "_ood" for d in domain})
+                dataloaders[ood_domains] = DataLoader(
+                    self.test_dataset_ood[domain],
+                    pin_memory=True,
+                    batch_size=self.batch_size,
+                    num_workers=self.num_workers,
+                )
         return CombinedLoader(dataloaders, mode="sequential")
 
     def predict_dataloader(self):

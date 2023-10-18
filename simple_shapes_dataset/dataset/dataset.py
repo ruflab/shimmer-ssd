@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -7,7 +7,12 @@ import torch.utils.data as torchdata
 from simple_shapes_dataset.dataset.domain import AVAILABLE_DOMAINS, SimpleShapesDomain
 
 
-class SimpleShapesDataset(Sequence, torchdata.Dataset):
+class SizedDataset(torchdata.Dataset):
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+
+class SimpleShapesDataset(SizedDataset):
     """
     Dataset class to obtain a SimpleShapesDataset.
     """

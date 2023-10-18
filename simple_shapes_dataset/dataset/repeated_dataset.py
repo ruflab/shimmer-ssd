@@ -1,7 +1,8 @@
-from collections.abc import Sequence
 from typing import Any
 
 from torch.utils.data import Dataset, Subset
+
+from simple_shapes_dataset.dataset.dataset import SizedDataset
 
 
 class RepeatedDataset(Dataset):
@@ -11,7 +12,7 @@ class RepeatedDataset(Dataset):
 
     def __init__(
         self,
-        dataset: Sequence | Subset,
+        dataset: SizedDataset | Subset,
         min_size: int,
         drop_last: bool = False,
     ):

@@ -7,10 +7,8 @@ from shimmer import ShimmerInfoConfig
 from simple_shapes_dataset.config.dataset import Dataset
 from simple_shapes_dataset.config.domains import DomainModules
 from simple_shapes_dataset.config.exploration import Exploration
-from simple_shapes_dataset.config.global_workspace import (
-    GlobalWorkspace,
-    LoadedDomainConfig,
-)
+from simple_shapes_dataset.config.global_workspace import (GlobalWorkspace,
+                                                           LoadedDomainConfig)
 from simple_shapes_dataset.config.logging import Logging
 from simple_shapes_dataset.config.slurm import Slurm
 from simple_shapes_dataset.config.training import Training
@@ -21,6 +19,7 @@ from simple_shapes_dataset.config.wandb import WanDB
 @dataclass()
 class Config:
     seed: int = 0
+    ood_seed: int | None = None
     default_root_dir: Path = MISSING
     domain_checkpoint: LoadedDomainConfig | None = None
     presaved_latents_path: dict[str, str] = field(default_factory=dict)
