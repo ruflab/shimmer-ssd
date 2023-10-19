@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
@@ -318,9 +318,11 @@ def save_bert_latents(
 
 def get_domain_alignment(
     seed: int,
-    dataset_size: int,
+    allowed_indices: Sequence[int] | np.ndarray,
     alignement_groups_props: dict[frozenset[str], float],
 ) -> dict[frozenset[str], np.ndarray]:
+    dataset_size = len(allowed_indices)
+
     alignement_groups_amounts = {
         domain_group: int(dataset_size * alignement_groups_props[domain_group])
         for domain_group in alignement_groups_props
@@ -338,7 +340,7 @@ def get_domain_alignment(
     selection = {
         domain_group: (
             np.array([], dtype=np.int64),
-            rng_stream.permutation(dataset_size),
+            rng_stream.permutation(allowed_indices),
         )
         for domain_group, rng_stream in rng_streams.items()
     }

@@ -1,9 +1,6 @@
 import numpy as np
 
-from simple_shapes_dataset.cli.utils import (
-    get_deterministic_name,
-    get_domain_alignment,
-)
+from simple_shapes_dataset.cli.utils import get_deterministic_name, get_domain_alignment
 
 
 def test_get_deterministic_name():
@@ -33,7 +30,7 @@ def test_get_domain_alignment_split():
     dataset_size = 100
     domain_groups = get_domain_alignment(
         seed=0,
-        dataset_size=dataset_size,
+        allowed_indices=np.arange(dataset_size),
         alignement_groups_props={
             frozenset(["v"]): 0.8,
             frozenset(["t"]): 0.9,
