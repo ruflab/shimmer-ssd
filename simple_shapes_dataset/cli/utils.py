@@ -292,10 +292,10 @@ def save_bert_latents(
     device: torch.device,
     compute_statistics: bool = False,
 ) -> None:
-    transformer = BertModel.from_pretrained(bert_path)
-    transformer.eval()  # type: ignore
+    transformer = cast(BertModel, BertModel.from_pretrained(bert_path))
+    transformer.eval()
     transformer.to(device)  # type: ignore
-    for p in transformer.parameters():  # type: ignore
+    for p in transformer.parameters():
         p.requires_grad_(False)
     tokenizer = BertTokenizer.from_pretrained(bert_path)
 
