@@ -1,6 +1,4 @@
-import logging
-from collections.abc import Callable
-from typing import Any, cast
+from typing import cast
 
 from lightning.pytorch import seed_everything
 from shimmer import load_structured_config
@@ -8,8 +6,6 @@ from shimmer import load_structured_config
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
-                                                       nullify_attribute_rotation)
 from simple_shapes_dataset.modules.domains.text import TextDomainModule
 
 
@@ -35,7 +31,6 @@ def main():
         },
     )
 
-    train_samples = data_module.get_samples("train", 32)
     val_samples = data_module.get_samples("val", 32)
     test_samples = data_module.get_samples("test", 32)
     for domains in val_samples.keys():

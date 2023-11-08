@@ -97,9 +97,9 @@ def main():
     gw_states_means, gw_stats_std = gw_mod.encoded_distribution(
         {"v_latents": v_test, "attr": attr_test}
     )
-    v_gw_var = (0.5 * gw_stats_std["v_latents"]).exp()
-    attr_gw_var = (0.5 * gw_stats_std["attr"]).exp()
-    print("ok")
+    v_gw_var = (0.5 * gw_stats_std["v_latents"]).exp()  # noqa: F841
+    attr_gw_var = (0.5 * gw_stats_std["attr"]).exp()  # noqa: F841
+    print(gw_states_means)
 
 
 if __name__ == "__main__":
