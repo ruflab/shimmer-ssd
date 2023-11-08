@@ -5,14 +5,15 @@ from attributes_to_language.writers import (Bins2dWriter, BinsWriter,
                                             QuantizedWriter, Writer)
 
 
-class AngleWriter:
+class AngleWriter(Writer):
     def __init__(self, writer: Writer):
+        super().__init__()
         self.writer = writer
 
     def __call__(self, angle, choices=None):
         if angle < 0:
             angle += 2 * np.pi
-        return self.writer(angle, choices)
+        return self.writer(angle, choices=choices)
 
 
 shapes_writer = OptionsWriter(

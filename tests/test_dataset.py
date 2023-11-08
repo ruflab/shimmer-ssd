@@ -1,4 +1,3 @@
-import torch.utils.data
 from torch.utils.data.dataloader import DataLoader
 from torchvision.transforms import ToTensor
 from utils import PROJECT_DIR

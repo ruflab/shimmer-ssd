@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 import click
+import matplotlib
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -12,6 +13,8 @@ from simple_shapes_dataset.text import composer
 
 from .utils import (generate_dataset, get_deterministic_name, get_domain_alignment,
                     load_labels, save_bert_latents, save_dataset, save_labels)
+
+matplotlib.use("Agg")
 
 
 def create_unpaired_attributes(

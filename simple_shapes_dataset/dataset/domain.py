@@ -352,7 +352,7 @@ class SimpleShapesText(SimpleShapesDomain):
             np.load(
                 self.dataset_path / f"{self.split}_{self.latent_filename}.npy"
             )
-        )[0]
+        )
         assert bert_data.ndim == 2
         self.bert_data = (bert_data - self.bert_mean) / self.bert_std
         self.transform = transform
