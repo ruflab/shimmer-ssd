@@ -1,3 +1,4 @@
+import torch.utils.data
 from torch.utils.data.dataloader import DataLoader
 from torchvision.transforms import ToTensor
 from utils import PROJECT_DIR
@@ -87,7 +88,7 @@ def test_datamodule():
     datamodule.setup()
 
     train_dataloader = datamodule.train_dataloader()
-    item = next(iter(train_dataloader))
+    item, _, _ = next(iter(train_dataloader))
     assert isinstance(item, dict)
     assert len(item) == 1
     assert frozenset(["attr"]) in item.keys()
@@ -108,7 +109,7 @@ def test_datamodule_aligned_dataset():
     datamodule.setup()
 
     train_dataloader = datamodule.train_dataloader()
-    item = next(iter(train_dataloader))
+    item, _, _ = next(iter(train_dataloader))
     assert isinstance(item, dict)
     for domain in item.keys():
         assert domain in [
