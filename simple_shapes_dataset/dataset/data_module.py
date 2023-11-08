@@ -138,7 +138,7 @@ class SimpleShapesDataModule(LightningDataModule):
         split: Literal["train", "val", "test"],
     ) -> tuple[
         Mapping[frozenset[str], DatasetT],
-        Mapping[frozenset[str], Subset] | None,
+        Mapping[frozenset[str], DatasetT] | None,
     ]:
         if self.ood_seed is None:
             return dataset, None
@@ -186,8 +186,9 @@ class SimpleShapesDataModule(LightningDataModule):
         datasets = self._get_dataset(split)
 
         if ood:
-            _, datasets = self._filter_ood(datasets, split)
-            assert datasets is not None
+            _, ood_datasets = self._filter_ood(datasets, split)
+            assert ood_datasets is not None
+            datasets = ood_datasets
 
         return {
             domain: default_collate([dataset[k] for k in range(amount)])

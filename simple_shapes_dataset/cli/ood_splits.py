@@ -18,7 +18,7 @@ class BoundaryKind(StrEnum):
 
 
 class BoundaryBase:
-    def choice(self) -> None:
+    def choice(self) -> Any:
         raise NotImplementedError
 
     def filter(self, x: Any) -> bool:

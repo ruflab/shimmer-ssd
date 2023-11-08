@@ -284,14 +284,15 @@ class LogTextCallback(LogSamplesCallback):
             return
 
         attr_samples = [samples["cls"], samples["attr"], samples["unpaired"]]
+        grammar_predictions: dict[str, list[int]]
         if mode == "reference":
-            grammar_predictions: dict[str, list[int]] = {
+            grammar_predictions = {
                 n: samples[n].long()[:, 0].detach().cpu().tolist()
                 for n in samples.keys()
                 if n not in ["bert", "cls", "attr", "unpaired"]
             }
         else:
-            grammar_predictions: dict[str, list[int]] = {
+            grammar_predictions = {
                 n: samples[n].argmax(dim=-1).detach().cpu().tolist()
                 for n in samples.keys()
                 if n not in ["bert", "cls", "attr", "unpaired"]

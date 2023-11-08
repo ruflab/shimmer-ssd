@@ -81,10 +81,10 @@ def structure_category_from_choice(
 
 def choices_from_structure_categories(
     composer: Composer, grammar_predictions: dict[str, list[int]]
-) -> list[dict[str, dict[str, Any]]]:
-    all_choices: list[dict[str, dict[str, Any]]] = []
+) -> list[dict[str, Any]]:
+    all_choices: list[dict[str, Any]] = []
     for i in range(len(grammar_predictions["structure"])):
-        choices = {
+        choices: dict[str, Any] = {
             "variants": {
                 name.replace("variant_", ""): variant[i]
                 for name, variant in grammar_predictions.items()

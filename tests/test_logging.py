@@ -4,13 +4,8 @@ from shimmer.modules.global_workspace import DeterministicGlobalWorkspace
 from utils import PROJECT_DIR
 
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.logging import (
-    LogGWImagesCallback,
-    attribute_image_grid,
-)
-from simple_shapes_dataset.modules.domains.attribute import (
-    AttributeDomainModule,
-)
+from simple_shapes_dataset.logging import LogGWImagesCallback, attribute_image_grid
+from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 
 
@@ -66,12 +61,12 @@ def test_gw_logger():
         ),
     }
 
-    module = DeterministicGlobalWorkspace(domains, latent_dim=4)
+    module = DeterministicGlobalWorkspace(domains, latent_dim=4, loss_coefs={})
     wandb_logger = WandbLogger(mode="disabled")
 
     val_samples = data_module.get_samples("val", 2)
     callback = LogGWImagesCallback(
-        val_samples, log_key="test", every_n_epochs=1
+        val_samples, log_key="test", mode="test", every_n_epochs=1
     )
 
     callback.on_callback(

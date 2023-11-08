@@ -135,10 +135,10 @@ class TextAndAttrs:
     def __call__(self, x: Text) -> dict[str, torch.Tensor]:
         text: dict[str, torch.Tensor] = {"bert": x.bert}
         attr = self.normalize(x.attr)
-        attr = attribute_to_tensor(attr)
-        text["cls"] = attr[0]
-        text["attr"] = attr[1]
-        text["unpaired"] = attr[2]
+        attr_list = attribute_to_tensor(attr)
+        text["cls"] = attr_list[0]
+        text["attr"] = attr_list[1]
+        text["unpaired"] = attr_list[2]
         grammar_categories = structure_category_from_choice(composer, x.choice)
         text.update(
             {

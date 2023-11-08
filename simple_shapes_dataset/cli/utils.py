@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from matplotlib import patches as patches
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 from torchdata.datapipes.iter import IterableWrapper
 from tqdm import tqdm
 from transformers import BertModel, BertTokenizer
@@ -118,7 +119,7 @@ def get_egg_patch(
 
 
 def generate_image(
-    ax: plt.Axes,
+    ax: Axes,
     cls: int,
     location: np.ndarray,
     scale: int,
@@ -127,6 +128,7 @@ def generate_image(
     imsize: int = 32,
 ) -> None:
     color = color.astype(np.float32) / 255
+    patch: patches.Patch
     if cls == 0:
         patch = get_diamond_patch(location, scale, rotation, color)
     elif cls == 1:
