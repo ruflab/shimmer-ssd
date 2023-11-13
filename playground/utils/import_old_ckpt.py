@@ -16,8 +16,6 @@ state_dict_remove = [
     "output_fun",
 ]
 
-state_dict_add = {}
-
 
 hyper_parameters = {
     "num_channels": lambda old: old["channel_num"],
@@ -67,7 +65,7 @@ def import_v():
         "hyper_parameters": new_hyperparams,
     }
 
-    model = torch.save(
+    torch.save(
         new_model, PROJECT_DIR / "checkpoints/pretrained/vae_v_shimmer.ckpt"
     )
 
