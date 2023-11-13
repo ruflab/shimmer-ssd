@@ -11,9 +11,7 @@ from simple_shapes_dataset.config.global_workspace import DomainType
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
-from simple_shapes_dataset.modules.domains.pretrained import (
-    load_pretrained_module,
-)
+from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_module
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 
 
@@ -65,11 +63,11 @@ def main():
         latents: list[np.ndarray] = []
 
         print(f"Saving {split}.")
-        for batch in tqdm(iter(dataloader), total=len(dataloader)):
+        for batch, _, _ in tqdm(iter(dataloader), total=len(dataloader)):
             if split == "train":
                 images = batch[frozenset(["v"])]["v"].to(device)
             else:
-                images = batch[0]["v"].to(device)
+                images = batch["v"].to(device)
             latent = visual_domain.encode(images)
             latents.append(latent.detach().cpu().numpy())
 
