@@ -9,6 +9,7 @@ from omegaconf import MISSING
 class DomainType(Enum):
     v = ("v", "default")
     attr = ("attr", "default")
+    attr_legacy = ("attr", "legacy")
     attr_unpaired = ("attr", "unpaired")
     v_latents = ("v_latents", "default")
     v_latents_unpaired = ("v_latents", "unpaired")

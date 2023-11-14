@@ -270,3 +270,37 @@ class AttributeWithUnpairedDomainModule(DomainModule):
                 pred[:, : self.paired_dim], target[:, : self.paired_dim]
             ),
         }
+
+
+class AttributeLegacyDomainModule(DomainModule):
+    latent_dim = 11
+
+    def __init__(
+        self,
+    ):
+        super().__init__()
+        self.save_hyperparameters()
+
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
+        pred_cat, pred_attr, _ = self.decode(pred)
+        target_cat, target_attr, _ = self.decode(target)
+
+        loss_attr = F.mse_loss(pred_attr, target_attr, reduction="mean")
+        loss_cat = F.nll_loss(pred_cat, torch.argmax(target_cat, 1))
+        loss = loss_attr + loss_cat
+
+        return {"loss": loss, "loss_attr": loss_attr, "loss_cat": loss_cat}
+
+    def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
+        return torch.cat(list(x)[:-1], dim=-1)
+
+    def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
+        categories = z[:, :3]
+        attr = z[:, 3:11]
+        unpaired = torch.zeros_like(z[:, 0])
+        return [categories, attr, unpaired]
+
+    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
+        return self.decode(self.encode(x))

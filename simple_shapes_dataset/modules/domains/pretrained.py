@@ -5,7 +5,8 @@ from shimmer.modules.domain import DomainDescription, DomainModule
 from simple_shapes_dataset.config.global_workspace import DomainType, LoadedDomainConfig
 from simple_shapes_dataset.errors import ConfigurationError
 from simple_shapes_dataset.modules.domains.attribute import (
-    AttributeDomainModule, AttributeWithUnpairedDomainModule)
+    AttributeDomainModule, AttributeLegacyDomainModule,
+    AttributeWithUnpairedDomainModule)
 from simple_shapes_dataset.modules.domains.visual import (
     VisualDomainModule, VisualLatentDomainModule, VisualLatentDomainWithUnpairedModule)
 from simple_shapes_dataset.modules.vae import RAEEncoder
@@ -61,6 +62,11 @@ def load_pretrained_module(
                 ),
             )
             latent_dim = module.latent_dim
+
+        case DomainType.attr_legacy:
+            module = AttributeLegacyDomainModule()
+            latent_dim = module.latent_dim
+
         case _:
             raise ConfigurationError(
                 f"Unknown domain type {domain.domain_type.name}"
