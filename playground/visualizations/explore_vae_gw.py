@@ -6,22 +6,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms.functional as F
+from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.config import load_structured_config
-from shimmer.modules.global_workspace import VariationalGlobalWorkspace
+from shimmer.modules.global_workspace import GlobalWorkspace
 from torchvision.utils import make_grid
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
-from simple_shapes_dataset.modules.domains.pretrained import (
-    load_pretrained_domains,
-)
-from simple_shapes_dataset.modules.domains.visual import (
-    VisualLatentDomainModule,
-)
+from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
+from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
 
 matplotlib.use("Agg")
 
@@ -36,7 +33,7 @@ def image_grid_from_v_tensor(
 
 
 def dim_exploration_figure(
-    module: VariationalGlobalWorkspace,
+    module: GlobalWorkspace,
     z_size: int,
     device: torch.device,
     domain: str,
@@ -46,13 +43,13 @@ def dim_exploration_figure(
     image_size: int = 32,
     plot_dims: Sequence[int] | None = None,
     fig_dim: int = 5,
-) -> plt.Figure:
+) -> Figure:
     possible_dims = plot_dims or np.arange(z_size)
 
     fig_size = (len(possible_dims) - 1) * fig_dim
 
     fig = cast(
-        plt.Figure,
+        Figure,
         plt.figure(
             constrained_layout=True, figsize=(fig_size, fig_size), dpi=1
         ),
@@ -161,8 +158,8 @@ def main() -> None:
     )
 
     domain_module = cast(
-        VariationalGlobalWorkspace,
-        VariationalGlobalWorkspace.load_from_checkpoint(
+        GlobalWorkspace,
+        GlobalWorkspace.load_from_checkpoint(
             config.visualization.explore_gw.checkpoint,
             domain_description=domain_description,
         ),

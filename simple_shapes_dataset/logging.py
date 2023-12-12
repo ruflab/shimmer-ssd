@@ -12,9 +12,7 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
-from shimmer.modules.global_workspace import (DeterministicGlobalWorkspace,
-                                              GlobalWorkspace,
-                                              VariationalGlobalWorkspace)
+from shimmer.modules.global_workspace import GlobalWorkspace
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import LOGGER
@@ -446,13 +444,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "train":
             return
 
-        if not isinstance(
-            pl_module,
-            (
-                DeterministicGlobalWorkspace,
-                VariationalGlobalWorkspace,
-            ),
-        ):
+        if not isinstance(pl_module, GlobalWorkspace):
             return
 
         if (
@@ -473,13 +465,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "val":
             return
 
-        if not isinstance(
-            pl_module,
-            (
-                DeterministicGlobalWorkspace,
-                VariationalGlobalWorkspace,
-            ),
-        ):
+        if not isinstance(pl_module, GlobalWorkspace):
             return
 
         if (
@@ -500,13 +486,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "test":
             return
 
-        if not isinstance(
-            pl_module,
-            (
-                DeterministicGlobalWorkspace,
-                VariationalGlobalWorkspace,
-            ),
-        ):
+        if not isinstance(pl_module, GlobalWorkspace):
             return
 
         return self.on_callback(
@@ -521,13 +501,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode == "test":
             return
 
-        if not isinstance(
-            pl_module,
-            (
-                DeterministicGlobalWorkspace,
-                VariationalGlobalWorkspace,
-            ),
-        ):
+        if not isinstance(pl_module, GlobalWorkspace):
             return
 
         return self.on_callback(
