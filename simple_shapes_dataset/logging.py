@@ -12,7 +12,8 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
-from shimmer.modules.global_workspace import GlobalWorkspace
+from shimmer.modules.global_workspace import (GlobalWorkspace, GlobalWorkspaceBase,
+                                              VariationalGlobalWorkspace)
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import LOGGER
@@ -380,7 +381,7 @@ class LogGWImagesCallback(pl.Callback):
         self,
         current_epoch: int,
         loggers: Sequence[Logger],
-        pl_module: GlobalWorkspace,
+        pl_module: GlobalWorkspaceBase,
     ) -> None:
         if not (len(loggers)):
             return
@@ -444,7 +445,9 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "train":
             return
 
-        if not isinstance(pl_module, GlobalWorkspace):
+        if not isinstance(
+            pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)
+        ):
             return
 
         if (
@@ -465,7 +468,9 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "val":
             return
 
-        if not isinstance(pl_module, GlobalWorkspace):
+        if not isinstance(
+            pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)
+        ):
             return
 
         if (
@@ -486,7 +491,9 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "test":
             return
 
-        if not isinstance(pl_module, GlobalWorkspace):
+        if not isinstance(
+            pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)
+        ):
             return
 
         return self.on_callback(
@@ -501,7 +508,9 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode == "test":
             return
 
-        if not isinstance(pl_module, GlobalWorkspace):
+        if not isinstance(
+            pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)
+        ):
             return
 
         return self.on_callback(
@@ -511,7 +520,7 @@ class LogGWImagesCallback(pl.Callback):
     def log_samples(
         self,
         logger: Logger,
-        pl_module: GlobalWorkspace,
+        pl_module: GlobalWorkspaceBase,
         samples: Any,
         domain: str,
         mode: str,

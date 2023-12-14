@@ -10,7 +10,8 @@ from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.config import load_structured_config
-from shimmer.modules.global_workspace import GlobalWorkspace
+from shimmer.modules.global_workspace import (GlobalWorkspaceBase,
+                                              VariationalGlobalWorkspace)
 from torchvision.utils import make_grid
 
 import wandb
@@ -33,7 +34,7 @@ def image_grid_from_v_tensor(
 
 
 def dim_exploration_figure(
-    module: GlobalWorkspace,
+    module: GlobalWorkspaceBase,
     z_size: int,
     device: torch.device,
     domain: str,
@@ -96,7 +97,7 @@ def dim_exploration_figure(
                 case "v_latents":
                     decoded_img = cast(
                         VisualLatentDomainModule,
-                        module.domain_modules[domain],
+                        module.domain_mods[domain],
                     ).decode_images(decoded_x)
                     img_grid = image_grid_from_v_tensor(
                         decoded_img,
@@ -158,8 +159,8 @@ def main() -> None:
     )
 
     domain_module = cast(
-        GlobalWorkspace,
-        GlobalWorkspace.load_from_checkpoint(
+        VariationalGlobalWorkspace,
+        VariationalGlobalWorkspace.load_from_checkpoint(
             config.visualization.explore_gw.checkpoint,
             domain_description=domain_description,
         ),
@@ -171,7 +172,7 @@ def main() -> None:
     range_end = config.visualization.explore_gw.range_end
     fig = dim_exploration_figure(
         domain_module,
-        domain_module.latent_dim,
+        domain_module.gw_mod.latent_dim,
         device,
         config.visualization.explore_gw.domain,
         num_samples,

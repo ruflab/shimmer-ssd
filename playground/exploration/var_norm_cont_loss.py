@@ -4,7 +4,7 @@ from typing import Any, cast
 
 import torch
 from shimmer import load_structured_config
-from shimmer.modules.global_workspace import GlobalWorkspace
+from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 from shimmer.modules.gw_module import VariationalGWModule
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
@@ -74,8 +74,8 @@ def main():
     )
 
     domain_module = cast(
-        GlobalWorkspace,
-        GlobalWorkspace.load_from_checkpoint(
+        VariationalGlobalWorkspace,
+        VariationalGlobalWorkspace.load_from_checkpoint(
             config.exploration.gw_checkpoint,
             domain_descriptions=domain_description,
         ),

@@ -9,8 +9,8 @@ from lightning.pytorch.callbacks import (LearningRateMonitor, ModelCheckpoint,
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
 from shimmer import load_structured_config
-from shimmer.modules.global_workspace import (SchedulerArgs, global_workspace,
-                                              variational_global_workspace)
+from shimmer.modules.global_workspace import (GlobalWorkspace, SchedulerArgs,
+                                              VariationalGlobalWorkspace)
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
@@ -85,7 +85,7 @@ def main():
     #     )
 
     if config.global_workspace.is_variational:
-        module = variational_global_workspace(
+        module = VariationalGlobalWorkspace(
             domain_modules,
             config.global_workspace.latent_dim,
             loss_coefs,
@@ -98,7 +98,7 @@ def main():
             ),
         )
     else:
-        module = global_workspace(
+        module = GlobalWorkspace(
             domain_modules,
             config.global_workspace.latent_dim,
             loss_coefs,
