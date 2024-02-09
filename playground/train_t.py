@@ -17,7 +17,7 @@ from simple_shapes_dataset.modules.domains.text import TextDomainModule
 def main():
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["train_t"],
+        load_files=["train_t.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

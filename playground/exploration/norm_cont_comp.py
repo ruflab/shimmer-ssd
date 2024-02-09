@@ -37,7 +37,7 @@ def put_on_device(
 def main():
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["exp_var_cont"],
+        load_files=["exp_var_cont.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

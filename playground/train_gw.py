@@ -31,7 +31,7 @@ from simple_shapes_dataset.modules.domains import load_pretrained_domains
 def main():
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["train_gw"],
+        load_files=["train_gw.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

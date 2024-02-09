@@ -136,7 +136,7 @@ def dim_exploration_figure(
 def main() -> None:
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["viz_vae_gw"],
+        load_files=["viz_vae_gw.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

@@ -17,7 +17,7 @@ from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModul
 def main():
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["train_attr"],
+        load_files=["train_attr.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

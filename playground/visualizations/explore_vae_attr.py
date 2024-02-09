@@ -17,7 +17,7 @@ matplotlib.use("Agg")
 def main() -> None:
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["viz_vae_attr"],
+        load_files=["viz_vae_attr.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

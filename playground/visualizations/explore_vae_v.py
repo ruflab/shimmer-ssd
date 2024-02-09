@@ -30,7 +30,7 @@ def image_grid_from_v_tensor(
 def main() -> None:
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["viz_vae_v"],
+        load_files=["viz_vae_v.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

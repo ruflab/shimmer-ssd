@@ -23,7 +23,7 @@ def main():
 
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["train_v"],
+        load_files=["train_v.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

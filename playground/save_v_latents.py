@@ -17,7 +17,7 @@ from simple_shapes_dataset.types import DomainType
 def main():
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["save_v_latents"],
+        load_files=["save_v_latents.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

@@ -18,7 +18,7 @@ from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_dom
 def main():
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["exp_var_cont"],
+        load_files=["exp_var_cont.yaml"],
         debug_mode=DEBUG_MODE,
     )
 

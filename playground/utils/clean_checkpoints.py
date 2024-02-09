@@ -8,7 +8,7 @@ from simple_shapes_dataset.config import load_config
 def main():
     config = load_config(
         PROJECT_DIR / "config",
-        load_files=["train_gw"],
+        load_files=["train_gw.yaml"],
         debug_mode=DEBUG_MODE,
     )
 
