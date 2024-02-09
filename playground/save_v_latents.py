@@ -3,22 +3,21 @@ from typing import Any, cast
 
 import numpy as np
 import torch
-from shimmer import load_structured_config
 from tqdm import tqdm
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_module
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
-from simple_shapes_dataset.types import Config, DomainType
+from simple_shapes_dataset.types import DomainType
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["save_v_latents"],
+        load_files=["save_v_latents"],
         debug_mode=DEBUG_MODE,
     )
 
@@ -44,7 +43,7 @@ def main():
 
     visual_domain = cast(
         VisualDomainModule,
-        load_pretrained_module(config.domain_checkpoint)[0],
+        load_pretrained_module(config.default_root_dir, config.domain_checkpoint)[0],
     )
     visual_domain.to(device)
     visual_domain.freeze()

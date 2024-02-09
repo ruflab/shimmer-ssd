@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import cast
 
 from shimmer.modules.domain import DomainDescription, DomainModule
@@ -18,14 +19,16 @@ from simple_shapes_dataset.types import DomainType, LoadedDomainConfig
 
 
 def load_pretrained_module(
+    root_path: Path,
     domain: LoadedDomainConfig,
 ) -> tuple[DomainModule, int]:
+    domain_checkpoint = root_path / domain.checkpoint_path
     match domain.domain_type:
         case DomainType.v:
             module = cast(
                 VisualDomainModule,
                 VisualDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path, **domain.args
+                    domain_checkpoint, **domain.args
                 ),
             )
             latent_dim = cast(RAEEncoder, module.vae.encoder).z_dim
@@ -34,7 +37,7 @@ def load_pretrained_module(
             v_module = cast(
                 VisualDomainModule,
                 VisualDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path, **domain.args
+                    domain_checkpoint, **domain.args
                 ),
             )
             module = VisualLatentDomainModule(v_module)
@@ -44,7 +47,7 @@ def load_pretrained_module(
             v_module = cast(
                 VisualDomainModule,
                 VisualDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path, **domain.args
+                    domain_checkpoint, **domain.args
                 ),
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
@@ -54,7 +57,7 @@ def load_pretrained_module(
             module = cast(
                 AttributeDomainModule,
                 AttributeDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path, **domain.args
+                    domain_checkpoint, **domain.args
                 ),
             )
             latent_dim = module.latent_dim
@@ -63,7 +66,7 @@ def load_pretrained_module(
             module = cast(
                 AttributeWithUnpairedDomainModule,
                 AttributeWithUnpairedDomainModule.load_from_checkpoint(
-                    domain.checkpoint_path, **domain.args
+                    domain_checkpoint, **domain.args
                 ),
             )
             latent_dim = module.latent_dim
@@ -78,13 +81,14 @@ def load_pretrained_module(
 
 
 def load_pretrained_domain(
+    default_root_dir: Path,
     domain: LoadedDomainConfig,
     encoder_hidden_dim: int,
     encoder_n_layers: int,
     decoder_hidden_dim: int,
     decoder_n_layers: int,
 ) -> DomainDescription:
-    module, latent_dim = load_pretrained_module(domain)
+    module, latent_dim = load_pretrained_module(default_root_dir, domain)
 
     return DomainDescription(
         module=module,
@@ -97,6 +101,7 @@ def load_pretrained_domain(
 
 
 def load_pretrained_domains(
+    default_root_dir: Path,
     domains: list[LoadedDomainConfig],
     encoders_hidden_dim: int,
     encoders_n_layers: int,
@@ -108,6 +113,7 @@ def load_pretrained_domains(
         if domain.domain_type.kind in modules:
             raise ConfigurationError("Cannot load multiple domains of the same kind.")
         modules[domain.domain_type.kind] = load_pretrained_domain(
+            default_root_dir,
             domain,
             encoders_hidden_dim,
             encoders_n_layers,

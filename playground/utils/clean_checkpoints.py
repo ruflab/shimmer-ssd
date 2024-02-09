@@ -1,17 +1,14 @@
 import shutil
 
-from shimmer import load_structured_config
-
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.types import Config
+from simple_shapes_dataset.config import load_config
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["train_gw"],
+        load_files=["train_gw"],
         debug_mode=DEBUG_MODE,
     )
 

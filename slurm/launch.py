@@ -1,8 +1,7 @@
 from auto_sbatch import ExperimentHandler, GridSearch, SBatch
-from omegaconf import OmegaConf
-from shimmer import load_config
 
 from simple_shapes_dataset import DEBUG_MODE, LOGGER, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 
 
 def main():
@@ -12,8 +11,6 @@ def main():
         PROJECT_DIR / "config",
         debug_mode=DEBUG_MODE,
     )
-
-    OmegaConf.resolve(config)
 
     handler = ExperimentHandler(
         config.slurm.script,

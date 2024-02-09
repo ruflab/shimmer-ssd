@@ -22,15 +22,15 @@ ood_seed: 0
 
 global_workspace:
     domains:
-        # -   checkpoint_path: ${default_root_dir}/shimmer-simple-shapes-t1nbecx3/epoch=201.ckpt
+        # -   checkpoint_path: shimmer-simple-shapes-t1nbecx3/epoch=201.ckpt
         #     domain_type: attr
         #     args:
         #         n_unpaired: ${global_workspace.domain_args.attr.n_unpaired}
         -   checkpoint_path: "."
             domain_type: attr_legacy
-        # -   checkpoint_path: ${default_root_dir}/shimmer-simple-shapes-z5ec9tmq/epoch=501.ckpt
+        # -   checkpoint_path: shimmer-simple-shapes-z5ec9tmq/epoch=501.ckpt
         #     domain_type: v
-        -   checkpoint_path: ${default_root_dir}/pretrained/vae_v_shimmer.ckpt
+        -   checkpoint_path: pretrained/vae_v_shimmer.ckpt
             domain_type: v_latents
 
     domain_args:

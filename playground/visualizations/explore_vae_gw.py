@@ -13,15 +13,14 @@ from shimmer.modules.global_workspace import (
     GlobalWorkspaceBase,
     VariationalGlobalWorkspace,
 )
-from shimmer.types import load_structured_config
 from torchvision.utils import make_grid
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
-from simple_shapes_dataset.types import Config
 
 matplotlib.use("Agg")
 
@@ -135,16 +134,16 @@ def dim_exploration_figure(
 
 
 def main() -> None:
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["viz_vae_gw"],
+        load_files=["viz_vae_gw"],
         debug_mode=DEBUG_MODE,
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     domain_description = load_pretrained_domains(
+        config.default_root_dir,
         config.global_workspace.domains,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,

@@ -1,2 +1,2 @@
 exploration:
-    gw_checkpoint: ${default_root_dir}/shimmer-simple-shapes-syhl3yoh/epoch=408.ckpt
+    gw_checkpoint: shimmer-simple-shapes-syhl3yoh/epoch=408.ckpt

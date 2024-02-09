@@ -6,15 +6,14 @@ import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms.functional as F
 from PIL.Image import Image
-from shimmer.types import load_structured_config
 from torchvision.utils import make_grid
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import get_pil_image
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 from simple_shapes_dataset.modules.vae import RAEEncoder, dim_exploration_figure
-from simple_shapes_dataset.types import Config
 
 matplotlib.use("Agg")
 
@@ -29,10 +28,9 @@ def image_grid_from_v_tensor(
 
 
 def main() -> None:
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["viz_vae_v"],
+        load_files=["viz_vae_v"],
         debug_mode=DEBUG_MODE,
     )
 

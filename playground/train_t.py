@@ -6,21 +6,18 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
-from omegaconf import OmegaConf
-from shimmer.types import load_structured_config
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogTextCallback
 from simple_shapes_dataset.modules.domains.text import TextDomainModule
-from simple_shapes_dataset.types import Config
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["train_t"],
+        load_files=["train_t"],
         debug_mode=DEBUG_MODE,
     )
 
@@ -84,9 +81,7 @@ def main():
             tags=["train_t"],
             name=run_name,
         )
-        wandb_logger.experiment.config.update(
-            OmegaConf.to_container(config, resolve=True)
-        )
+        wandb_logger.experiment.config.update(config.model_dump())
 
         checkpoint_dir = (
             config.default_root_dir / f"{wandb_logger.name}-{wandb_logger.version}"

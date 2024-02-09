@@ -1,19 +1,17 @@
 from typing import cast
 
 from lightning.pytorch import seed_everything
-from shimmer import load_structured_config
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.modules.domains.text import TextDomainModule
-from simple_shapes_dataset.types import Config
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["exp_test_t"],
+        load_files=["exp_test_t"],
         debug_mode=DEBUG_MODE,
     )
 
@@ -39,7 +37,9 @@ def main():
 
     module = cast(
         TextDomainModule,
-        TextDomainModule.load_from_checkpoint(config.exploration.gw_checkpoint),
+        TextDomainModule.load_from_checkpoint(
+            config.default_root_dir / config.exploration.gw_checkpoint
+        ),
     )
     module.freeze()
     print(val_samples[frozenset({"t"})]["t"]["caption"][8].item())

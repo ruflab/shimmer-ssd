@@ -3,24 +3,22 @@ from collections.abc import Callable
 from typing import Any, cast
 
 from lightning.pytorch import Trainer
-from shimmer import load_structured_config
 from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
     color_blind_visual_domain,
     nullify_attribute_rotation,
 )
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
-from simple_shapes_dataset.types import Config
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["exp_var_cont"],
+        load_files=["exp_var_cont"],
         debug_mode=DEBUG_MODE,
     )
 
@@ -48,6 +46,7 @@ def main():
     )
 
     domain_description = load_pretrained_domains(
+        config.default_root_dir,
         config.global_workspace.domains,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,

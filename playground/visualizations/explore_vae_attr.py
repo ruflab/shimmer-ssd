@@ -3,23 +3,21 @@ from typing import cast
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
-from shimmer.types import load_structured_config
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
 from simple_shapes_dataset.modules.vae import dim_exploration_figure
-from simple_shapes_dataset.types import Config
 
 matplotlib.use("Agg")
 
 
 def main() -> None:
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["viz_vae_attr"],
+        load_files=["viz_vae_attr"],
         debug_mode=DEBUG_MODE,
     )
 

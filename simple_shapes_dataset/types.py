@@ -1,8 +1,15 @@
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel
+from shimmer import __version__ as shimmer_version
+
+
+@dataclass
+class RelativePathToRoot:
+    pass
 
 
 class DomainType(Enum):
@@ -90,7 +97,7 @@ class WanDB(BaseModel):
 
 
 class Exploration(BaseModel):
-    gw_checkpoint: Path
+    gw_checkpoint: str
 
 
 class Dataset(BaseModel):
@@ -136,7 +143,7 @@ class EncodersConfig(BaseModel):
 
 
 class LoadedDomainConfig(BaseModel):
-    checkpoint_path: Path
+    checkpoint_path: str
     domain_type: DomainType
     args: dict[str, Any]
 
@@ -168,9 +175,9 @@ class GlobalWorkspace(BaseModel):
 
 
 class ShimmerConfigInfo(BaseModel):
-    version: str
-    debug: bool
-    cli: Any
+    version: str = shimmer_version
+    debug: bool = False
+    cli: Any = {}
 
 
 class Config(BaseModel):
@@ -188,4 +195,4 @@ class Config(BaseModel):
     visualization: Visualization
     exploration: Exploration
     slurm: Slurm
-    __shimmer__: ShimmerConfigInfo | None = None
+    __shimmer__: ShimmerConfigInfo = ShimmerConfigInfo()
