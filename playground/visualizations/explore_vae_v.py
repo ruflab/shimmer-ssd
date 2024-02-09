@@ -39,7 +39,7 @@ def main() -> None:
     domain_module = cast(
         VisualDomainModule,
         VisualDomainModule.load_from_checkpoint(
-            config.visualization.explore_vae.checkpoint
+            config.default_root_dir / config.visualization.explore_vae.checkpoint
         ),
     )
     domain_module.eval().freeze()

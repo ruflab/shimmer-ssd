@@ -67,7 +67,7 @@ class Training(BaseModel):
 
 
 class ExploreVAE(BaseModel):
-    checkpoint: Path
+    checkpoint: str
     num_samples: int = 9
     range_start: int = -3
     range_end: int = 3
@@ -76,7 +76,7 @@ class ExploreVAE(BaseModel):
 
 class ExploreGW(BaseModel):
     domain: str
-    checkpoint: Path
+    checkpoint: str
     num_samples: int = 9
     range_start: int = -3
     range_end: int = 3

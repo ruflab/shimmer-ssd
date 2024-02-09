@@ -1,11 +1,11 @@
-default_root_dir: "${oc.env:HOME}/projects/simple-shapes-dataset/checkpoints"
+default_root_dir: "/home/bdevillers/projects/simple-shapes-dataset/checkpoints"
 
 dataset:
-    path: "${oc.env:DATASET_DIR}/simple_shapes_dataset"
+    path: "/shared/datasets/simple_shapes_dataset"
 
 wandb:
     enabled: true
-    save_dir: "${oc.env:HOME}/projects/simple-shapes-dataset/wandb"
+    save_dir: "/home/bdevillers/projects/simple-shapes-dataset/wandb"
     project: "shimmer-simple-shapes"
     entity: "vanrullen-lab"
     reinit: true

@@ -154,7 +154,7 @@ def main() -> None:
     domain_module = cast(
         VariationalGlobalWorkspace,
         VariationalGlobalWorkspace.load_from_checkpoint(
-            config.visualization.explore_gw.checkpoint,
+            config.default_root_dir / config.visualization.explore_gw.checkpoint,
             domain_description=domain_description,
         ),
     )
