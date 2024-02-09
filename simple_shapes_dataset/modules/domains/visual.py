@@ -179,3 +179,4 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
             f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}"
         )
         return self.visual_module.decode(z[:, :-1])
+
