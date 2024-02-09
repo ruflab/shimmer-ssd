@@ -20,8 +20,9 @@ jobs:
             poetry install --with dev
       - uses: isort/isort-action@master
         with:
-          sortPaths: "."
-          configuration: --check-only --diff --profile="black" --line-length=88
+          sortPaths: 
+            - "./simple_shapes_dataset"
+            - "./playground"
       - uses: psf/black@stable
         with:
           src: "."
