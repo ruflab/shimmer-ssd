@@ -2,7 +2,6 @@ from typing import cast
 
 from shimmer.modules.domain import DomainDescription, DomainModule
 
-from simple_shapes_dataset.config.global_workspace import DomainType, LoadedDomainConfig
 from simple_shapes_dataset.errors import ConfigurationError
 from simple_shapes_dataset.modules.domains.attribute import (
     AttributeDomainModule,
@@ -15,6 +14,7 @@ from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainWithUnpairedModule,
 )
 from simple_shapes_dataset.modules.vae import RAEEncoder
+from simple_shapes_dataset.types import DomainType, LoadedDomainConfig
 
 
 def load_pretrained_module(

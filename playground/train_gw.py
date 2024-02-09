@@ -20,7 +20,6 @@ from shimmer.modules.global_workspace import (
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
     color_blind_visual_domain,
@@ -28,6 +27,7 @@ from simple_shapes_dataset.dataset.pre_process import (
 )
 from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
+from simple_shapes_dataset.types import Config
 
 
 def main():

@@ -3,14 +3,14 @@ from typing import cast
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
-from shimmer.config import load_structured_config
+from shimmer.types import load_structured_config
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
 from simple_shapes_dataset.modules.vae import dim_exploration_figure
+from simple_shapes_dataset.types import Config
 
 matplotlib.use("Agg")
 

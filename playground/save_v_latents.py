@@ -7,12 +7,11 @@ from shimmer import load_structured_config
 from tqdm import tqdm
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.global_workspace import DomainType
-from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_module
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
+from simple_shapes_dataset.types import Config, DomainType
 
 
 def main():

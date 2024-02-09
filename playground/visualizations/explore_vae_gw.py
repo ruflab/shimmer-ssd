@@ -9,19 +9,19 @@ import torchvision.transforms.functional as F
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
-from shimmer.config import load_structured_config
 from shimmer.modules.global_workspace import (
     GlobalWorkspaceBase,
     VariationalGlobalWorkspace,
 )
+from shimmer.types import load_structured_config
 from torchvision.utils import make_grid
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
+from simple_shapes_dataset.types import Config
 
 matplotlib.use("Agg")
 

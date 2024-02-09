@@ -6,15 +6,15 @@ import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms.functional as F
 from PIL.Image import Image
-from shimmer.config import load_structured_config
+from shimmer.types import load_structured_config
 from torchvision.utils import make_grid
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import get_pil_image
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 from simple_shapes_dataset.modules.vae import RAEEncoder, dim_exploration_figure
+from simple_shapes_dataset.types import Config
 
 matplotlib.use("Agg")
 

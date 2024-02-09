@@ -10,14 +10,14 @@ from lightning.pytorch.callbacks import (
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
 from omegaconf import OmegaConf
-from shimmer.config import load_structured_config
+from shimmer.types import load_structured_config
 
 from simple_shapes_dataset import DEBUG_MODE, LOGGER, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
 from simple_shapes_dataset.logging import LogVisualCallback
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
+from simple_shapes_dataset.types import Config
 
 
 def main():

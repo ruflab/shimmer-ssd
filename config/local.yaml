@@ -1,0 +1,50 @@
+default_root_dir: "${oc.env:HOME}/projects/simple-shapes-dataset/checkpoints"
+
+dataset:
+    path: "${oc.env:DATASET_DIR}/simple_shapes_dataset"
+
+wandb:
+    enabled: true
+    save_dir: "${oc.env:HOME}/projects/simple-shapes-dataset/wandb"
+    project: "shimmer-simple-shapes"
+    entity: "vanrullen-lab"
+    reinit: true
+
+training:
+    precision: "16-mixed"
+    float32_matmul_precision: "medium"
+
+domain_modules:
+    text:
+        latent_filename: bert-base-uncased
+
+ood_seed: 0
+
+global_workspace:
+    domains:
+        # -   checkpoint_path: ${default_root_dir}/shimmer-simple-shapes-t1nbecx3/epoch=201.ckpt
+        #     domain_type: attr
+        #     args:
+        #         n_unpaired: ${global_workspace.domain_args.attr.n_unpaired}
+        -   checkpoint_path: "."
+            domain_type: attr_legacy
+        # -   checkpoint_path: ${default_root_dir}/shimmer-simple-shapes-z5ec9tmq/epoch=501.ckpt
+        #     domain_type: v
+        -   checkpoint_path: ${default_root_dir}/pretrained/vae_v_shimmer.ckpt
+            domain_type: v_latents
+
+    domain_args:
+        v_latents:
+            # presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501_color_blind.npy
+            # presaved_path: shimmer-simple-shapes-z5ec9tmq_epoch=501.npy
+            presaved_path: vae_v_shimmer.npy
+        attr:
+            n_unpaired: 1
+
+
+slurm:
+    script: "playground/train_v.py"
+    run_workdir: "."
+    python_env: "test"
+    command: "python test.py"
+

@@ -4,7 +4,7 @@ from shimmer import load_structured_config
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
+from simple_shapes_dataset.types import Config
 
 
 def main():
