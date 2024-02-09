@@ -142,20 +142,23 @@ def main() -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    domain_description = load_pretrained_domains(
+    domain_description, interfaces = load_pretrained_domains(
         config.default_root_dir,
         config.global_workspace.domains,
+        config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
+        is_variational=True,
     )
 
     domain_module = cast(
         VariationalGlobalWorkspace,
         VariationalGlobalWorkspace.load_from_checkpoint(
             config.default_root_dir / config.visualization.explore_gw.checkpoint,
-            domain_description=domain_description,
+            domain_mods=domain_description,
+            gw_interfaces=interfaces,
         ),
     )
     domain_module.eval().freeze()

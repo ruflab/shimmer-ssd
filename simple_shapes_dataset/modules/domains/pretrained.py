@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import cast
 
-from shimmer import DomainModule, GWInterface
+from shimmer import DomainModule, GWInterface, GWInterfaceBase, VariationalGWInterface
 
 from simple_shapes_dataset.errors import ConfigurationError
 from simple_shapes_dataset.modules.domains.attribute import (
@@ -81,10 +81,13 @@ def load_pretrained_domain(
     encoder_n_layers: int,
     decoder_hidden_dim: int,
     decoder_n_layers: int,
-) -> tuple[DomainModule, GWInterface]:
+    is_variational: bool = False,
+) -> tuple[DomainModule, GWInterfaceBase]:
     module = load_pretrained_module(default_root_dir, domain)
 
-    return module, GWInterface(
+    interface_cls = VariationalGWInterface if is_variational else GWInterface
+
+    return module, interface_cls(
         module,
         workspace_dim=workspace_dim,
         encoder_hidden_dim=encoder_hidden_dim,
@@ -102,9 +105,10 @@ def load_pretrained_domains(
     encoders_n_layers: int,
     decoders_hidden_dim: int,
     decoders_n_layers: int,
-) -> tuple[dict[str, DomainModule], dict[str, GWInterface]]:
+    is_variational: bool = False,
+) -> tuple[dict[str, DomainModule], dict[str, GWInterfaceBase]]:
     modules: dict[str, DomainModule] = {}
-    interfaces: dict[str, GWInterface] = {}
+    interfaces: dict[str, GWInterfaceBase] = {}
     for domain in domains:
         if domain.domain_type.kind in modules:
             raise ConfigurationError("Cannot load multiple domains of the same kind.")
@@ -116,6 +120,7 @@ def load_pretrained_domains(
             encoders_n_layers,
             decoders_hidden_dim,
             decoders_n_layers,
+            is_variational,
         )
         modules[domain.domain_type.kind] = model
         interfaces[domain.domain_type.kind] = interface

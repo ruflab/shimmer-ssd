@@ -61,13 +61,15 @@ def main():
         additional_transforms=additional_transforms,
     )
 
-    domain_modules = load_pretrained_domains(
+    domain_modules, interfaces = load_pretrained_domains(
         config.default_root_dir,
         config.global_workspace.domains,
+        config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
+        is_variational=config.global_workspace.is_variational,
     )
 
     loss_coefs: dict[str, torch.Tensor] = {
@@ -91,6 +93,7 @@ def main():
     if config.global_workspace.is_variational:
         module = VariationalGlobalWorkspace(
             domain_modules,
+            interfaces,
             config.global_workspace.latent_dim,
             loss_coefs,
             config.global_workspace.var_contrastive_loss,
@@ -104,6 +107,7 @@ def main():
     else:
         module = GlobalWorkspace(
             domain_modules,
+            interfaces,
             config.global_workspace.latent_dim,
             loss_coefs,
             config.training.optim.lr,
