@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import cast
 
-from shimmer.modules.domain import DomainDescription, DomainModule
+from shimmer import DomainModule, GWInterface
 
 from simple_shapes_dataset.errors import ConfigurationError
 from simple_shapes_dataset.modules.domains.attribute import (
@@ -14,14 +14,13 @@ from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainModule,
     VisualLatentDomainWithUnpairedModule,
 )
-from simple_shapes_dataset.modules.vae import RAEEncoder
 from simple_shapes_dataset.types import DomainType, LoadedDomainConfig
 
 
 def load_pretrained_module(
     root_path: Path,
     domain: LoadedDomainConfig,
-) -> tuple[DomainModule, int]:
+) -> DomainModule:
     domain_checkpoint = root_path / domain.checkpoint_path
     match domain.domain_type:
         case DomainType.v:
@@ -31,7 +30,6 @@ def load_pretrained_module(
                     domain_checkpoint, **domain.args
                 ),
             )
-            latent_dim = cast(RAEEncoder, module.vae.encoder).z_dim
 
         case DomainType.v_latents:
             v_module = cast(
@@ -41,7 +39,6 @@ def load_pretrained_module(
                 ),
             )
             module = VisualLatentDomainModule(v_module)
-            latent_dim = module.latent_dim
 
         case DomainType.v_latents_unpaired:
             v_module = cast(
@@ -51,7 +48,6 @@ def load_pretrained_module(
                 ),
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
-            latent_dim = module.latent_dim
 
         case DomainType.attr:
             module = cast(
@@ -60,7 +56,6 @@ def load_pretrained_module(
                     domain_checkpoint, **domain.args
                 ),
             )
-            latent_dim = module.latent_dim
 
         case DomainType.attr_unpaired:
             module = cast(
@@ -69,30 +64,29 @@ def load_pretrained_module(
                     domain_checkpoint, **domain.args
                 ),
             )
-            latent_dim = module.latent_dim
 
         case DomainType.attr_legacy:
             module = AttributeLegacyDomainModule()
-            latent_dim = module.latent_dim
 
         case _:
             raise ConfigurationError(f"Unknown domain type {domain.domain_type.name}")
-    return module, latent_dim
+    return module
 
 
 def load_pretrained_domain(
     default_root_dir: Path,
     domain: LoadedDomainConfig,
+    workspace_dim: int,
     encoder_hidden_dim: int,
     encoder_n_layers: int,
     decoder_hidden_dim: int,
     decoder_n_layers: int,
-) -> DomainDescription:
-    module, latent_dim = load_pretrained_module(default_root_dir, domain)
+) -> tuple[DomainModule, GWInterface]:
+    module = load_pretrained_module(default_root_dir, domain)
 
-    return DomainDescription(
-        module=module,
-        latent_dim=latent_dim,
+    return module, GWInterface(
+        module,
+        workspace_dim=workspace_dim,
         encoder_hidden_dim=encoder_hidden_dim,
         encoder_n_layers=encoder_n_layers,
         decoder_hidden_dim=decoder_hidden_dim,
@@ -103,21 +97,26 @@ def load_pretrained_domain(
 def load_pretrained_domains(
     default_root_dir: Path,
     domains: list[LoadedDomainConfig],
+    workspace_dim: int,
     encoders_hidden_dim: int,
     encoders_n_layers: int,
     decoders_hidden_dim: int,
     decoders_n_layers: int,
-) -> dict[str, DomainDescription]:
-    modules: dict[str, DomainDescription] = {}
+) -> tuple[dict[str, DomainModule], dict[str, GWInterface]]:
+    modules: dict[str, DomainModule] = {}
+    interfaces: dict[str, GWInterface] = {}
     for domain in domains:
         if domain.domain_type.kind in modules:
             raise ConfigurationError("Cannot load multiple domains of the same kind.")
-        modules[domain.domain_type.kind] = load_pretrained_domain(
+        model, interface = load_pretrained_domain(
             default_root_dir,
             domain,
+            workspace_dim,
             encoders_hidden_dim,
             encoders_n_layers,
             decoders_hidden_dim,
             decoders_n_layers,
         )
-    return modules
+        modules[domain.domain_type.kind] = model
+        interfaces[domain.domain_type.kind] = interface
+    return modules, interfaces

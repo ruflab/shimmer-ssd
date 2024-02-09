@@ -91,10 +91,9 @@ class AttributeDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
     ):
-        super().__init__()
+        super().__init__(latent_dim)
         self.save_hyperparameters()
 
-        self.latent_dim = latent_dim
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
@@ -218,12 +217,11 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
     ):
-        super().__init__()
-        self.save_hyperparameters()
+        super().__init__(latent_dim + n_unpaired)
 
+        self.save_hyperparameters()
         self.paired_dim = latent_dim
         self.n_unpaired = n_unpaired
-        self.latent_dim = latent_dim + self.n_unpaired
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
@@ -274,10 +272,8 @@ class AttributeWithUnpairedDomainModule(DomainModule):
 class AttributeLegacyDomainModule(DomainModule):
     latent_dim = 11
 
-    def __init__(
-        self,
-    ):
-        super().__init__()
+    def __init__(self):
+        super().__init__(self.latent_dim)
         self.save_hyperparameters()
 
     def compute_loss(

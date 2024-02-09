@@ -88,10 +88,9 @@ class TextDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
     ):
-        super().__init__()
+        super().__init__(latent_dim)
         self.save_hyperparameters()
 
-        self.latent_dim = latent_dim
         self.hidden_dim = hidden_dim
 
         vae_encoder = Encoder(self.in_dim, self.hidden_dim, self.latent_dim)

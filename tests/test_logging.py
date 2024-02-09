@@ -1,5 +1,5 @@
 from lightning.pytorch.loggers.wandb import WandbLogger
-from shimmer.modules.domain import DomainDescription
+from shimmer import GWInterface
 from shimmer.modules.global_workspace import GlobalWorkspace
 from utils import PROJECT_DIR
 
@@ -40,18 +40,25 @@ def test_gw_logger():
         seed=0,
     )
 
+    workspace_dim = 4
+
     domains = {
-        "v": DomainDescription(
-            module=VisualDomainModule(3, 4, 16),
-            latent_dim=4,
+        "v": VisualDomainModule(3, 4, 16),
+        "attr": AttributeDomainModule(4, 16),
+    }
+
+    domain_interfaces = {
+        "v": GWInterface(
+            domains["v"],
+            workspace_dim=workspace_dim,
             encoder_hidden_dim=16,
             encoder_n_layers=2,
             decoder_hidden_dim=16,
             decoder_n_layers=2,
         ),
-        "attr": DomainDescription(
-            module=AttributeDomainModule(4, 16),
-            latent_dim=4,
+        "attr": GWInterface(
+            domains["attr"],
+            workspace_dim=workspace_dim,
             encoder_hidden_dim=16,
             encoder_n_layers=2,
             decoder_hidden_dim=16,
@@ -59,7 +66,7 @@ def test_gw_logger():
         ),
     }
 
-    module = GlobalWorkspace(domains, latent_dim=4, loss_coefs={})
+    module = GlobalWorkspace(domains, domain_interfaces, workspace_dim, loss_coefs={})
     wandb_logger = WandbLogger(mode="disabled")
 
     val_samples = data_module.get_samples("val", 2)

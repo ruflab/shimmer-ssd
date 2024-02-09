@@ -22,7 +22,7 @@ class VisualDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: Mapping[str, Any] | None = None,
     ):
-        super().__init__()
+        super().__init__(latent_dim)
         self.save_hyperparameters()
 
         vae_encoder = RAEEncoder(
@@ -37,7 +37,6 @@ class VisualDomainModule(DomainModule):
             ae_dim,
         )
         self.vae = VAE(vae_encoder, vae_decoder, beta)
-        self.latent_dim = latent_dim
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
         self.scheduler_args: dict[str, Any] = {
@@ -118,9 +117,8 @@ class VisualDomainModule(DomainModule):
 
 class VisualLatentDomainModule(DomainModule):
     def __init__(self, visual_module: VisualDomainModule):
-        super().__init__()
+        super().__init__(visual_module.latent_dim)
         self.visual_module = visual_module
-        self.latent_dim = self.visual_module.latent_dim
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x[:, :-1]
@@ -141,10 +139,9 @@ class VisualLatentDomainModule(DomainModule):
 
 class VisualLatentDomainWithUnpairedModule(DomainModule):
     def __init__(self, visual_module: VisualDomainModule):
-        super().__init__()
+        super().__init__(visual_module.latent_dim + 1)
         self.visual_module = visual_module
         self.paired_dim = self.visual_module.latent_dim
-        self.latent_dim = self.visual_module.latent_dim + 1
 
     # def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
     #     out = x.clone()
