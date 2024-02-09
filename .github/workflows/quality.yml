@@ -21,6 +21,7 @@ jobs:
       - uses: isort/isort-action@master
         with:
           sortPaths: "."
+          configuration: --check-only --diff --profile="black" --line-length=88
       - uses: psf/black@stable
         with:
           src: "."
