@@ -7,8 +7,10 @@ from shimmer import ShimmerInfoConfig
 from simple_shapes_dataset.config.dataset import Dataset
 from simple_shapes_dataset.config.domains import DomainModules
 from simple_shapes_dataset.config.exploration import Exploration
-from simple_shapes_dataset.config.global_workspace import (GlobalWorkspace,
-                                                           LoadedDomainConfig)
+from simple_shapes_dataset.config.global_workspace import (
+    GlobalWorkspace,
+    LoadedDomainConfig,
+)
 from simple_shapes_dataset.config.logging import Logging
 from simple_shapes_dataset.config.slurm import Slurm
 from simple_shapes_dataset.config.training import Training

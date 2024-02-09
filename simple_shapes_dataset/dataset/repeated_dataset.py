@@ -30,8 +30,7 @@ class RepeatedDataset(Dataset):
             self.total_size = min_size
         else:
             self.total_size = (
-                min_size // self.dataset_size
-                + int(min_size % self.dataset_size > 0)
+                min_size // self.dataset_size + int(min_size % self.dataset_size > 0)
             ) * self.dataset_size
 
     def __len__(self) -> int:

@@ -14,10 +14,7 @@ from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import get_pil_image
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
-from simple_shapes_dataset.modules.vae import (
-    RAEEncoder,
-    dim_exploration_figure,
-)
+from simple_shapes_dataset.modules.vae import RAEEncoder, dim_exploration_figure
 
 matplotlib.use("Agg")
 

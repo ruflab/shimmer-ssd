@@ -1,7 +1,8 @@
 from utils import PROJECT_DIR
 
-from simple_shapes_dataset.dataset.downstream.odd_one_out.dataset import \
-    OddOneOutDataset
+from simple_shapes_dataset.dataset.downstream.odd_one_out.dataset import (
+    OddOneOutDataset,
+)
 
 
 def test_dataset():

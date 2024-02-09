@@ -89,9 +89,7 @@ class BoundaryInfo:
     boundary: BoundaryBase
 
 
-def attr_boundaries(
-    imsize: int, min_size: int, max_size: int
-) -> list[BoundaryInfo]:
+def attr_boundaries(imsize: int, min_size: int, max_size: int) -> list[BoundaryInfo]:
     size_range = (max_size - min_size) / 3
     margin = max_size // 2
     x_range = (imsize - 2 * margin) / 3

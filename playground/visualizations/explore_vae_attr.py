@@ -9,9 +9,7 @@ import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
-from simple_shapes_dataset.modules.domains.attribute import (
-    AttributeDomainModule,
-)
+from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
 from simple_shapes_dataset.modules.vae import dim_exploration_figure
 
 matplotlib.use("Agg")

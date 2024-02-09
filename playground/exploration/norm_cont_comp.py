@@ -11,8 +11,10 @@ from shimmer.modules.losses import contrastive_loss
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
-                                                       nullify_attribute_rotation)
+from simple_shapes_dataset.dataset.pre_process import (
+    color_blind_visual_domain,
+    nullify_attribute_rotation,
+)
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 
 

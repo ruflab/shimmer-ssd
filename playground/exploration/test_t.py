@@ -25,9 +25,7 @@ def main():
         batch_size=config.training.batch_size,
         num_workers=config.training.num_workers,
         domain_args={
-            "t": {
-                "latent_filename": config.domain_modules.text.latent_filename
-            }
+            "t": {"latent_filename": config.domain_modules.text.latent_filename}
         },
     )
 
@@ -35,19 +33,13 @@ def main():
     test_samples = data_module.get_samples("test", 32)
     for domains in val_samples.keys():
         for domain in domains:
-            val_samples[frozenset([domain])] = {
-                domain: val_samples[domains][domain]
-            }
-            test_samples[frozenset([domain])] = {
-                domain: test_samples[domains][domain]
-            }
+            val_samples[frozenset([domain])] = {domain: val_samples[domains][domain]}
+            test_samples[frozenset([domain])] = {domain: test_samples[domains][domain]}
         break
 
     module = cast(
         TextDomainModule,
-        TextDomainModule.load_from_checkpoint(
-            config.exploration.gw_checkpoint
-        ),
+        TextDomainModule.load_from_checkpoint(config.exploration.gw_checkpoint),
     )
     module.freeze()
     print(val_samples[frozenset({"t"})]["t"]["caption"][8].item())

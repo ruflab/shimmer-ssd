@@ -2,8 +2,12 @@ import click
 
 from simple_shapes_dataset.cli.odd_one_out import create_odd_one_out_dataset
 
-from .create_dataset import (add_alignment_split, create_dataset, create_ood_split,
-                             unpaired_attributes_command)
+from .create_dataset import (
+    add_alignment_split,
+    create_dataset,
+    create_ood_split,
+    unpaired_attributes_command,
+)
 
 __all__ = [
     "add_alignment_split",

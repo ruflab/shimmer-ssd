@@ -5,8 +5,13 @@ import torch
 import torch.nn.functional as F
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.global_workspace import SchedulerArgs
-from shimmer.modules.vae import (VAE, VAEDecoder, VAEEncoder, gaussian_nll,
-                                 kl_divergence_loss)
+from shimmer.modules.vae import (
+    VAE,
+    VAEDecoder,
+    VAEEncoder,
+    gaussian_nll,
+    kl_divergence_loss,
+)
 from torch import nn
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -39,9 +44,7 @@ class Encoder(VAEEncoder):
         self.q_mean = nn.Linear(self.out_dim, self.out_dim)
         self.q_logvar = nn.Linear(self.out_dim, self.out_dim)
 
-    def forward(
-        self, x: Sequence[torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: Sequence[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         out = torch.cat(list(x), dim=-1)
         out = self.encoder(out)
         return self.q_mean(out), self.q_logvar(out)
@@ -147,9 +150,7 @@ class TextDomainModule(DomainModule):
         text.update(self.predict_grammar(z))
         return text
 
-    def predict_attr(
-        self, mean: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def predict_attr(self, mean: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         attr_pred = self.attribute_cls(mean)
         attr_pred_cat = self.attribute_cls_cat(attr_pred)
         attr_pred_attr = self.attribute_cls_attr(attr_pred)
@@ -157,14 +158,9 @@ class TextDomainModule(DomainModule):
 
     def predict_grammar(self, mean: torch.Tensor) -> dict[str, torch.Tensor]:
         grammar_pred = self.grammar_cls(mean)
-        return {
-            name: head(grammar_pred)
-            for name, head in self.grammar_heads.items()
-        }
+        return {name: head(grammar_pred) for name, head in self.grammar_heads.items()}
 
-    def grammar_losses(
-        self, mean: torch.Tensor, targets
-    ) -> dict[str, torch.Tensor]:
+    def grammar_losses(self, mean: torch.Tensor, targets) -> dict[str, torch.Tensor]:
         grammar_pred = self.predict_grammar(mean)
         return {
             f"{name}_ce": F.cross_entropy(
@@ -173,9 +169,7 @@ class TextDomainModule(DomainModule):
             for name, pred in grammar_pred.items()
         }
 
-    def forward(
-        self, x: Mapping[str, torch.Tensor]
-    ) -> dict[str, torch.Tensor]:
+    def forward(self, x: Mapping[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         return self.decode(self.encode(x))
 
     def generic_step(
@@ -197,16 +191,11 @@ class TextDomainModule(DomainModule):
             attr_pred_cat, x["cls"].argmax(dim=1), reduction="sum"
         )
         loss_attr = F.mse_loss(attr_pred_attr, x["attr"], reduction="sum")
-        grammar_targets = {
-            name: x[name] for name in self.composer_grammar_options
-        }
+        grammar_targets = {name: x[name] for name in self.composer_grammar_options}
         grammar_losses = self.grammar_losses(mean, grammar_targets)
 
         total_loss = (
-            reconstruction_loss
-            + self.vae.beta * kl_loss
-            + loss_attr_cat
-            + loss_attr
+            reconstruction_loss + self.vae.beta * kl_loss + loss_attr_cat + loss_attr
         )
 
         for grammar_loss_name, grammar_loss in grammar_losses.items():
@@ -228,9 +217,7 @@ class TextDomainModule(DomainModule):
 
     def training_step(
         self,
-        batch: Mapping[
-            frozenset[str], Mapping[str, Mapping[str, torch.Tensor]]
-        ],
+        batch: Mapping[frozenset[str], Mapping[str, Mapping[str, torch.Tensor]]],
         _,
     ) -> torch.Tensor:
         x = batch[frozenset(["t"])]["t"]

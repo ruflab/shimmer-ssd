@@ -6,14 +6,18 @@ import torch
 from shimmer import load_structured_config
 from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 from shimmer.modules.gw_module import VariationalGWModule
-from shimmer.modules.losses import (VariationalGWLosses,
-                                    contrastive_loss_with_uncertainty)
+from shimmer.modules.losses import (
+    VariationalGWLosses,
+    contrastive_loss_with_uncertainty,
+)
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config.root import Config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
-                                                       nullify_attribute_rotation)
+from simple_shapes_dataset.dataset.pre_process import (
+    color_blind_visual_domain,
+    nullify_attribute_rotation,
+)
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 
 
@@ -90,9 +94,7 @@ def main():
     n_rep = 128
     n_unpaired = 8
 
-    val_samples = put_on_device(
-        data_module.get_samples("val", batch_size), device
-    )
+    val_samples = put_on_device(data_module.get_samples("val", batch_size), device)
     encoded_samples = domain_module.encode_domains(val_samples)[
         frozenset(["v_latents", "attr"])
     ]
@@ -102,12 +104,7 @@ def main():
         .expand((batch_size, n_rep, -1))
         .clone()
     )
-    attr1 = (
-        encoded_samples["attr"]
-        .unsqueeze(1)
-        .expand((batch_size, n_rep, -1))
-        .clone()
-    )
+    attr1 = encoded_samples["attr"].unsqueeze(1).expand((batch_size, n_rep, -1)).clone()
     v_unpaired = torch.randn(batch_size, n_rep, n_unpaired).to(device)
     attr_unpaired = torch.randn(batch_size, n_rep, n_unpaired).to(device)
     v2 = v1[:]
@@ -122,10 +119,7 @@ def main():
     )
 
     actual_std_attr = (
-        gw_states_means["attr"]
-        .reshape(batch_size, n_rep, -1)
-        .std(dim=1)
-        .mean(dim=0)
+        gw_states_means["attr"].reshape(batch_size, n_rep, -1).std(dim=1).mean(dim=0)
     )
     actual_std_v = (
         gw_states_means["v_latents"]

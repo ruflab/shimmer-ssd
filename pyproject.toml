@@ -50,3 +50,15 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 shapesd = "simple_shapes_dataset.cli:cli"
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.black]
+line-length = 88
+
+[tool.mypy]
+ignore_missing_imports = true
+install_types = true
+check_untyped_defs = true

@@ -100,8 +100,7 @@ def main():
         )
 
         checkpoint_dir = (
-            config.default_root_dir
-            / f"{wandb_logger.name}-{wandb_logger.version}"
+            config.default_root_dir / f"{wandb_logger.name}-{wandb_logger.version}"
         )
         callbacks.append(
             ModelCheckpoint(
@@ -114,9 +113,7 @@ def main():
         )
     LOGGER.debug(f"wandb logger: {wandb_logger}")
 
-    torch.set_float32_matmul_precision(
-        config.training.float32_matmul_precision
-    )
+    torch.set_float32_matmul_precision(config.training.float32_matmul_precision)
 
     trainer = pl.Trainer(
         logger=wandb_logger,

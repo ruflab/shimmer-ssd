@@ -68,9 +68,7 @@ class VisualDomainModule(DomainModule):
     ) -> torch.Tensor:
         (mean, logvar), reconstruction = self.vae((x,))
 
-        reconstruction_loss = gaussian_nll(
-            reconstruction[0], torch.tensor(0), x
-        ).sum()
+        reconstruction_loss = gaussian_nll(reconstruction[0], torch.tensor(0), x).sum()
 
         kl_loss = kl_divergence_loss(mean, logvar)
         total_loss = reconstruction_loss + self.vae.beta * kl_loss
@@ -137,9 +135,7 @@ class VisualLatentDomainModule(DomainModule):
         return {"loss": mse_loss(pred, target, reduction="mean")}
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
-        LOGGER.debug(
-            f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}"
-        )
+        LOGGER.debug(f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}")
         return self.visual_module.decode(z[:, :-1])
 
 
@@ -175,8 +171,5 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
         }
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
-        LOGGER.debug(
-            f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}"
-        )
+        LOGGER.debug(f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}")
         return self.visual_module.decode(z[:, :-1])
-

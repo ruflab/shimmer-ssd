@@ -16,9 +16,7 @@ def inspect_writers(composer: Composer) -> dict[str, int]:
         for k, writer in enumerate(writers):
             for variant_name, variant in writer.variants.items():
                 if len(variant) > 1:
-                    choices[f"writer_{writer_name}_{k}_{variant_name}"] = len(
-                        variant
-                    )
+                    choices[f"writer_{writer_name}_{k}_{variant_name}"] = len(variant)
     return choices
 
 
@@ -26,9 +24,7 @@ def inspect_all_choices(composer: Composer) -> dict[str, int]:
     num_structures = 0
     choices: dict[str, int] = {}
     for structure in composer.script_structures:
-        num_structures += math.factorial(
-            len(re.findall(r"<[^>]+>", structure))
-        )
+        num_structures += math.factorial(len(re.findall(r"<[^>]+>", structure)))
     choices["structure"] = num_structures
 
     for variant_name, variant in composer.variants.items():
@@ -108,9 +104,7 @@ def choices_from_structure_categories(
                         == variant_choice
                     ):
                         variant_name = split_name[3]
-                        choices["writers"][writer_name][
-                            variant_name
-                        ] = variant[i]
+                        choices["writers"][writer_name][variant_name] = variant[i]
         # structure
         category = grammar_predictions["structure"][i]
         for k, structure in enumerate(composer.script_structures):

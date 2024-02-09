@@ -22,8 +22,7 @@ def get_alignment(
     alignment_split_name = get_deterministic_name(domain_proportions, seed)
 
     alignement_split_path = (
-        dataset_path
-        / f"domain_splits/{split}_{alignment_split_name}_domain_split.npy"
+        dataset_path / f"domain_splits/{split}_{alignment_split_name}_domain_split.npy"
     )
     if not alignement_split_path.exists():
         domain_alignment = [

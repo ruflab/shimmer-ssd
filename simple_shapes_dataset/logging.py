@@ -12,14 +12,20 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
-from shimmer.modules.global_workspace import (GlobalWorkspace, GlobalWorkspaceBase,
-                                              VariationalGlobalWorkspace)
+from shimmer.modules.global_workspace import (
+    GlobalWorkspace,
+    GlobalWorkspaceBase,
+    VariationalGlobalWorkspace,
+)
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import LOGGER
 from simple_shapes_dataset.cli.utils import generate_image
-from simple_shapes_dataset.dataset.pre_process import (UnnormalizeAttributes,
-                                                       attr_to_str, tensor_to_attribute)
+from simple_shapes_dataset.dataset.pre_process import (
+    UnnormalizeAttributes,
+    attr_to_str,
+    tensor_to_attribute,
+)
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
 
 matplotlib.use("Agg")
@@ -81,19 +87,13 @@ class LogSamplesCallback(pl.Callback):
             return
 
         LOGGER.debug("[LOGGER] on_train_epoch_end called")
-        return self.on_callback(
-            trainer.current_epoch, trainer.loggers, pl_module
-        )
+        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
-    def on_fit_end(
-        self, trainer: pl.Trainer, pl_module: pl.LightningModule
-    ) -> None:
+    def on_fit_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         if self.mode == "test":
             return
 
-        return self.on_callback(
-            trainer.current_epoch, trainer.loggers, pl_module
-        )
+        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
     def on_validation_epoch_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
@@ -107,9 +107,7 @@ class LogSamplesCallback(pl.Callback):
         ):
             return
 
-        return self.on_callback(
-            trainer.current_epoch, trainer.loggers, pl_module
-        )
+        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
     def on_test_epoch_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
@@ -117,9 +115,7 @@ class LogSamplesCallback(pl.Callback):
         if self.mode != "test":
             return
 
-        return self.on_callback(
-            trainer.current_epoch, trainer.loggers, pl_module
-        )
+        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
     def log_samples(self, logger: Logger, samples: Any, mode: str) -> None:
         raise NotImplementedError
@@ -149,9 +145,7 @@ def get_attribute_figure_grid(
     height = nrows * (image_size + padding) + padding
     dpi = 1
 
-    figure = plt.figure(
-        figsize=(width / dpi, height / dpi), dpi=dpi, facecolor="white"
-    )
+    figure = plt.figure(figsize=(width / dpi, height / dpi), dpi=dpi, facecolor="white")
     gs = gridspec.GridSpec(
         nrows,
         ncols,
@@ -306,9 +300,7 @@ class LogTextCallback(LogSamplesCallback):
         unnormalizer = UnnormalizeAttributes(image_size=self.image_size)
         attributes = unnormalizer(tensor_to_attribute(attr_samples))
         text = [[t] for t in attr_to_str(attributes, grammar_predictions)]
-        logger.log_text(
-            key=f"{self.log_key}_{mode}_str", columns=["text"], data=text
-        )
+        logger.log_text(key=f"{self.log_key}_{mode}_str", columns=["text"], data=text)
 
 
 class LogVisualCallback(LogSamplesCallback):
@@ -323,13 +315,9 @@ class LogVisualCallback(LogSamplesCallback):
         super().__init__(reference_samples, log_key, mode, every_n_epochs)
         self.ncols = ncols
 
-    def log_samples(
-        self, logger: Logger, samples: torch.Tensor, mode: str
-    ) -> None:
+    def log_samples(self, logger: Logger, samples: torch.Tensor, mode: str) -> None:
         if not isinstance(logger, WandbLogger):
-            LOGGER.warning(
-                "[VISUAL LOGGER] Only logging to wandb is supported"
-            )
+            LOGGER.warning("[VISUAL LOGGER] Only logging to wandb is supported")
             return
 
         LOGGER.debug("[VISUAL LOGGER] logging samples")
@@ -361,12 +349,8 @@ class LogGWImagesCallback(pl.Callback):
             frozenset[str], Mapping[str, torch.Tensor | Sequence[torch.Tensor]]
         ],
         device: torch.device,
-    ) -> dict[
-        frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]
-    ]:
-        out: dict[
-            frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]
-        ] = {}
+    ) -> dict[frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]]:
+        out: dict[frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]] = {}
         for domain_names, domains in samples.items():
             latents: dict[str, torch.Tensor | Sequence[torch.Tensor]] = {}
             for domain_name, domain in domains.items():
@@ -445,9 +429,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "train":
             return
 
-        if not isinstance(
-            pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)
-        ):
+        if not isinstance(pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)):
             return
 
         if (
@@ -456,9 +438,7 @@ class LogGWImagesCallback(pl.Callback):
         ):
             return
 
-        return self.on_callback(
-            trainer.current_epoch, trainer.loggers, pl_module
-        )
+        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
     def on_validation_epoch_end(
         self,
@@ -468,9 +448,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "val":
             return
 
-        if not isinstance(
-            pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)
-        ):
+        if not isinstance(pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)):
             return
 
         if (
@@ -479,9 +457,7 @@ class LogGWImagesCallback(pl.Callback):
         ):
             return
 
-        return self.on_callback(
-            trainer.current_epoch, trainer.loggers, pl_module
-        )
+        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
     def on_test_epoch_end(
         self,
@@ -491,14 +467,10 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "test":
             return
 
-        if not isinstance(
-            pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)
-        ):
+        if not isinstance(pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)):
             return
 
-        return self.on_callback(
-            trainer.current_epoch, trainer.loggers, pl_module
-        )
+        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
     def on_fit_end(
         self,
@@ -508,14 +480,10 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode == "test":
             return
 
-        if not isinstance(
-            pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)
-        ):
+        if not isinstance(pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)):
             return
 
-        return self.on_callback(
-            trainer.current_epoch, trainer.loggers, pl_module
-        )
+        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
     def log_samples(
         self,
@@ -539,9 +507,7 @@ class LogGWImagesCallback(pl.Callback):
                     VisualLatentDomainModule,
                     pl_module.domain_mods["v_latents"],
                 )
-                self.log_visual_samples(
-                    logger, module.decode_images(samples), mode
-                )
+                self.log_visual_samples(logger, module.decode_images(samples), mode)
             case "attr":
                 self.log_attribute_samples(logger, samples, mode)
 

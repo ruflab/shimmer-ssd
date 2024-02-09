@@ -10,8 +10,10 @@ from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.config import load_structured_config
-from shimmer.modules.global_workspace import (GlobalWorkspaceBase,
-                                              VariationalGlobalWorkspace)
+from shimmer.modules.global_workspace import (
+    GlobalWorkspaceBase,
+    VariationalGlobalWorkspace,
+)
 from torchvision.utils import make_grid
 
 import wandb
@@ -51,9 +53,7 @@ def dim_exploration_figure(
 
     fig = cast(
         Figure,
-        plt.figure(
-            constrained_layout=True, figsize=(fig_size, fig_size), dpi=1
-        ),
+        plt.figure(constrained_layout=True, figsize=(fig_size, fig_size), dpi=1),
     )
     gs = GridSpec(len(possible_dims), len(possible_dims), figure=fig)
     done_dims: list[set[int]] = []
@@ -76,14 +76,14 @@ def dim_exploration_figure(
             )
 
             for p in range(num_samples):
-                step = range_start + (range_end - range_start) * float(
-                    p
-                ) / float(num_samples - 1)
+                step = range_start + (range_end - range_start) * float(p) / float(
+                    num_samples - 1
+                )
                 z[p, :, dim_i] = step
             for q in range(num_samples):
-                step = range_start + (range_end - range_start) * float(
-                    q
-                ) / float(num_samples - 1)
+                step = range_start + (range_end - range_start) * float(q) / float(
+                    num_samples - 1
+                )
                 z[:, q, dim_j] = step
 
             decoded_z = module.decode(z.reshape(-1, z_size))[domain]
@@ -105,18 +105,14 @@ def dim_exploration_figure(
                         num_samples,
                     )
                 case "attr":
-                    img_grid = attribute_image_grid(
-                        decoded_x, image_size, num_samples
-                    )
+                    img_grid = attribute_image_grid(decoded_x, image_size, num_samples)
                 case _:
                     raise NotImplementedError
 
             ax.imshow(img_grid)
             ax.set_xlabel(f"dim {dim_j}")
             ax.set_ylabel(f"dim {dim_i}")
-            ax.set_xticks(
-                image_size * np.arange(num_samples) + image_size // 2
-            )
+            ax.set_xticks(image_size * np.arange(num_samples) + image_size // 2)
             ax.set_xticklabels(
                 list(
                     map(
@@ -125,9 +121,7 @@ def dim_exploration_figure(
                     )
                 )
             )
-            ax.set_yticks(
-                image_size * np.arange(num_samples) + image_size // 2
-            )
+            ax.set_yticks(image_size * np.arange(num_samples) + image_size // 2)
             ax.set_yticklabels(
                 list(
                     map(

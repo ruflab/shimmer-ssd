@@ -81,6 +81,5 @@ class SimpleShapesDataset(SizedDataset):
             the given index.
         """
         return {
-            domain_name: domain[index]
-            for domain_name, domain in self.domains.items()
+            domain_name: domain[index] for domain_name, domain in self.domains.items()
         }

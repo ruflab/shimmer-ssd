@@ -5,10 +5,15 @@ from shimmer.modules.domain import DomainDescription, DomainModule
 from simple_shapes_dataset.config.global_workspace import DomainType, LoadedDomainConfig
 from simple_shapes_dataset.errors import ConfigurationError
 from simple_shapes_dataset.modules.domains.attribute import (
-    AttributeDomainModule, AttributeLegacyDomainModule,
-    AttributeWithUnpairedDomainModule)
+    AttributeDomainModule,
+    AttributeLegacyDomainModule,
+    AttributeWithUnpairedDomainModule,
+)
 from simple_shapes_dataset.modules.domains.visual import (
-    VisualDomainModule, VisualLatentDomainModule, VisualLatentDomainWithUnpairedModule)
+    VisualDomainModule,
+    VisualLatentDomainModule,
+    VisualLatentDomainWithUnpairedModule,
+)
 from simple_shapes_dataset.modules.vae import RAEEncoder
 
 
@@ -68,9 +73,7 @@ def load_pretrained_module(
             latent_dim = module.latent_dim
 
         case _:
-            raise ConfigurationError(
-                f"Unknown domain type {domain.domain_type.name}"
-            )
+            raise ConfigurationError(f"Unknown domain type {domain.domain_type.name}")
     return module, latent_dim
 
 
@@ -103,9 +106,7 @@ def load_pretrained_domains(
     modules: dict[str, DomainDescription] = {}
     for domain in domains:
         if domain.domain_type.kind in modules:
-            raise ConfigurationError(
-                "Cannot load multiple domains of the same kind."
-            )
+            raise ConfigurationError("Cannot load multiple domains of the same kind.")
         modules[domain.domain_type.kind] = load_pretrained_domain(
             domain,
             encoders_hidden_dim,

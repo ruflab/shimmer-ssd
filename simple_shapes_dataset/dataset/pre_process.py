@@ -5,14 +5,14 @@ import torch.nn.functional as F
 
 from simple_shapes_dataset.dataset.domain import Attribute, Text
 from simple_shapes_dataset.text import composer
-from simple_shapes_dataset.text.utils import (choices_from_structure_categories,
-                                              structure_category_from_choice)
+from simple_shapes_dataset.text.utils import (
+    choices_from_structure_categories,
+    structure_category_from_choice,
+)
 
 
 class NormalizeAttributes:
-    def __init__(
-        self, min_size: int = 7, max_size: int = 14, image_size: int = 32
-    ):
+    def __init__(self, min_size: int = 7, max_size: int = 14, image_size: int = 32):
         self.min_size = min_size
         self.max_size = max_size
         self.scale_size = self.max_size - self.min_size
@@ -41,9 +41,7 @@ def to_unit_range(x: torch.Tensor) -> torch.Tensor:
 
 
 class UnnormalizeAttributes:
-    def __init__(
-        self, min_size: int = 7, max_size: int = 14, image_size: int = 32
-    ):
+    def __init__(self, min_size: int = 7, max_size: int = 14, image_size: int = 32):
         self.min_size = min_size
         self.max_size = max_size
         self.scale_size = self.max_size - self.min_size
@@ -101,9 +99,7 @@ def tensor_to_attribute(tensor: Sequence[torch.Tensor]) -> Attribute:
     unpaired = tensor[2]
 
     rotation = torch.atan2(attributes[:, 4], attributes[:, 3])
-    constrained_rotation = torch.where(
-        rotation < 0, rotation + 2 * torch.pi, rotation
-    )
+    constrained_rotation = torch.where(rotation < 0, rotation + 2 * torch.pi, rotation)
 
     return Attribute(
         category=category.argmax(dim=1),
@@ -127,9 +123,7 @@ def text_to_bert(text: Text) -> torch.Tensor:
 
 
 class TextAndAttrs:
-    def __init__(
-        self, min_size: int = 7, max_size: int = 14, image_size: int = 32
-    ):
+    def __init__(self, min_size: int = 7, max_size: int = 14, image_size: int = 32):
         self.normalize = NormalizeAttributes(min_size, max_size, image_size)
 
     def __call__(self, x: Text) -> dict[str, torch.Tensor]:

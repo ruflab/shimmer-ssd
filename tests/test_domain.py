@@ -21,9 +21,7 @@ def test_image_domain():
 
 
 def test_attribute_domain():
-    train_attributes = SimpleShapesAttributes(
-        PROJECT_DIR / "sample_dataset", "train"
-    )
+    train_attributes = SimpleShapesAttributes(PROJECT_DIR / "sample_dataset", "train")
 
     assert len(train_attributes) == 4
 

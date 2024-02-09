@@ -51,8 +51,7 @@ def import_v():
             new_callbacks[new_key.replace("val_total_loss", "val/loss")] = val
 
     new_hyperparams = {
-        key: fn(model["hyper_parameters"])
-        for key, fn in hyper_parameters.items()
+        key: fn(model["hyper_parameters"]) for key, fn in hyper_parameters.items()
     }
 
     new_model = {
@@ -65,9 +64,7 @@ def import_v():
         "hyper_parameters": new_hyperparams,
     }
 
-    torch.save(
-        new_model, PROJECT_DIR / "checkpoints/pretrained/vae_v_shimmer.ckpt"
-    )
+    torch.save(new_model, PROJECT_DIR / "checkpoints/pretrained/vae_v_shimmer.ckpt")
 
 
 if __name__ == "__main__":

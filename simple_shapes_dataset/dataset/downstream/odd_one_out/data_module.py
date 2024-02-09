@@ -8,11 +8,14 @@ from torch.utils.data import DataLoader, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
 from simple_shapes_dataset.dataset.domain_alignment import get_alignment
-from simple_shapes_dataset.dataset.downstream.odd_one_out.dataset import \
-    OddOneOutDataset
-from simple_shapes_dataset.dataset.pre_process import (NormalizeAttributes,
-                                                       TextAndAttrs,
-                                                       attribute_to_tensor)
+from simple_shapes_dataset.dataset.downstream.odd_one_out.dataset import (
+    OddOneOutDataset,
+)
+from simple_shapes_dataset.dataset.pre_process import (
+    NormalizeAttributes,
+    TextAndAttrs,
+    attribute_to_tensor,
+)
 from simple_shapes_dataset.dataset.repeated_dataset import RepeatedDataset
 
 DatasetT = OddOneOutDataset | Subset[OddOneOutDataset]
@@ -53,8 +56,9 @@ class OddOneOutDataModule(LightningDataModule):
         num_workers: int = 0,
         seed: int | None = None,
         domain_args: Mapping[str, Any] | None = None,
-        additional_transforms: Mapping[str, Sequence[Callable[[Any], Any]]]
-        | None = None,
+        additional_transforms: (
+            Mapping[str, Sequence[Callable[[Any], Any]]] | None
+        ) = None,
     ) -> None:
         super().__init__()
 
@@ -118,9 +122,7 @@ class OddOneOutDataModule(LightningDataModule):
 
         if split == "train" and self._require_aligned_dataset():
             if self.seed is None:
-                raise ValueError(
-                    "Seed must be provided when using aligned dataset"
-                )
+                raise ValueError("Seed must be provided when using aligned dataset")
 
             return get_aligned_datasets(
                 self.dataset_path,
@@ -178,9 +180,7 @@ class OddOneOutDataModule(LightningDataModule):
         assert self.train_dataset is not None
 
         dataloaders = {}
-        max_sized_dataset = max(
-            len(dataset) for dataset in self.train_dataset.values()
-        )
+        max_sized_dataset = max(len(dataset) for dataset in self.train_dataset.values())
         for domain, dataset in self.train_dataset.items():
             dataloaders[domain] = DataLoader(
                 RepeatedDataset(dataset, max_sized_dataset, drop_last=False),
