@@ -19,6 +19,9 @@ jobs:
             ssh-add - <<< '${{ secrets.SHIMMER_DEPLOY }}'
             poetry install --with dev
       - uses: isort/isort-action@master
+        with:
+            configuration: "--profile=black --check-only --diff"
+            sort-paths: "simple_shapes_dataset playground"
       - uses: psf/black@stable
         with:
           src: "."
