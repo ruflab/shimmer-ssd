@@ -3,6 +3,7 @@ from typing import Any
 
 import torch
 import torch.nn.functional as F
+from shimmer import LossOutput
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.global_workspace import SchedulerArgs
 from shimmer.modules.vae import (
@@ -132,10 +133,8 @@ class TextDomainModule(DomainModule):
         )
         self.scheduler_args.update(scheduler_args or {})
 
-    def compute_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        return {"loss": F.mse_loss(pred, target, reduction="mean")}
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        return LossOutput(F.mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
         return self.vae.encode((x["bert"],))

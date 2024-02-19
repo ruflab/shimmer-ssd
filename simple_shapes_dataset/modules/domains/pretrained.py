@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from pathlib import Path
 from typing import cast
 
@@ -99,7 +100,7 @@ def load_pretrained_domain(
 
 def load_pretrained_domains(
     default_root_dir: Path,
-    domains: list[LoadedDomainConfig],
+    domains: Sequence[LoadedDomainConfig],
     workspace_dim: int,
     encoders_hidden_dim: int,
     encoders_n_layers: int,
