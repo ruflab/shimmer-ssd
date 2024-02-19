@@ -1,9 +1,10 @@
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from shimmer import __version__ as shimmer_version
 
 
@@ -36,12 +37,12 @@ class Slurm(BaseModel):
     python_env: str
     command: str
 
-    pre_modules: list[str]
-    run_modules: list[str]
-    args: dict[str, Any]
+    pre_modules: Sequence[str] = []
+    run_modules: Sequence[str] = []
+    args: Mapping[str, Any] = {}
 
-    grid_search: list[str] | None = None
-    grid_search_exclude: list[dict[str, Any]] | None = None
+    grid_search: Sequence[str] | None = None
+    grid_search_exclude: Sequence[Mapping[str, Any]] | None = None
 
 
 class Optim(BaseModel):
@@ -145,11 +146,21 @@ class EncodersConfig(BaseModel):
 class LoadedDomainConfig(BaseModel):
     checkpoint_path: str
     domain_type: DomainType
-    args: dict[str, Any]
+    args: Mapping[str, Any] = {}
+
+    @field_validator("domain_type", mode="before")
+    @classmethod
+    def validate_domain_type(cls, v: str) -> DomainType:
+        """
+        Use names instead of values to select enums
+        """
+        if not hasattr(DomainType, v):
+            raise ValueError(f"{v} is not part of enum DomainType")
+        return getattr(DomainType, v)
 
 
 class DomainProportion(BaseModel):
-    domains: list[str]
+    domains: Sequence[str]
     proportion: float
 
 
@@ -165,13 +176,13 @@ class GlobalWorkspace(BaseModel):
     latent_dim: int = 12
     is_variational: bool = False
     var_contrastive_loss: bool = False
-    domains: list[LoadedDomainConfig]
-    encoders: EncodersConfig
-    decoders: EncodersConfig
+    domains: Sequence[LoadedDomainConfig]
+    encoders: EncodersConfig = EncodersConfig()
+    decoders: EncodersConfig = EncodersConfig()
     sync_prop: float = 1.0
-    domain_proportions: list[DomainProportion]
-    loss_coefficients: LossCoeffients
-    domain_args: dict[str, Any]
+    domain_proportions: Sequence[DomainProportion]
+    loss_coefficients: LossCoeffients = LossCoeffients()
+    domain_args: Mapping[str, Any]
 
 
 class ShimmerConfigInfo(BaseModel):
@@ -185,14 +196,14 @@ class Config(BaseModel):
     ood_seed: int | None = None
     default_root_dir: Path
     domain_checkpoint: LoadedDomainConfig | None = None
-    presaved_latents_path: dict[str, str] = {}
+    presaved_latents_path: Mapping[str, str] = {}
     dataset: Dataset
     training: Training
     wandb: WanDB
     logging: Logging
     domain_modules: DomainModules
     global_workspace: GlobalWorkspace
-    visualization: Visualization
-    exploration: Exploration
-    slurm: Slurm
+    visualization: Visualization | None = None
+    exploration: Exploration | None = None
+    slurm: Slurm | None = None
     __shimmer__: ShimmerConfigInfo = ShimmerConfigInfo()
