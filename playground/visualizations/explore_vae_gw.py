@@ -140,6 +140,9 @@ def main() -> None:
         debug_mode=DEBUG_MODE,
     )
 
+    if config.visualization is None:
+        raise ValueError("Visualization config should be defined for this script.")
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     domain_description, interfaces = load_pretrained_domains(
@@ -168,7 +171,7 @@ def main() -> None:
     range_end = config.visualization.explore_gw.range_end
     fig = dim_exploration_figure(
         domain_module,
-        domain_module.gw_mod.latent_dim,
+        domain_module.gw_mod.workspace_dim,
         device,
         config.visualization.explore_gw.domain,
         num_samples,

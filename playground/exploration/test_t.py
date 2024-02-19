@@ -15,6 +15,9 @@ def main():
         debug_mode=DEBUG_MODE,
     )
 
+    if config.exploration is None:
+        raise ValueError("Exploration config should be set for this script")
+
     seed_everything(config.seed, workers=True)
 
     data_module = SimpleShapesDataModule(

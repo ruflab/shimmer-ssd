@@ -21,6 +21,9 @@ def main() -> None:
         debug_mode=DEBUG_MODE,
     )
 
+    if config.visualization is None:
+        raise ValueError("Visualization config should be defined for this script.")
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     domain_module = cast(

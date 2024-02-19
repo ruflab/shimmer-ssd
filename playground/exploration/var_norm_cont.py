@@ -22,6 +22,9 @@ def main():
         debug_mode=DEBUG_MODE,
     )
 
+    if config.exploration is None:
+        raise ValueError("Exploration config should be set for this script")
+
     domain_proportion = {
         frozenset(item.domains): item.proportion
         for item in config.global_workspace.domain_proportions

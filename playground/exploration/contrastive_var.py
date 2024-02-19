@@ -44,6 +44,9 @@ def main():
         debug_mode=DEBUG_MODE,
     )
 
+    if config.exploration is None:
+        raise ValueError("Exploration config should be set for this script")
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     domain_proportion = {

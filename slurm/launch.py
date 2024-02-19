@@ -12,6 +12,9 @@ def main():
         debug_mode=DEBUG_MODE,
     )
 
+    if config.slurm is None:
+        raise ValueError("slurm config should be defined for this script")
+
     handler = ExperimentHandler(
         config.slurm.script,
         str(PROJECT_DIR.absolute()),
