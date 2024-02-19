@@ -54,6 +54,7 @@ shapesd = "simple_shapes_dataset.cli:cli"
 [tool.isort]
 profile = "black"
 line_length = 88
+py_version = 311
 
 [tool.black]
 line-length = 88
