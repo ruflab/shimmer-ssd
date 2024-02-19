@@ -20,7 +20,7 @@ jobs:
             poetry install --with dev
       - uses: isort/isort-action@master
         with:
-            configuration: "--profile=black --check-only --diff --py=311"
+            configuration: "--profile=black --check-only --diff --line-length=88"
             sort-paths: "simple_shapes_dataset playground"
       - uses: psf/black@stable
         with:
