@@ -3,12 +3,7 @@ from collections.abc import Callable, Mapping
 from typing import Any, cast
 
 import torch
-from shimmer.modules.global_workspace import VariationalGlobalWorkspace
-from shimmer.modules.gw_module import VariationalGWModule
-from shimmer.modules.losses import (
-    VariationalGWLosses,
-    contrastive_loss_with_uncertainty,
-)
+from shimmer import VariationalGlobalWorkspace, VariationalGWLosses, VariationalGWModule
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config import load_config
@@ -141,22 +136,23 @@ def main():
     print(f"Predicted std attr: {predicted_std_attr}")
     print(f"Predicted std v: {predicted_std_v}")
 
-    logit_scale = cast(VariationalGWLosses, domain_module.loss_mod).logit_scale
+    contrastive_fn = cast(
+        VariationalGWLosses, domain_module.loss_mod
+    ).var_contrastive_fn
+    assert contrastive_fn is not None
 
-    cont_loss1 = contrastive_loss_with_uncertainty(
+    cont_loss1 = contrastive_fn(
         gw_states_means["attr"],
         gw_states_std["attr"],
         gw_states_means["v_latents"],
         gw_states_std["v_latents"],
-        logit_scale,
     )
 
-    cont_loss2 = contrastive_loss_with_uncertainty(
+    cont_loss2 = contrastive_fn(
         gw_states_means["attr"],
         actual_std_attr,
         gw_states_means["v_latents"],
         actual_std_v,
-        logit_scale,
     )
 
     print(f"Contrastive loss 1: {cont_loss1}")

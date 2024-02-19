@@ -3,9 +3,9 @@ from collections.abc import Callable, Mapping
 from typing import Any, cast
 
 import torch
+from shimmer import contrastive_loss
 from shimmer.modules.global_workspace import GlobalWorkspace
 from shimmer.modules.gw_module import VariationalGWModule
-from shimmer.modules.losses import contrastive_loss
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config import load_config
@@ -40,6 +40,9 @@ def main():
         load_files=["exp_var_cont.yaml"],
         debug_mode=DEBUG_MODE,
     )
+
+    if config.exploration is None:
+        raise ValueError("Exploration config should be set for this script")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
