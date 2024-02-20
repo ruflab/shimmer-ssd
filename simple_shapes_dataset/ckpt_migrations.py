@@ -3,12 +3,35 @@ from os import PathLike
 from pathlib import Path
 
 import torch
-from migrate_ckpt import Migration, ckpt_migration_key, migrate_ckpt
+from migrate_ckpt import CkptType, Migration, ckpt_migration_key, migrate_ckpt
 
 from simple_shapes_dataset import LOGGER
 
-gw_migrations: list[Migration] = []
-var_gw_migrations: list[Migration] = []
+
+def add_gw_interfaces(ckpt: CkptType) -> CkptType:
+    new_state_dict = {}
+    for name, val in ckpt["state_dict"].items():
+        new_name = name.replace(
+            "gw_mod.encoders.resnet", "gw_mod.gw_interfaces.resnet.encoder"
+        )
+        new_name = new_name.replace(
+            "gw_mod.encoders.bge", "gw_mod.gw_interfaces.bge.encoder"
+        )
+        new_name = new_name.replace(
+            "gw_mod.decoders.resnet", "gw_mod.gw_interfaces.resnet.decoder"
+        )
+        new_name = new_name.replace(
+            "gw_mod.decoders.bge", "gw_mod.gw_interfaces.bge.decoder"
+        )
+        new_state_dict[new_name] = val
+    ckpt["state_dict"] = new_state_dict
+    return ckpt
+
+
+add_gw_interfaces_migration = Migration("add-gw-interfaces", add_gw_interfaces)
+
+gw_migrations: list[Migration] = [add_gw_interfaces_migration]
+var_gw_migrations: list[Migration] = [add_gw_interfaces_migration]
 visual_mod_migrations: list[Migration] = []
 attribute_mod_migrations: list[Migration] = []
 text_mod_migrations: list[Migration] = []
