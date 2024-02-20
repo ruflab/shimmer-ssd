@@ -1,11 +1,13 @@
-from typing import cast
-
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
 import wandb
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.ckpt_migrations import (
+    attribute_mod_migrations,
+    migrate_model,
+)
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
@@ -26,12 +28,9 @@ def main() -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    domain_module = cast(
-        AttributeDomainModule,
-        AttributeDomainModule.load_from_checkpoint(
-            config.default_root_dir / config.visualization.explore_vae.checkpoint
-        ),
-    )
+    ckpt_path = config.default_root_dir / config.visualization.explore_vae.checkpoint
+    migrate_model(ckpt_path, attribute_mod_migrations)
+    domain_module = AttributeDomainModule.load_from_checkpoint(ckpt_path)
     domain_module.eval().freeze()
 
     num_samples = config.visualization.explore_vae.num_samples
@@ -64,4 +63,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    main()
+    main()
+    main()
     main()

@@ -10,6 +10,7 @@ from PIL.Image import Image
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.ckpt_migrations import migrate_model, visual_mod_migrations
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import get_pil_image
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
@@ -39,12 +40,9 @@ def main() -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    domain_module = cast(
-        VisualDomainModule,
-        VisualDomainModule.load_from_checkpoint(
-            config.default_root_dir / config.visualization.explore_vae.checkpoint
-        ),
-    )
+    ckpt_path = config.default_root_dir / config.visualization.explore_vae.checkpoint
+    migrate_model(ckpt_path, visual_mod_migrations)
+    domain_module = VisualDomainModule.load_from_checkpoint(ckpt_path)
     domain_module.eval().freeze()
 
     num_samples = config.visualization.explore_vae.num_samples

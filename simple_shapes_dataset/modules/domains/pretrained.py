@@ -1,9 +1,13 @@
 from collections.abc import Sequence
 from pathlib import Path
-from typing import cast
 
 from shimmer import DomainModule, GWInterface, GWInterfaceBase, VariationalGWInterface
 
+from simple_shapes_dataset.ckpt_migrations import (
+    attribute_mod_migrations,
+    migrate_model,
+    visual_mod_migrations,
+)
 from simple_shapes_dataset.errors import ConfigurationError
 from simple_shapes_dataset.modules.domains.attribute import (
     AttributeDomainModule,
@@ -25,45 +29,35 @@ def load_pretrained_module(
     domain_checkpoint = root_path / domain.checkpoint_path
     match domain.domain_type:
         case DomainType.v:
-            module = cast(
-                VisualDomainModule,
-                VisualDomainModule.load_from_checkpoint(
-                    domain_checkpoint, **domain.args
-                ),
+            migrate_model(domain_checkpoint, visual_mod_migrations)
+            module = VisualDomainModule.load_from_checkpoint(
+                domain_checkpoint, **domain.args
             )
 
         case DomainType.v_latents:
-            v_module = cast(
-                VisualDomainModule,
-                VisualDomainModule.load_from_checkpoint(
-                    domain_checkpoint, **domain.args
-                ),
+            migrate_model(domain_checkpoint, visual_mod_migrations)
+            v_module = VisualDomainModule.load_from_checkpoint(
+                domain_checkpoint, **domain.args
             )
             module = VisualLatentDomainModule(v_module)
 
         case DomainType.v_latents_unpaired:
-            v_module = cast(
-                VisualDomainModule,
-                VisualDomainModule.load_from_checkpoint(
-                    domain_checkpoint, **domain.args
-                ),
+            migrate_model(domain_checkpoint, visual_mod_migrations)
+            v_module = VisualDomainModule.load_from_checkpoint(
+                domain_checkpoint, **domain.args
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
 
         case DomainType.attr:
-            module = cast(
-                AttributeDomainModule,
-                AttributeDomainModule.load_from_checkpoint(
-                    domain_checkpoint, **domain.args
-                ),
+            migrate_model(domain_checkpoint, attribute_mod_migrations)
+            module = AttributeDomainModule.load_from_checkpoint(
+                domain_checkpoint, **domain.args
             )
 
         case DomainType.attr_unpaired:
-            module = cast(
-                AttributeWithUnpairedDomainModule,
-                AttributeWithUnpairedDomainModule.load_from_checkpoint(
-                    domain_checkpoint, **domain.args
-                ),
+            migrate_model(domain_checkpoint, attribute_mod_migrations)
+            module = AttributeWithUnpairedDomainModule.load_from_checkpoint(
+                domain_checkpoint, **domain.args
             )
 
         case DomainType.attr_legacy:

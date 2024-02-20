@@ -1,11 +1,12 @@
 import logging
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from lightning.pytorch import Trainer
 from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.ckpt_migrations import migrate_model, var_gw_migrations
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
@@ -59,15 +60,13 @@ def main():
         is_variational=True,
     )
 
-    gw = cast(
-        VariationalGlobalWorkspace,
-        VariationalGlobalWorkspace.load_from_checkpoint(
-            config.exploration.gw_checkpoint,
-            domain_mods=domain_description,
-            gw_interfaces=interfaces,
-        ),
+    ckpt_path = config.exploration.gw_checkpoint
+    migrate_model(ckpt_path, var_gw_migrations)
+    gw = VariationalGlobalWorkspace.load_from_checkpoint(
+        ckpt_path,
+        domain_mods=domain_description,
+        gw_interfaces=interfaces,
     )
-    # gw_mod = cast(VariationalGWModule, gw.gw_mod)
 
     trainer = Trainer(
         fast_dev_run=config.training.fast_dev_run,

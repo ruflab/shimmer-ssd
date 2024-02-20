@@ -1,8 +1,7 @@
-from typing import cast
-
 from lightning.pytorch import seed_everything
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.ckpt_migrations import migrate_model, text_mod_migrations
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.modules.domains.text import TextDomainModule
@@ -38,15 +37,14 @@ def main():
             test_samples[frozenset([domain])] = {domain: test_samples[domains][domain]}
         break
 
-    module = cast(
-        TextDomainModule,
-        TextDomainModule.load_from_checkpoint(
-            config.default_root_dir / config.exploration.gw_checkpoint
-        ),
-    )
+    ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
+    migrate_model(ckpt_path, text_mod_migrations)
+    module = TextDomainModule.load_from_checkpoint(ckpt_path)
     module.freeze()
     print(val_samples[frozenset({"t"})]["t"]["caption"][8].item())
 
 
 if __name__ == "__main__":
+    main()
+
     main()
