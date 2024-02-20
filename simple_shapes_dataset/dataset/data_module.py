@@ -10,9 +10,11 @@ from torchvision.transforms import Compose, ToTensor
 
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset, SizedDataset
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
-from simple_shapes_dataset.dataset.pre_process import (NormalizeAttributes,
-                                                       TextAndAttrs,
-                                                       attribute_to_tensor)
+from simple_shapes_dataset.dataset.pre_process import (
+    NormalizeAttributes,
+    TextAndAttrs,
+    attribute_to_tensor,
+)
 from simple_shapes_dataset.dataset.repeated_dataset import RepeatedDataset
 
 DatasetT = SizedDataset | Subset
@@ -28,8 +30,9 @@ class SimpleShapesDataModule(LightningDataModule):
         seed: int | None = None,
         ood_seed: int | None = None,
         domain_args: Mapping[str, Any] | None = None,
-        additional_transforms: Mapping[str, Sequence[Callable[[Any], Any]]]
-        | None = None,
+        additional_transforms: (
+            Mapping[str, Sequence[Callable[[Any], Any]]] | None
+        ) = None,
     ) -> None:
         super().__init__()
 
@@ -98,9 +101,7 @@ class SimpleShapesDataModule(LightningDataModule):
 
         if split == "train" and self._require_aligned_dataset():
             if self.seed is None:
-                raise ValueError(
-                    "Seed must be provided when using aligned dataset"
-                )
+                raise ValueError("Seed must be provided when using aligned dataset")
 
             return get_aligned_datasets(
                 self.dataset_path,
@@ -147,9 +148,7 @@ class SimpleShapesDataModule(LightningDataModule):
         in_dist: list[int] = np.load(
             split_path / f"{split}_in_dist_{self.ood_seed}.npy"
         )
-        ood: list[int] = np.load(
-            split_path / f"{split}_ood_{self.ood_seed}.npy"
-        )
+        ood: list[int] = np.load(split_path / f"{split}_ood_{self.ood_seed}.npy")
         dataset_in_dist: dict[frozenset[str], Subset] = {}
         for k, d in dataset.items():
             if isinstance(d, Subset):
@@ -204,9 +203,7 @@ class SimpleShapesDataModule(LightningDataModule):
         assert self.train_dataset is not None
 
         dataloaders = {}
-        max_sized_dataset = max(
-            len(dataset) for dataset in self.train_dataset.values()
-        )
+        max_sized_dataset = max(len(dataset) for dataset in self.train_dataset.values())
         for domain, dataset in self.train_dataset.items():
             dataloaders[domain] = DataLoader(
                 RepeatedDataset(dataset, max_sized_dataset, drop_last=False),

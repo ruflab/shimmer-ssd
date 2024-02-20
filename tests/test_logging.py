@@ -1,5 +1,5 @@
 from lightning.pytorch.loggers.wandb import WandbLogger
-from shimmer.modules.domain import DomainDescription
+from shimmer import GWInterface
 from shimmer.modules.global_workspace import GlobalWorkspace
 from utils import PROJECT_DIR
 
@@ -21,9 +21,7 @@ def test_attribute_figure_grid():
     )
     image_size = 32
     padding = 2
-    val_samples = data_module.get_samples("train", 4)[frozenset(["attr"])][
-        "attr"
-    ]
+    val_samples = data_module.get_samples("train", 4)[frozenset(["attr"])]["attr"]
     images = attribute_image_grid(val_samples, image_size=image_size, ncols=2)
     assert images.height == 2 * image_size + 3 * padding
     assert images.width == 2 * image_size + 3 * padding
@@ -42,18 +40,25 @@ def test_gw_logger():
         seed=0,
     )
 
+    workspace_dim = 4
+
     domains = {
-        "v": DomainDescription(
-            module=VisualDomainModule(3, 4, 16),
-            latent_dim=4,
+        "v": VisualDomainModule(3, 4, 16),
+        "attr": AttributeDomainModule(4, 16),
+    }
+
+    domain_interfaces = {
+        "v": GWInterface(
+            domains["v"],
+            workspace_dim=workspace_dim,
             encoder_hidden_dim=16,
             encoder_n_layers=2,
             decoder_hidden_dim=16,
             decoder_n_layers=2,
         ),
-        "attr": DomainDescription(
-            module=AttributeDomainModule(4, 16),
-            latent_dim=4,
+        "attr": GWInterface(
+            domains["attr"],
+            workspace_dim=workspace_dim,
             encoder_hidden_dim=16,
             encoder_n_layers=2,
             decoder_hidden_dim=16,
@@ -61,7 +66,7 @@ def test_gw_logger():
         ),
     }
 
-    module = GlobalWorkspace(domains, latent_dim=4, loss_coefs={})
+    module = GlobalWorkspace(domains, domain_interfaces, workspace_dim, loss_coefs={})
     wandb_logger = WandbLogger(mode="disabled")
 
     val_samples = data_module.get_samples("val", 2)
@@ -69,6 +74,4 @@ def test_gw_logger():
         val_samples, log_key="test", mode="test", every_n_epochs=1
     )
 
-    callback.on_callback(
-        current_epoch=0, loggers=[wandb_logger], pl_module=module
-    )
+    callback.on_callback(current_epoch=0, loggers=[wandb_logger], pl_module=module)

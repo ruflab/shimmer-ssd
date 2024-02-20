@@ -4,9 +4,7 @@ from torch import nn
 
 
 def symlog(x, alpha=1):
-    return (
-        torch.sign(x) * torch.log(1 + alpha * torch.abs(x)) / np.log(1 + alpha)
-    )
+    return torch.sign(x) * torch.log(1 + alpha * torch.abs(x)) / np.log(1 + alpha)
 
 
 def symexp(x, alpha=1):

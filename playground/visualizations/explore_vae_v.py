@@ -5,19 +5,16 @@ import matplotlib
 import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms.functional as F
+import wandb
 from PIL.Image import Image
-from shimmer.config import load_structured_config
 from torchvision.utils import make_grid
 
-import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
+from simple_shapes_dataset.ckpt_migrations import migrate_model, visual_mod_migrations
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import get_pil_image
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
-from simple_shapes_dataset.modules.vae import (
-    RAEEncoder,
-    dim_exploration_figure,
-)
+from simple_shapes_dataset.modules.vae import RAEEncoder, dim_exploration_figure
 
 matplotlib.use("Agg")
 
@@ -32,21 +29,20 @@ def image_grid_from_v_tensor(
 
 
 def main() -> None:
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["viz_vae_v"],
+        load_files=["viz_vae_v.yaml"],
         debug_mode=DEBUG_MODE,
     )
 
+    if config.visualization is None:
+        raise ValueError("Visualization config should be defined for this script.")
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    domain_module = cast(
-        VisualDomainModule,
-        VisualDomainModule.load_from_checkpoint(
-            config.visualization.explore_vae.checkpoint
-        ),
-    )
+    ckpt_path = config.default_root_dir / config.visualization.explore_vae.checkpoint
+    migrate_model(ckpt_path, visual_mod_migrations)
+    domain_module = VisualDomainModule.load_from_checkpoint(ckpt_path)
     domain_module.eval().freeze()
 
     num_samples = config.visualization.explore_vae.num_samples

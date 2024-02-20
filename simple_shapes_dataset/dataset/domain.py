@@ -39,12 +39,10 @@ class SimpleShapesDomain(Sequence):
         raise NotImplementedError
 
     @overload
-    def __getitem__(self, index: int) -> Any:
-        ...
+    def __getitem__(self, index: int) -> Any: ...
 
     @overload
-    def __getitem__(self, index: slice) -> Sequence[Any]:
-        ...
+    def __getitem__(self, index: slice) -> Sequence[Any]: ...
 
     def __getitem__(self, index):
         raise NotImplementedError
@@ -75,12 +73,10 @@ class SimpleShapesImages(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> Image.Image:
-        ...
+    def __getitem__(self, index: int) -> Image.Image: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[Image.Image]:
-        ...
+    def __getitem__(self, index: slice) -> list[Image.Image]: ...
 
     def __getitem__(self, index):
         """
@@ -138,21 +134,17 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> torch.Tensor:
-        ...
+    def __getitem__(self, index: int) -> torch.Tensor: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[torch.Tensor]:
-        ...
+    def __getitem__(self, index: slice) -> list[torch.Tensor]: ...
 
     def __getitem__(self, index):
         if isinstance(index, slice):
             determined_slice_indices = index.indices(len(self))
             return [self[i] for i in range(*determined_slice_indices)]
 
-        x = torch.cat(
-            [self.latents[index], self.unpaired[index].unsqueeze(0)], dim=0
-        )
+        x = torch.cat([self.latents[index], self.unpaired[index].unsqueeze(0)], dim=0)
 
         if self.transform is not None:
             return self.transform(x)
@@ -202,9 +194,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         self.dataset_size = self.labels.size(0)
 
         assert (self.dataset_path / f"{split}_unpaired.npy").exists()
-        assert (
-            self.additional_args["n_unpaired"] >= 1
-        ), "n_unpaired should be >= 1"
+        assert self.additional_args["n_unpaired"] >= 1, "n_unpaired should be >= 1"
         self.unpaired = torch.from_numpy(
             np.load(self.dataset_path / f"{split}_unpaired.npy")[
                 :, 2 : 2 + self.additional_args["n_unpaired"]
@@ -215,12 +205,10 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> Attribute:
-        ...
+    def __getitem__(self, index: int) -> Attribute: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[Attribute]:
-        ...
+    def __getitem__(self, index: slice) -> list[Attribute]: ...
 
     def __getitem__(self, index):
         """
@@ -294,12 +282,10 @@ class SimpleShapesRawText(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> RawText:
-        ...
+    def __getitem__(self, index: int) -> RawText: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[RawText]:
-        ...
+    def __getitem__(self, index: slice) -> list[RawText]: ...
 
     def __getitem__(self, index):
         if isinstance(index, slice):
@@ -334,9 +320,7 @@ class SimpleShapesText(SimpleShapesDomain):
         self.split = split
 
         self.additional_args = additional_args or {}
-        self.latent_filename = self.additional_args.get(
-            "latent_filename", "latent"
-        )
+        self.latent_filename = self.additional_args.get("latent_filename", "latent")
 
         self.raw_text = SimpleShapesRawText(self.dataset_path, self.split)
         self.attributes = SimpleShapesAttributes(self.dataset_path, self.split)
@@ -349,9 +333,7 @@ class SimpleShapesText(SimpleShapesDomain):
         )
 
         bert_data = torch.from_numpy(
-            np.load(
-                self.dataset_path / f"{self.split}_{self.latent_filename}.npy"
-            )
+            np.load(self.dataset_path / f"{self.split}_{self.latent_filename}.npy")
         )
         assert bert_data.ndim == 2
         self.bert_data = (bert_data - self.bert_mean) / self.bert_std
@@ -362,12 +344,10 @@ class SimpleShapesText(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> Text:
-        ...
+    def __getitem__(self, index: int) -> Text: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[Text]:
-        ...
+    def __getitem__(self, index: slice) -> list[Text]: ...
 
     def __getitem__(self, index):
         if isinstance(index, slice):

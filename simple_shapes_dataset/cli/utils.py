@@ -172,9 +172,7 @@ def generate_rotation(n_samples: int) -> np.ndarray:
     return rotations
 
 
-def generate_location(
-    n_samples: int, max_scale: int, imsize: int
-) -> np.ndarray:
+def generate_location(n_samples: int, max_scale: int, imsize: int) -> np.ndarray:
     assert max_scale <= imsize
     margin = max_scale // 2
     locations = np.random.randint(margin, imsize - margin, (n_samples, 2))
@@ -203,9 +201,7 @@ def generate_dataset(
     sizes = generate_scale(n_samples, min_scale, max_scale)
     locations = generate_location(n_samples, max_scale, imsize)
     rotation = generate_rotation(n_samples)
-    colors_rgb, colors_hls = generate_color(
-        n_samples, min_lightness, max_lightness
-    )
+    colors_rgb, colors_hls = generate_color(n_samples, min_lightness, max_lightness)
     unpaired = generate_unpaired_attr(n_samples)
     return Dataset(
         classes=classes,
@@ -378,13 +374,9 @@ def define_domain_split(
     for target_domain_group in selection.keys():
         if target_domain_group <= domain_group:
             target_selected, target_remaining = selection[target_domain_group]
-            new_selected = np.unique(
-                np.concatenate([target_selected, selected])
-            )
+            new_selected = np.unique(np.concatenate([target_selected, selected]))
             nb_added = len(new_selected) - len(target_selected)
-            new_remaining = np.setdiff1d(
-                target_remaining, selected, assume_unique=True
-            )
+            new_remaining = np.setdiff1d(target_remaining, selected, assume_unique=True)
             selection[target_domain_group] = (new_selected, new_remaining)
 
             alignement_groups_amounts[target_domain_group] -= nb_added

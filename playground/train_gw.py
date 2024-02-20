@@ -4,29 +4,34 @@ from typing import Any
 
 import torch
 from lightning.pytorch import Callback, Trainer, seed_everything
-from lightning.pytorch.callbacks import (LearningRateMonitor, ModelCheckpoint,
-                                         RichProgressBar)
+from lightning.pytorch.callbacks import (
+    LearningRateMonitor,
+    ModelCheckpoint,
+    RichProgressBar,
+)
 from lightning.pytorch.loggers.wandb import WandbLogger
-from omegaconf import OmegaConf
-from shimmer import load_structured_config
-from shimmer.modules.global_workspace import (GlobalWorkspace, SchedulerArgs,
-                                              VariationalGlobalWorkspace)
+from shimmer.modules.global_workspace import (
+    GlobalWorkspace,
+    SchedulerArgs,
+    VariationalGlobalWorkspace,
+)
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
-                                                       nullify_attribute_rotation)
+from simple_shapes_dataset.dataset.pre_process import (
+    color_blind_visual_domain,
+    nullify_attribute_rotation,
+)
 from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["train_gw"],
+        load_files=["train_gw.yaml"],
         debug_mode=DEBUG_MODE,
     )
 
@@ -56,21 +61,22 @@ def main():
         additional_transforms=additional_transforms,
     )
 
-    domain_modules = load_pretrained_domains(
+    domain_modules, interfaces = load_pretrained_domains(
+        config.default_root_dir,
         config.global_workspace.domains,
+        config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
+        is_variational=config.global_workspace.is_variational,
     )
 
     loss_coefs: dict[str, torch.Tensor] = {
         "demi_cycles": torch.Tensor(
             [config.global_workspace.loss_coefficients.demi_cycles]
         ),
-        "cycles": torch.Tensor(
-            [config.global_workspace.loss_coefficients.cycles]
-        ),
+        "cycles": torch.Tensor([config.global_workspace.loss_coefficients.cycles]),
         "translations": torch.Tensor(
             [config.global_workspace.loss_coefficients.translations]
         ),
@@ -87,6 +93,7 @@ def main():
     if config.global_workspace.is_variational:
         module = VariationalGlobalWorkspace(
             domain_modules,
+            interfaces,
             config.global_workspace.latent_dim,
             loss_coefs,
             config.global_workspace.var_contrastive_loss,
@@ -100,6 +107,7 @@ def main():
     else:
         module = GlobalWorkspace(
             domain_modules,
+            interfaces,
             config.global_workspace.latent_dim,
             loss_coefs,
             config.training.optim.lr,
@@ -116,12 +124,8 @@ def main():
 
     for domains in val_samples.keys():
         for domain in domains:
-            val_samples[frozenset([domain])] = {
-                domain: val_samples[domains][domain]
-            }
-            test_samples[frozenset([domain])] = {
-                domain: test_samples[domains][domain]
-            }
+            val_samples[frozenset([domain])] = {domain: val_samples[domains][domain]}
+            test_samples[frozenset([domain])] = {domain: test_samples[domains][domain]}
         break
 
     callbacks: list[Callback] = [
@@ -198,13 +202,10 @@ def main():
             tags=["train_gw"],
             name=run_name,
         )
-        wandb_logger.experiment.config.update(
-            OmegaConf.to_container(config, resolve=True)
-        )
+        wandb_logger.experiment.config.update(config.model_dump())
 
         checkpoint_dir = (
-            config.default_root_dir
-            / f"{wandb_logger.name}-{wandb_logger.version}"
+            config.default_root_dir / f"{wandb_logger.name}-{wandb_logger.version}"
         )
         callbacks.append(
             ModelCheckpoint(

@@ -1,26 +1,30 @@
 import logging
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from lightning.pytorch import Trainer
-from shimmer import load_structured_config
 from shimmer.modules.global_workspace import VariationalGlobalWorkspace
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
+from simple_shapes_dataset.ckpt_migrations import migrate_model, var_gw_migrations
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
-                                                       nullify_attribute_rotation)
+from simple_shapes_dataset.dataset.pre_process import (
+    color_blind_visual_domain,
+    nullify_attribute_rotation,
+)
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["exp_var_cont"],
+        load_files=["exp_var_cont.yaml"],
         debug_mode=DEBUG_MODE,
     )
+
+    if config.exploration is None:
+        raise ValueError("Exploration config should be set for this script")
 
     domain_proportion = {
         frozenset(item.domains): item.proportion
@@ -45,22 +49,24 @@ def main():
         additional_transforms=additional_transforms,
     )
 
-    domain_description = load_pretrained_domains(
+    domain_description, interfaces = load_pretrained_domains(
+        config.default_root_dir,
         config.global_workspace.domains,
+        config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
+        is_variational=True,
     )
 
-    gw = cast(
-        VariationalGlobalWorkspace,
-        VariationalGlobalWorkspace.load_from_checkpoint(
-            config.exploration.gw_checkpoint,
-            domain_descriptions=domain_description,
-        ),
+    ckpt_path = config.exploration.gw_checkpoint
+    migrate_model(ckpt_path, var_gw_migrations)
+    gw = VariationalGlobalWorkspace.load_from_checkpoint(
+        ckpt_path,
+        domain_mods=domain_description,
+        gw_interfaces=interfaces,
     )
-    # gw_mod = cast(VariationalGWModule, gw.gw_mod)
 
     trainer = Trainer(
         fast_dev_run=config.training.fast_dev_run,

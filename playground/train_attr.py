@@ -1,23 +1,23 @@
 import lightning.pytorch as pl
 import torch
-from lightning.pytorch.callbacks import (LearningRateMonitor, ModelCheckpoint,
-                                         RichProgressBar)
+from lightning.pytorch.callbacks import (
+    LearningRateMonitor,
+    ModelCheckpoint,
+    RichProgressBar,
+)
 from lightning.pytorch.loggers.wandb import WandbLogger
-from omegaconf import OmegaConf
-from shimmer.config import load_structured_config
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogAttributesCallback
 from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["train_attr"],
+        load_files=["train_attr.yaml"],
         debug_mode=DEBUG_MODE,
     )
 
@@ -44,12 +44,8 @@ def main():
         },
     )
 
-    val_samples = data_module.get_samples("val", 32)[frozenset(["attr"])][
-        "attr"
-    ]
-    train_samples = data_module.get_samples("train", 32)[frozenset(["attr"])][
-        "attr"
-    ]
+    val_samples = data_module.get_samples("val", 32)[frozenset(["attr"])]["attr"]
+    train_samples = data_module.get_samples("train", 32)[frozenset(["attr"])]["attr"]
 
     callbacks: list[pl.Callback] = [
         LearningRateMonitor(logging_interval="step"),
@@ -84,13 +80,10 @@ def main():
             tags=["train_attr"],
             name=run_name,
         )
-        wandb_logger.experiment.config.update(
-            OmegaConf.to_container(config, resolve=True)
-        )
+        wandb_logger.experiment.config.update(config.model_dump())
 
         checkpoint_dir = (
-            config.default_root_dir
-            / f"{wandb_logger.name}-{wandb_logger.version}"
+            config.default_root_dir / f"{wandb_logger.name}-{wandb_logger.version}"
         )
         callbacks.append(
             ModelCheckpoint(
@@ -102,9 +95,7 @@ def main():
             )
         )
 
-    torch.set_float32_matmul_precision(
-        config.training.float32_matmul_precision
-    )
+    torch.set_float32_matmul_precision(config.training.float32_matmul_precision)
 
     trainer = pl.Trainer(
         logger=wandb_logger,

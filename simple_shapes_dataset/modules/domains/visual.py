@@ -2,6 +2,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import torch
+from shimmer import LossOutput
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
 from torch.nn.functional import mse_loss
@@ -22,7 +23,7 @@ class VisualDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: Mapping[str, Any] | None = None,
     ):
-        super().__init__()
+        super().__init__(latent_dim)
         self.save_hyperparameters()
 
         vae_encoder = RAEEncoder(
@@ -37,7 +38,6 @@ class VisualDomainModule(DomainModule):
             ae_dim,
         )
         self.vae = VAE(vae_encoder, vae_decoder, beta)
-        self.latent_dim = latent_dim
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
         self.scheduler_args: dict[str, Any] = {
@@ -46,10 +46,8 @@ class VisualDomainModule(DomainModule):
         }
         self.scheduler_args.update(scheduler_args or {})
 
-    def compute_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        return {"loss": mse_loss(pred, target, reduction="mean")}
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        return LossOutput(mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.vae.encode((x,))
@@ -68,9 +66,7 @@ class VisualDomainModule(DomainModule):
     ) -> torch.Tensor:
         (mean, logvar), reconstruction = self.vae((x,))
 
-        reconstruction_loss = gaussian_nll(
-            reconstruction[0], torch.tensor(0), x
-        ).sum()
+        reconstruction_loss = gaussian_nll(reconstruction[0], torch.tensor(0), x).sum()
 
         kl_loss = kl_divergence_loss(mean, logvar)
         total_loss = reconstruction_loss + self.vae.beta * kl_loss
@@ -120,9 +116,8 @@ class VisualDomainModule(DomainModule):
 
 class VisualLatentDomainModule(DomainModule):
     def __init__(self, visual_module: VisualDomainModule):
-        super().__init__()
+        super().__init__(visual_module.latent_dim)
         self.visual_module = visual_module
-        self.latent_dim = self.visual_module.latent_dim
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x[:, :-1]
@@ -131,24 +126,19 @@ class VisualLatentDomainModule(DomainModule):
         extra = torch.zeros_like(z[:, -1]).unsqueeze(1)
         return torch.cat([z, extra], dim=1)
 
-    def compute_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        return {"loss": mse_loss(pred, target, reduction="mean")}
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        return LossOutput(mse_loss(pred, target, reduction="mean"))
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
-        LOGGER.debug(
-            f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}"
-        )
+        LOGGER.debug(f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}")
         return self.visual_module.decode(z[:, :-1])
 
 
 class VisualLatentDomainWithUnpairedModule(DomainModule):
     def __init__(self, visual_module: VisualDomainModule):
-        super().__init__()
+        super().__init__(visual_module.latent_dim + 1)
         self.visual_module = visual_module
         self.paired_dim = self.visual_module.latent_dim
-        self.latent_dim = self.visual_module.latent_dim + 1
 
     # def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
     #     out = x.clone()
@@ -161,22 +151,19 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         return z
 
-    def compute_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        return {
-            "loss": mse_loss(pred, target, reduction="mean"),
-            "unpaired": mse_loss(
-                pred[:, self.paired_dim :], target[:, self.paired_dim :]
-            ),
-            "paired": mse_loss(
-                pred[:, : self.paired_dim], target[:, : self.paired_dim]
-            ),
-        }
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        return LossOutput(
+            loss=mse_loss(pred, target, reduction="mean"),
+            metrics={
+                "unpaired": mse_loss(
+                    pred[:, self.paired_dim :], target[:, self.paired_dim :]
+                ),
+                "paired": mse_loss(
+                    pred[:, : self.paired_dim], target[:, : self.paired_dim]
+                ),
+            },
+        )
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
-        LOGGER.debug(
-            f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}"
-        )
+        LOGGER.debug(f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}")
         return self.visual_module.decode(z[:, :-1])
-

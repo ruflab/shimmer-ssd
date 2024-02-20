@@ -3,16 +3,18 @@ from collections.abc import Callable, Mapping
 from typing import Any, cast
 
 import torch
-from shimmer import load_structured_config
+from shimmer import contrastive_loss
 from shimmer.modules.global_workspace import GlobalWorkspace
 from shimmer.modules.gw_module import VariationalGWModule
-from shimmer.modules.losses import contrastive_loss
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
+from simple_shapes_dataset.ckpt_migrations import gw_migrations, migrate_model
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
-                                                       nullify_attribute_rotation)
+from simple_shapes_dataset.dataset.pre_process import (
+    color_blind_visual_domain,
+    nullify_attribute_rotation,
+)
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 
 
@@ -34,12 +36,14 @@ def put_on_device(
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["exp_var_cont"],
+        load_files=["exp_var_cont.yaml"],
         debug_mode=DEBUG_MODE,
     )
+
+    if config.exploration is None:
+        raise ValueError("Exploration config should be set for this script")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -66,20 +70,22 @@ def main():
         additional_transforms=additional_transforms,
     )
 
-    domain_description = load_pretrained_domains(
+    domain_description, interfaces = load_pretrained_domains(
+        config.default_root_dir,
         config.global_workspace.domains,
+        config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
     )
 
-    domain_module = cast(
-        GlobalWorkspace,
-        GlobalWorkspace.load_from_checkpoint(
-            config.exploration.gw_checkpoint,
-            domain_descriptions=domain_description,
-        ),
+    ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
+    migrate_model(ckpt_path, gw_migrations)
+    domain_module = GlobalWorkspace.load_from_checkpoint(
+        ckpt_path,
+        domain_mods=domain_description,
+        gw_interfaces=interfaces,
     )
     domain_module.eval().freeze()
     domain_module.to(device)

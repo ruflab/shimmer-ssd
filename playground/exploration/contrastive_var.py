@@ -3,17 +3,16 @@ from collections.abc import Callable, Mapping
 from typing import Any, cast
 
 import torch
-from shimmer import load_structured_config
-from shimmer.modules.global_workspace import VariationalGlobalWorkspace
-from shimmer.modules.gw_module import VariationalGWModule
-from shimmer.modules.losses import (VariationalGWLosses,
-                                    contrastive_loss_with_uncertainty)
+from shimmer import VariationalGlobalWorkspace, VariationalGWLosses, VariationalGWModule
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
+from simple_shapes_dataset.ckpt_migrations import migrate_model, var_gw_migrations
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.pre_process import (color_blind_visual_domain,
-                                                       nullify_attribute_rotation)
+from simple_shapes_dataset.dataset.pre_process import (
+    color_blind_visual_domain,
+    nullify_attribute_rotation,
+)
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 
 
@@ -35,12 +34,14 @@ def put_on_device(
 
 
 def main():
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["exp_var_cont"],
+        load_files=["exp_var_cont.yaml"],
         debug_mode=DEBUG_MODE,
     )
+
+    if config.exploration is None:
+        raise ValueError("Exploration config should be set for this script")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -67,20 +68,23 @@ def main():
         additional_transforms=additional_transforms,
     )
 
-    domain_description = load_pretrained_domains(
+    domain_description, interfaces = load_pretrained_domains(
+        config.default_root_dir,
         config.global_workspace.domains,
+        config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
+        is_variational=True,
     )
 
-    domain_module = cast(
-        VariationalGlobalWorkspace,
-        VariationalGlobalWorkspace.load_from_checkpoint(
-            config.exploration.gw_checkpoint,
-            domain_descriptions=domain_description,
-        ),
+    ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
+    migrate_model(ckpt_path, var_gw_migrations)
+    domain_module = VariationalGlobalWorkspace.load_from_checkpoint(
+        ckpt_path,
+        domain_mods=domain_description,
+        gw_interfaces=interfaces,
     )
     domain_module.eval().freeze()
     domain_module.to(device)
@@ -90,9 +94,7 @@ def main():
     n_rep = 128
     n_unpaired = 8
 
-    val_samples = put_on_device(
-        data_module.get_samples("val", batch_size), device
-    )
+    val_samples = put_on_device(data_module.get_samples("val", batch_size), device)
     encoded_samples = domain_module.encode_domains(val_samples)[
         frozenset(["v_latents", "attr"])
     ]
@@ -102,12 +104,7 @@ def main():
         .expand((batch_size, n_rep, -1))
         .clone()
     )
-    attr1 = (
-        encoded_samples["attr"]
-        .unsqueeze(1)
-        .expand((batch_size, n_rep, -1))
-        .clone()
-    )
+    attr1 = encoded_samples["attr"].unsqueeze(1).expand((batch_size, n_rep, -1)).clone()
     v_unpaired = torch.randn(batch_size, n_rep, n_unpaired).to(device)
     attr_unpaired = torch.randn(batch_size, n_rep, n_unpaired).to(device)
     v2 = v1[:]
@@ -122,10 +119,7 @@ def main():
     )
 
     actual_std_attr = (
-        gw_states_means["attr"]
-        .reshape(batch_size, n_rep, -1)
-        .std(dim=1)
-        .mean(dim=0)
+        gw_states_means["attr"].reshape(batch_size, n_rep, -1).std(dim=1).mean(dim=0)
     )
     actual_std_v = (
         gw_states_means["v_latents"]
@@ -142,22 +136,23 @@ def main():
     print(f"Predicted std attr: {predicted_std_attr}")
     print(f"Predicted std v: {predicted_std_v}")
 
-    logit_scale = cast(VariationalGWLosses, domain_module.loss_mod).logit_scale
+    contrastive_fn = cast(
+        VariationalGWLosses, domain_module.loss_mod
+    ).var_contrastive_fn
+    assert contrastive_fn is not None
 
-    cont_loss1 = contrastive_loss_with_uncertainty(
+    cont_loss1 = contrastive_fn(
         gw_states_means["attr"],
         gw_states_std["attr"],
         gw_states_means["v_latents"],
         gw_states_std["v_latents"],
-        logit_scale,
     )
 
-    cont_loss2 = contrastive_loss_with_uncertainty(
+    cont_loss2 = contrastive_fn(
         gw_states_means["attr"],
         actual_std_attr,
         gw_states_means["v_latents"],
         actual_std_v,
-        logit_scale,
     )
 
     print(f"Contrastive loss 1: {cont_loss1}")

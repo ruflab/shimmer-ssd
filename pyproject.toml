@@ -15,15 +15,16 @@ tqdm = "^4.65.0"
 transformers = "^4.30.2"
 opencv-python = "^4.7.0.72"
 attributes-to-language = {git = "https://github.com/bdvllrs/attributes-to-language.git", rev = "v0.3.0"}
-auto-sbatch = {git = "https://github.com/bdvllrs/auto-sbatch.git", rev = "v0.3.7"}
+auto-sbatch = {git = "https://github.com/bdvllrs/auto-sbatch.git", rev = "v0.4.1"}
+migrate-ckpt = {git = "https://github.com/bdvllrs/migrate-ckpt.git", rev = "main"}
 torchdata = "^0.6.1"
 pillow = "^9.5.0"
 numpy = "^1.25"
 torch = "^2.0.1"
 shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "main"}
 wandb = "^0.15.4"
-lightning = "^2.0.4"
-pydantic = "<2.0.0"
+lightning = "^2.1.0"
+pydantic = "^2.6.0"
 torchmetrics = "<1.0.0"
 rich = "^13.4.2"
 
@@ -36,9 +37,10 @@ types-pywin32 = "^306.0.0.2"
 types-setuptools = "^67.8.0.0"
 types-tabulate = "^0.9.0.2"
 types-dataclasses = "^0.6.6"
+types-click = "^7.1.8"
 flake8 = "^6.0.0"
 mypy = "^1.4.0"
-types-click = "^7.1.8"
+isort = "^5.13.2"
 
 [tool.poetry.group.test.dependencies]
 torchvision = "^0.15.2"
@@ -50,3 +52,17 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 shapesd = "simple_shapes_dataset.cli:cli"
+
+[tool.isort]
+profile = "black"
+line_length = 88
+py_version = 311
+known_third_party = ["wandb"]
+
+[tool.black]
+line-length = 88
+
+[tool.mypy]
+ignore_missing_imports = true
+install_types = true
+check_untyped_defs = true

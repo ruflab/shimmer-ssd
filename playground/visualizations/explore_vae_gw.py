@@ -6,17 +6,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms.functional as F
+import wandb
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
-from shimmer.config import load_structured_config
-from shimmer.modules.global_workspace import (GlobalWorkspaceBase,
-                                              VariationalGlobalWorkspace)
+from shimmer.modules.global_workspace import (
+    GlobalWorkspaceBase,
+    VariationalGlobalWorkspace,
+)
 from torchvision.utils import make_grid
 
-import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.config.root import Config
+from simple_shapes_dataset.ckpt_migrations import migrate_model, var_gw_migrations
+from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
@@ -51,9 +53,7 @@ def dim_exploration_figure(
 
     fig = cast(
         Figure,
-        plt.figure(
-            constrained_layout=True, figsize=(fig_size, fig_size), dpi=1
-        ),
+        plt.figure(constrained_layout=True, figsize=(fig_size, fig_size), dpi=1),
     )
     gs = GridSpec(len(possible_dims), len(possible_dims), figure=fig)
     done_dims: list[set[int]] = []
@@ -76,14 +76,14 @@ def dim_exploration_figure(
             )
 
             for p in range(num_samples):
-                step = range_start + (range_end - range_start) * float(
-                    p
-                ) / float(num_samples - 1)
+                step = range_start + (range_end - range_start) * float(p) / float(
+                    num_samples - 1
+                )
                 z[p, :, dim_i] = step
             for q in range(num_samples):
-                step = range_start + (range_end - range_start) * float(
-                    q
-                ) / float(num_samples - 1)
+                step = range_start + (range_end - range_start) * float(q) / float(
+                    num_samples - 1
+                )
                 z[:, q, dim_j] = step
 
             decoded_z = module.decode(z.reshape(-1, z_size))[domain]
@@ -105,18 +105,14 @@ def dim_exploration_figure(
                         num_samples,
                     )
                 case "attr":
-                    img_grid = attribute_image_grid(
-                        decoded_x, image_size, num_samples
-                    )
+                    img_grid = attribute_image_grid(decoded_x, image_size, num_samples)
                 case _:
                     raise NotImplementedError
 
             ax.imshow(img_grid)
             ax.set_xlabel(f"dim {dim_j}")
             ax.set_ylabel(f"dim {dim_i}")
-            ax.set_xticks(
-                image_size * np.arange(num_samples) + image_size // 2
-            )
+            ax.set_xticks(image_size * np.arange(num_samples) + image_size // 2)
             ax.set_xticklabels(
                 list(
                     map(
@@ -125,9 +121,7 @@ def dim_exploration_figure(
                     )
                 )
             )
-            ax.set_yticks(
-                image_size * np.arange(num_samples) + image_size // 2
-            )
+            ax.set_yticks(image_size * np.arange(num_samples) + image_size // 2)
             ax.set_yticklabels(
                 list(
                     map(
@@ -141,29 +135,34 @@ def dim_exploration_figure(
 
 
 def main() -> None:
-    config = load_structured_config(
+    config = load_config(
         PROJECT_DIR / "config",
-        Config,
-        load_dirs=["viz_vae_gw"],
+        load_files=["viz_vae_gw.yaml"],
         debug_mode=DEBUG_MODE,
     )
 
+    if config.visualization is None:
+        raise ValueError("Visualization config should be defined for this script.")
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    domain_description = load_pretrained_domains(
+    domain_description, interfaces = load_pretrained_domains(
+        config.default_root_dir,
         config.global_workspace.domains,
+        config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
+        is_variational=True,
     )
 
-    domain_module = cast(
-        VariationalGlobalWorkspace,
-        VariationalGlobalWorkspace.load_from_checkpoint(
-            config.visualization.explore_gw.checkpoint,
-            domain_description=domain_description,
-        ),
+    ckpt_path = config.default_root_dir / config.visualization.explore_gw.checkpoint
+    migrate_model(ckpt_path, var_gw_migrations)
+    domain_module = VariationalGlobalWorkspace.load_from_checkpoint(
+        ckpt_path,
+        domain_mods=domain_description,
+        gw_interfaces=interfaces,
     )
     domain_module.eval().freeze()
 
@@ -172,7 +171,7 @@ def main() -> None:
     range_end = config.visualization.explore_gw.range_end
     fig = dim_exploration_figure(
         domain_module,
-        domain_module.gw_mod.latent_dim,
+        domain_module.gw_mod.workspace_dim,
         device,
         config.visualization.explore_gw.domain,
         num_samples,

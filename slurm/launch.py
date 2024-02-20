@@ -1,8 +1,7 @@
 from auto_sbatch import ExperimentHandler, GridSearch, SBatch
-from omegaconf import OmegaConf
-from shimmer import load_config
 
 from simple_shapes_dataset import DEBUG_MODE, LOGGER, PROJECT_DIR
+from simple_shapes_dataset.config import load_config
 
 
 def main():
@@ -13,7 +12,8 @@ def main():
         debug_mode=DEBUG_MODE,
     )
 
-    OmegaConf.resolve(config)
+    if config.slurm is None:
+        raise ValueError("slurm config should be defined for this script")
 
     handler = ExperimentHandler(
         config.slurm.script,
@@ -28,23 +28,16 @@ def main():
 
     grid_search = None
     extra_config = config.__shimmer__.cli
+    grid_search_config = config.slurm.grid_search
 
     # Add all grid search parameters as parameters to auto_sbatch
-    if config.slurm.grid_search is not None:
-        extra_config = OmegaConf.unsafe_merge(
-            OmegaConf.from_dotlist(
-                [
-                    f"{arg}="
-                    + str(OmegaConf.select(config, arg, throw_on_missing=True))
-                    for arg in config.slurm.grid_search
-                ]
-            ),
-            extra_config,
-        )
-
-        grid_search = GridSearch(
-            config.slurm.grid_search, config.slurm.grid_search_exclude
-        )
+    if grid_search_config is not None:
+        grid_search = GridSearch(grid_search_config, config.slurm.grid_search_exclude)
+        extra_config = {
+            key: val
+            for key, val in config.__shimmer__.cli.items()
+            if key not in grid_search_config
+        }
 
     sbatch = SBatch(
         config.slurm.args,

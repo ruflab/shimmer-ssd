@@ -37,8 +37,7 @@ variants = {
 random_composer = Composer(script_structures, writers, variants)
 
 script_structures = [
-    "{start} {size} {colorBefore} {shape}{link} <{location}>{link} <{"
-    "rotation}>.",
+    "{start} {size} {colorBefore} {shape}{link} <{location}>{link} <{" "rotation}>.",
     "{start} {size} {colorBefore} {object} <{location}>{link} <{rotation}>{"
     "link2} {a} {shape}.",
     "{start} {size} {object} <{location}>{link} <{rotation}>{link} {"

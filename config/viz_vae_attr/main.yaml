@@ -1,4 +1,0 @@
-visualization:
-    explore_vae:
-        wandb_name: tlexjzo7
-        checkpoint: ${default_root_dir}/shimmer-simple-shapes-tlexjzo7/epoch=196.ckpt

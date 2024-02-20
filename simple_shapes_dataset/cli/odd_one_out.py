@@ -17,9 +17,7 @@ def select_odd_one_out(ref1, ref2, labels):
         np.min(np.abs(labels - ref2), axis=1),
     )
     sorted_dists = np.argsort(-dists)
-    return np.random.choice(sorted_dists[: sorted_dists.shape[0] // 1000], 1)[
-        0
-    ]
+    return np.random.choice(sorted_dists[: sorted_dists.shape[0] // 1000], 1)[0]
 
 
 def normalize_labels(labels):
@@ -88,9 +86,7 @@ def create_odd_one_out_dataset(
     for split in ["train", "val", "test"]:
         if split == "train" and train_dataset_path is not None:
             labels = normalize_labels(
-                np.load(str(Path(train_dataset_path) / f"{split}_labels.npy"))[
-                    :, :8
-                ]
+                np.load(str(Path(train_dataset_path) / f"{split}_labels.npy"))[:, :8]
             )
         else:
             labels = normalize_labels(
@@ -113,6 +109,4 @@ def create_odd_one_out_dataset(
                     np.where(order == 2)[0][0],
                 ]
             )
-        np.save(
-            str(dataset_location / f"{split}_odd_one_out_labels.npy"), dataset
-        )
+        np.save(str(dataset_location / f"{split}_odd_one_out_labels.npy"), dataset)

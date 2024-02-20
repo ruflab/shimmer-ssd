@@ -1,4 +1,3 @@
-
 training:
     optim:
         lr: 5e-3

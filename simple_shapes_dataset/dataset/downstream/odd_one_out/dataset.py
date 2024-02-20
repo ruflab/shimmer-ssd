@@ -71,9 +71,7 @@ class OddOneOutDataset(Subset, torchdata.Dataset):
         """
         return self.labels.shape[0]
 
-    def __getitem__(
-        self, index: int
-    ) -> dict[str, tuple[Any, Any, Any] | torch.Tensor]:
+    def __getitem__(self, index: int) -> dict[str, tuple[Any, Any, Any] | torch.Tensor]:
         """
         Params:
             index (int): Index of the item to get.

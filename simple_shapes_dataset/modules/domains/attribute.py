@@ -3,10 +3,16 @@ from typing import Any
 
 import torch
 import torch.nn.functional as F
+from shimmer import LossOutput
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.global_workspace import SchedulerArgs
-from shimmer.modules.vae import (VAE, VAEDecoder, VAEEncoder, gaussian_nll,
-                                 kl_divergence_loss)
+from shimmer.modules.vae import (
+    VAE,
+    VAEDecoder,
+    VAEEncoder,
+    gaussian_nll,
+    kl_divergence_loss,
+)
 from torch import nn
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -34,9 +40,7 @@ class Encoder(VAEEncoder):
         self.q_mean = nn.Linear(self.out_dim, self.out_dim)
         self.q_logvar = nn.Linear(self.out_dim, self.out_dim)
 
-    def forward(
-        self, x: Sequence[torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: Sequence[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         out = torch.cat(list(x), dim=-1)
         out = self.encoder(out)
         return self.q_mean(out), self.q_logvar(out)
@@ -88,10 +92,9 @@ class AttributeDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
     ):
-        super().__init__()
+        super().__init__(latent_dim)
         self.save_hyperparameters()
 
-        self.latent_dim = latent_dim
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
@@ -109,10 +112,8 @@ class AttributeDomainModule(DomainModule):
         )
         self.scheduler_args.update(scheduler_args or {})
 
-    def compute_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        return {"loss": F.mse_loss(pred, target, reduction="mean")}
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        return LossOutput(F.mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         return self.vae.encode(x[:-1])
@@ -215,22 +216,17 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
     ):
-        super().__init__()
-        self.save_hyperparameters()
+        super().__init__(latent_dim + n_unpaired)
 
+        self.save_hyperparameters()
         self.paired_dim = latent_dim
         self.n_unpaired = n_unpaired
-        self.latent_dim = latent_dim + self.n_unpaired
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
 
-        vae_encoder = Encoder(
-            self.hidden_dim, self.latent_dim - self.n_unpaired
-        )
-        vae_decoder = Decoder(
-            self.latent_dim - self.n_unpaired, self.hidden_dim
-        )
+        vae_encoder = Encoder(self.hidden_dim, self.latent_dim - self.n_unpaired)
+        vae_decoder = Decoder(self.latent_dim - self.n_unpaired, self.hidden_dim)
         self.vae = VAE(vae_encoder, vae_decoder, beta)
 
         self.optim_lr = optim_lr
@@ -258,32 +254,28 @@ class AttributeWithUnpairedDomainModule(DomainModule):
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
         return self.decode(self.encode(x))
 
-    def compute_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        return {
-            "loss": F.mse_loss(pred, target, reduction="mean"),
-            "unpaired": F.mse_loss(
-                pred[:, self.paired_dim :], target[:, self.paired_dim :]
-            ),
-            "paired": F.mse_loss(
-                pred[:, : self.paired_dim], target[:, : self.paired_dim]
-            ),
-        }
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        return LossOutput(
+            loss=F.mse_loss(pred, target, reduction="mean"),
+            metrics={
+                "unpaired": F.mse_loss(
+                    pred[:, self.paired_dim :], target[:, self.paired_dim :]
+                ),
+                "paired": F.mse_loss(
+                    pred[:, : self.paired_dim], target[:, : self.paired_dim]
+                ),
+            },
+        )
 
 
 class AttributeLegacyDomainModule(DomainModule):
     latent_dim = 11
 
-    def __init__(
-        self,
-    ):
-        super().__init__()
+    def __init__(self):
+        super().__init__(self.latent_dim)
         self.save_hyperparameters()
 
-    def compute_loss(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
         pred_cat, pred_attr, _ = self.decode(pred)
         target_cat, target_attr, _ = self.decode(target)
 
@@ -291,7 +283,7 @@ class AttributeLegacyDomainModule(DomainModule):
         loss_cat = F.nll_loss(pred_cat, torch.argmax(target_cat, 1))
         loss = loss_attr + loss_cat
 
-        return {"loss": loss, "loss_attr": loss_attr, "loss_cat": loss_cat}
+        return LossOutput(loss, metrics={"loss_attr": loss_attr, "loss_cat": loss_cat})
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         return torch.cat(list(x)[:-1], dim=-1)

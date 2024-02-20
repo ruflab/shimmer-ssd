@@ -11,8 +11,15 @@ from tqdm import tqdm
 from simple_shapes_dataset.cli.ood_splits import filter_dataset, ood_split
 from simple_shapes_dataset.text import composer
 
-from .utils import (generate_dataset, get_deterministic_name, get_domain_alignment,
-                    load_labels, save_bert_latents, save_dataset, save_labels)
+from .utils import (
+    generate_dataset,
+    get_deterministic_name,
+    get_domain_alignment,
+    load_labels,
+    save_bert_latents,
+    save_dataset,
+    save_labels,
+)
 
 matplotlib.use("Agg")
 
@@ -112,8 +119,7 @@ def create_unpaired_attributes(
     multiple=True,
     type=click.Tuple([str, float]),
     help=(
-        "Domain alignment proportions. "
-        "Format: 'domain1,domain2,...,domainN prop'."
+        "Domain alignment proportions. " "Format: 'domain1,domain2,...,domainN prop'."
     ),
 )
 def create_dataset(
@@ -198,9 +204,7 @@ def create_dataset(
             captions.append(caption)
             choices.append(choice)
         np.save(str(dataset_location / f"{split}_captions.npy"), captions)
-        np.save(
-            str(dataset_location / f"{split}_caption_choices.npy"), choices
-        )
+        np.save(str(dataset_location / f"{split}_caption_choices.npy"), choices)
 
         save_bert_latents(
             captions,
@@ -275,8 +279,7 @@ def create_domain_split(
     multiple=True,
     type=click.Tuple([str, float]),
     help=(
-        "Domain alignment proportions. "
-        "Format: 'domain1,domain2,...,domainN prop'."
+        "Domain alignment proportions. " "Format: 'domain1,domain2,...,domainN prop'."
     ),
 )
 def add_alignment_split(
@@ -293,9 +296,7 @@ def add_alignment_split(
     )
 
 
-@click.command(
-    "unpaired", help="Create an unpaired attribute for each domains"
-)
+@click.command("unpaired", help="Create an unpaired attribute for each domains")
 @click.option("--seed", "-s", default=0, type=int, help="Random seed")
 @click.option(
     "--dataset_path",
@@ -311,9 +312,7 @@ def unpaired_attributes_command(
     create_unpaired_attributes(seed, Path(dataset_path))
 
 
-@click.command(
-    "ood", help="Create Out-Of-Distribution splits for the dataset."
-)
+@click.command("ood", help="Create Out-Of-Distribution splits for the dataset.")
 @click.option("--seed", "-s", default=0, type=int, help="Random seed")
 @click.option(
     "--dataset_path",
@@ -352,9 +351,7 @@ def create_ood_split(
         writer = csv.writer(csv_file)
         writer.writerow(["kind", "min", "max"])
         for bound_info in boundary_infos:
-            writer.writerow(
-                [bound_info.kind.value, *bound_info.boundary.description()]
-            )
+            writer.writerow([bound_info.kind.value, *bound_info.boundary.description()])
 
     train_set = load_labels(dataset_location / "train_labels.npy")
     train_in_dist, train_ood = filter_dataset(train_set, boundary_infos)

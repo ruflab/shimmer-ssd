@@ -44,9 +44,7 @@ class RAEEncoder(VAEEncoder):
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.dims[0])
-            if self.use_batchnorm
-            else nn.Identity(),
+            nn.BatchNorm2d(self.dims[0]) if self.use_batchnorm else nn.Identity(),
             nn.ReLU(),
             nn.Conv2d(
                 self.dims[0],
@@ -56,9 +54,7 @@ class RAEEncoder(VAEEncoder):
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.dims[1])
-            if self.use_batchnorm
-            else nn.Identity(),
+            nn.BatchNorm2d(self.dims[1]) if self.use_batchnorm else nn.Identity(),
             nn.ReLU(),
             nn.Conv2d(
                 self.dims[1],
@@ -68,9 +64,7 @@ class RAEEncoder(VAEEncoder):
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.dims[2])
-            if self.use_batchnorm
-            else nn.Identity(),
+            nn.BatchNorm2d(self.dims[2]) if self.use_batchnorm else nn.Identity(),
             nn.ReLU(),
             nn.Conv2d(
                 self.dims[2],
@@ -80,18 +74,14 @@ class RAEEncoder(VAEEncoder):
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.dims[3])
-            if self.use_batchnorm
-            else nn.Identity(),
+            nn.BatchNorm2d(self.dims[3]) if self.use_batchnorm else nn.Identity(),
             nn.ReLU(),
         )
 
         self.q_mean = nn.Linear(self.out_dim, self.z_dim)
         self.q_logvar = nn.Linear(self.out_dim, self.z_dim)
 
-    def forward(
-        self, x: Sequence[torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: Sequence[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
         out = self.layers(x[0]).view(x[0].size(0), -1)
         out = out.view(out.size(0), -1)
 
@@ -126,9 +116,7 @@ class RAEDecoder(VAEDecoder):
                 stride=1,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.dims[2])
-            if self.use_batchnorm
-            else nn.Identity(),
+            nn.BatchNorm2d(self.dims[2]) if self.use_batchnorm else nn.Identity(),
             nn.ReLU(),
             nn.ConvTranspose2d(
                 self.dims[2],
@@ -138,9 +126,7 @@ class RAEDecoder(VAEDecoder):
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.dims[1])
-            if self.use_batchnorm
-            else nn.Identity(),
+            nn.BatchNorm2d(self.dims[1]) if self.use_batchnorm else nn.Identity(),
             nn.ReLU(),
             nn.ConvTranspose2d(
                 self.dims[1],
@@ -150,9 +136,7 @@ class RAEDecoder(VAEDecoder):
                 padding=self.padding,
                 bias=not self.use_batchnorm,
             ),
-            nn.BatchNorm2d(self.dims[0])
-            if self.use_batchnorm
-            else nn.Identity(),
+            nn.BatchNorm2d(self.dims[0]) if self.use_batchnorm else nn.Identity(),
             nn.ReLU(),
         )
 
@@ -188,9 +172,7 @@ def dim_exploration_figure(
 
     fig_size = (len(possible_dims) - 1) * fig_dim
 
-    fig = plt.figure(
-        constrained_layout=True, figsize=(fig_size, fig_size), dpi=1
-    )
+    fig = plt.figure(constrained_layout=True, figsize=(fig_size, fig_size), dpi=1)
 
     gs = GridSpec(len(possible_dims), len(possible_dims), figure=fig)
     done_dims: list[set[int]] = []
@@ -213,14 +195,14 @@ def dim_exploration_figure(
             )
 
             for p in range(num_samples):
-                step = range_start + (range_end - range_start) * float(
-                    p
-                ) / float(num_samples - 1)
+                step = range_start + (range_end - range_start) * float(p) / float(
+                    num_samples - 1
+                )
                 z[p, :, dim_i] = step
             for q in range(num_samples):
-                step = range_start + (range_end - range_start) * float(
-                    q
-                ) / float(num_samples - 1)
+                step = range_start + (range_end - range_start) * float(q) / float(
+                    num_samples - 1
+                )
                 z[:, q, dim_j] = step
 
             decoded_x = vae.decoder(z.reshape(-1, z_size))
@@ -230,9 +212,7 @@ def dim_exploration_figure(
             ax.imshow(img_grid)
             ax.set_xlabel(f"dim {dim_j}")
             ax.set_ylabel(f"dim {dim_i}")
-            ax.set_xticks(
-                image_size * np.arange(num_samples) + image_size // 2
-            )
+            ax.set_xticks(image_size * np.arange(num_samples) + image_size // 2)
             ax.set_xticklabels(
                 list(
                     map(
@@ -241,9 +221,7 @@ def dim_exploration_figure(
                     )
                 )
             )
-            ax.set_yticks(
-                image_size * np.arange(num_samples) + image_size // 2
-            )
+            ax.set_yticks(image_size * np.arange(num_samples) + image_size // 2)
             ax.set_yticklabels(
                 list(
                     map(
