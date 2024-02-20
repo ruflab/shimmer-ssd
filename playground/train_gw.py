@@ -18,6 +18,11 @@ from shimmer.modules.global_workspace import (
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.ckpt_migrations import (
+    SaveMigrations,
+    gw_migrations,
+    var_gw_migrations,
+)
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
@@ -207,14 +212,21 @@ def main():
         checkpoint_dir = (
             config.default_root_dir / f"{wandb_logger.name}-{wandb_logger.version}"
         )
-        callbacks.append(
-            ModelCheckpoint(
-                dirpath=checkpoint_dir,
-                filename="{epoch}",
-                monitor="val/loss",
-                mode="min",
-                save_top_k=1,
-            )
+        callbacks.extend(
+            [
+                SaveMigrations(
+                    var_gw_migrations
+                    if config.global_workspace.is_variational
+                    else gw_migrations
+                ),
+                ModelCheckpoint(
+                    dirpath=checkpoint_dir,
+                    filename="{epoch}",
+                    monitor="val/loss",
+                    mode="min",
+                    save_top_k=1,
+                ),
+            ]
         )
 
     set_float32_matmul_precision(config.training.float32_matmul_precision)

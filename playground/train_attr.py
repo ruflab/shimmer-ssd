@@ -8,6 +8,10 @@ from lightning.pytorch.callbacks import (
 from lightning.pytorch.loggers.wandb import WandbLogger
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
+from simple_shapes_dataset.ckpt_migrations import (
+    SaveMigrations,
+    attribute_mod_migrations,
+)
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.logging import LogAttributesCallback
@@ -85,14 +89,17 @@ def main():
         checkpoint_dir = (
             config.default_root_dir / f"{wandb_logger.name}-{wandb_logger.version}"
         )
-        callbacks.append(
-            ModelCheckpoint(
-                dirpath=checkpoint_dir,
-                filename="{epoch}",
-                monitor="val/loss",
-                mode="min",
-                save_top_k=1,
-            )
+        callbacks.extend(
+            [
+                SaveMigrations(attribute_mod_migrations),
+                ModelCheckpoint(
+                    dirpath=checkpoint_dir,
+                    filename="{epoch}",
+                    monitor="val/loss",
+                    mode="min",
+                    save_top_k=1,
+                ),
+            ]
         )
 
     torch.set_float32_matmul_precision(config.training.float32_matmul_precision)

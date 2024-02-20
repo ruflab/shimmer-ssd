@@ -1,8 +1,10 @@
 from collections.abc import Sequence
 from os import PathLike
 from pathlib import Path
+from typing import Any
 
 import torch
+from lightning.pytorch import Callback, LightningModule, Trainer
 from migrate_ckpt import CkptType, Migration, ckpt_migration_key, migrate_ckpt
 
 from simple_shapes_dataset import LOGGER
@@ -48,3 +50,13 @@ def migrate_model(ckpt_path: str | PathLike, migrations: Sequence[Migration], **
         version = len(ckpt[ckpt_migration_key])
     torch.save(ckpt, ckpt_path.with_stem(f"{ckpt_path.stem}-{version}"))
     torch.save(new_ckpt, ckpt_path)
+
+
+class SaveMigrations(Callback):
+    def __init__(self, migrations: Sequence[Migration]):
+        self.migrations = migrations
+
+    def on_save_checkpoint(
+        self, trainer: Trainer, pl_module: LightningModule, checkpoint: dict[str, Any]
+    ):
+        checkpoint[ckpt_migration_key] = [mig.name for mig in self.migrations]

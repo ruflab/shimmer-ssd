@@ -11,6 +11,7 @@ from lightning.pytorch.callbacks import (
 from lightning.pytorch.loggers.wandb import WandbLogger
 
 from simple_shapes_dataset import DEBUG_MODE, LOGGER, PROJECT_DIR
+from simple_shapes_dataset.ckpt_migrations import SaveMigrations, visual_mod_migrations
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
@@ -97,14 +98,17 @@ def main():
         checkpoint_dir = (
             config.default_root_dir / f"{wandb_logger.name}-{wandb_logger.version}"
         )
-        callbacks.append(
-            ModelCheckpoint(
-                dirpath=checkpoint_dir,
-                filename="{epoch}",
-                monitor="val/loss",
-                mode="min",
-                save_top_k=1,
-            )
+        callbacks.extend(
+            [
+                SaveMigrations(visual_mod_migrations),
+                ModelCheckpoint(
+                    dirpath=checkpoint_dir,
+                    filename="{epoch}",
+                    monitor="val/loss",
+                    mode="min",
+                    save_top_k=1,
+                ),
+            ]
         )
     LOGGER.debug(f"wandb logger: {wandb_logger}")
 
