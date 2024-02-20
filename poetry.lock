@@ -170,7 +170,7 @@ tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "p
 
 [[package]]
 name = "auto-sbatch"
-version = "0.4.0"
+version = "0.4.1"
 description = "Create SLURM scripts automatically from your python script."
 optional = false
 python-versions = "^3.11"
@@ -180,8 +180,8 @@ develop = false
 [package.source]
 type = "git"
 url = "https://github.com/bdvllrs/auto-sbatch.git"
-reference = "v0.4.0"
-resolved_reference = "b2c563929cbe8c4e2a6cb15dd128234075bf0958"
+reference = "main"
+resolved_reference = "a1db0c14b65149141d0fb2ce32721a3de40ace91"
 
 [[package]]
 name = "certifi"
@@ -3041,4 +3041,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "6e0ba6a719eca097a4e4e9807c6bf8c034b07d0b22dbf86030f190d9bc2e7c87"
+content-hash = "4d764faa1f9fdfd633a34ff1c558f527b8188e020dee73c5ff0ec1f3ac28738d"
