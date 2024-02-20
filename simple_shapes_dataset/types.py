@@ -41,7 +41,7 @@ class Slurm(BaseModel):
     run_modules: Sequence[str] = []
     args: Mapping[str, Any] = {}
 
-    grid_search: Sequence[str] | None = None
+    grid_search: Mapping[str, Sequence[Any]] | None = None
     grid_search_exclude: Sequence[Mapping[str, Any]] | None = None
 
 
