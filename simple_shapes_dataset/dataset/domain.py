@@ -54,7 +54,7 @@ class SimpleShapesDomain(ABC, Generic[T]):
     def __getitem__(self, index: int | slice) -> T | Sequence[T]: ...
 
 
-def default_callback(x: T) -> T:
+def default_transform(x: T) -> T:
     return x
 
 
@@ -67,7 +67,7 @@ class SimpleShapesImages(SimpleShapesDomain, Generic[T]):
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Image.Image], T] = default_callback,
+        transform: Callable[[Image.Image], T] = default_transform,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
@@ -115,7 +115,7 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain, Generic[T]):
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[torch.Tensor], T] = default_callback,
+        transform: Callable[[torch.Tensor], T] = default_transform,
         additional_args: PretrainedVisualAdditionalArgs | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
@@ -183,7 +183,7 @@ class SimpleShapesAttributes(SimpleShapesDomain, Generic[T]):
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Attribute], T] = default_callback,
+        transform: Callable[[Attribute], T] = default_transform,
         additional_args: AttributesAdditionalArgs | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
@@ -265,7 +265,7 @@ class SimpleShapesRawText(SimpleShapesDomain, Generic[T]):
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[RawText], T] = default_callback,
+        transform: Callable[[RawText], T] = default_transform,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
@@ -308,7 +308,7 @@ class SimpleShapesText(SimpleShapesDomain, Generic[T]):
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Text], T] = default_callback,
+        transform: Callable[[Text], T] = default_transform,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
         """

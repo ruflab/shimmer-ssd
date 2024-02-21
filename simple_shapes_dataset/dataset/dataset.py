@@ -4,7 +4,11 @@ from typing import Any
 
 import torch.utils.data as torchdata
 
-from simple_shapes_dataset.dataset.domain import AVAILABLE_DOMAINS, SimpleShapesDomain
+from simple_shapes_dataset.dataset.domain import (
+    AVAILABLE_DOMAINS,
+    SimpleShapesDomain,
+    default_transform,
+)
 
 
 class SizedDataset(torchdata.Dataset):
@@ -48,7 +52,7 @@ class SimpleShapesDataset(SizedDataset):
             if domain == "v" and "v_latents" in self.domain_args:
                 domain = "v_latents"
 
-            transform = None
+            transform = default_transform
             if transforms is not None and domain in transforms:
                 transform = transforms[domain]
 
