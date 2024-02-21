@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -17,15 +18,15 @@ class BoundaryKind(StrEnum):
     position = "position"
 
 
-class BoundaryBase:
-    def choice(self) -> Any:
-        raise NotImplementedError
+class BoundaryBase(ABC):
+    @abstractmethod
+    def choice(self) -> Any: ...
 
-    def filter(self, x: Any) -> bool:
-        raise NotImplementedError
+    @abstractmethod
+    def filter(self, x: Any) -> bool: ...
 
-    def description(self) -> list[str]:
-        raise NotImplementedError
+    @abstractmethod
+    def description(self) -> list[str]: ...
 
 
 class ChoiceBoundary(BoundaryBase):
