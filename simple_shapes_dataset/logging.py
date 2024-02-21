@@ -1,4 +1,5 @@
 import io
+from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal, cast
 
@@ -31,7 +32,7 @@ from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModul
 matplotlib.use("Agg")
 
 
-class LogSamplesCallback(pl.Callback):
+class LogSamplesCallback(ABC, pl.Callback):
     def __init__(
         self,
         reference_samples: Any,
@@ -117,8 +118,8 @@ class LogSamplesCallback(pl.Callback):
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
 
-    def log_samples(self, logger: Logger, samples: Any, mode: str) -> None:
-        raise NotImplementedError
+    @abstractmethod
+    def log_samples(self, logger: Logger, samples: Any, mode: str) -> None: ...
 
 
 def get_pil_image(figure: Figure) -> Image.Image:

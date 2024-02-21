@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, NamedTuple, TypedDict, overload
+from typing import Any, Generic, NamedTuple, TypedDict, TypeVar, overload
 
 import numpy as np
 import torch
@@ -10,45 +11,54 @@ from PIL import Image
 # with a workaround in:
 # https://github.com/pytorch/pytorch/issues/13246#issuecomment-905703662
 
+T = TypeVar("T")
 
-class SimpleShapesDomain(Sequence):
+
+class SimpleShapesDomain(ABC, Generic[T]):
     """
     Base class for a domain of the SimpleShapesDataset.
     All domains extend this base class and implement the
     __getitem__ and __len__ methods.
     """
 
+    @abstractmethod
     def __init__(
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Any], Any] | None = None,
+        transform: Callable[[Any], T] | None = None,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
         """
         Params:
             dataset_path (str | pathlib.Path): Path to the dataset.
             split (str): The split of the dataset to use. One of "train", "val", "test".
-            transform (Any -> Any): Optional transform to apply to the data.
+            transform (Any -> T): Optional transform to apply to the data.
             additional_args (dict[str, Any]): Optional additional arguments to pass
                 to the domain.
         """
-        raise NotImplementedError
+        ...
 
-    def __len__(self) -> int:
-        raise NotImplementedError
-
-    @overload
-    def __getitem__(self, index: int) -> Any: ...
+    @abstractmethod
+    def __len__(self) -> int: ...
 
     @overload
-    def __getitem__(self, index: slice) -> Sequence[Any]: ...
+    @abstractmethod
+    def __getitem__(self, index: int) -> T: ...
 
-    def __getitem__(self, index):
-        raise NotImplementedError
+    @overload
+    @abstractmethod
+    def __getitem__(self, index: slice) -> Sequence[T]: ...
+
+    @abstractmethod
+    def __getitem__(self, index: int | slice) -> T | Sequence[T]: ...
 
 
-class SimpleShapesImages(SimpleShapesDomain):
+def default_callback(x: T) -> T:
+    return x
+
+
+class SimpleShapesImages(SimpleShapesDomain, Generic[T]):
     """
     Domain for the images of the SimpleShapesDataset.
     """
@@ -57,7 +67,7 @@ class SimpleShapesImages(SimpleShapesDomain):
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Any], Any] | None = None,
+        transform: Callable[[Image.Image], T] = default_callback,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
@@ -73,12 +83,12 @@ class SimpleShapesImages(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> Image.Image: ...
+    def __getitem__(self, index: int) -> T: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[Image.Image]: ...
+    def __getitem__(self, index: slice) -> list[T]: ...
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> T | list[T]:
         """
         Params:
             index: The index of the image to retrieve.
@@ -93,21 +103,19 @@ class SimpleShapesImages(SimpleShapesDomain):
         with Image.open(path) as image:
             image = image.convert("RGB")
 
-            if self.transform is not None:
-                return self.transform(image)
-            return image
+            return self.transform(image)
 
 
 class PretrainedVisualAdditionalArgs(TypedDict):
     presaved_path: str
 
 
-class SimpleShapesPretrainedVisual(SimpleShapesDomain):
+class SimpleShapesPretrainedVisual(SimpleShapesDomain, Generic[T]):
     def __init__(
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Any], Any] | None = None,
+        transform: Callable[[torch.Tensor], T] = default_callback,
         additional_args: PretrainedVisualAdditionalArgs | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
@@ -134,21 +142,19 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> torch.Tensor: ...
+    def __getitem__(self, index: int) -> T: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[torch.Tensor]: ...
+    def __getitem__(self, index: slice) -> list[T]: ...
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> T | list[T]:
         if isinstance(index, slice):
             determined_slice_indices = index.indices(len(self))
             return [self[i] for i in range(*determined_slice_indices)]
 
         x = torch.cat([self.latents[index], self.unpaired[index].unsqueeze(0)], dim=0)
 
-        if self.transform is not None:
-            return self.transform(x)
-        return x
+        return self.transform(x)
 
 
 class Attribute(NamedTuple):
@@ -172,12 +178,12 @@ class AttributesAdditionalArgs(TypedDict):
     n_unpaired: int
 
 
-class SimpleShapesAttributes(SimpleShapesDomain):
+class SimpleShapesAttributes(SimpleShapesDomain, Generic[T]):
     def __init__(
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Any], Any] | None = None,
+        transform: Callable[[Attribute], T] = default_callback,
         additional_args: AttributesAdditionalArgs | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
@@ -205,12 +211,12 @@ class SimpleShapesAttributes(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> Attribute: ...
+    def __getitem__(self, index: int) -> T: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[Attribute]: ...
+    def __getitem__(self, index: slice) -> list[T]: ...
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> T | list[T]:
         """
         Returns:
             An Attribute named tuple at the given index.
@@ -232,9 +238,7 @@ class SimpleShapesAttributes(SimpleShapesDomain):
             unpaired=self.unpaired[index],
         )
 
-        if self.transform is not None:
-            return self.transform(item)
-        return item
+        return self.transform(item)
 
 
 class Choice(NamedTuple):
@@ -256,12 +260,12 @@ class Text(NamedTuple):
     attr: Attribute
 
 
-class SimpleShapesRawText(SimpleShapesDomain):
+class SimpleShapesRawText(SimpleShapesDomain, Generic[T]):
     def __init__(
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Any], Any] | None = None,
+        transform: Callable[[RawText], T] = default_callback,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
         assert split in ("train", "val", "test"), "Invalid split"
@@ -282,12 +286,12 @@ class SimpleShapesRawText(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> RawText: ...
+    def __getitem__(self, index: int) -> T: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[RawText]: ...
+    def __getitem__(self, index: slice) -> list[T]: ...
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> T | list[T]:
         if isinstance(index, slice):
             determined_slice_indices = index.indices(len(self))
             return [self[i] for i in range(*determined_slice_indices)]
@@ -296,17 +300,15 @@ class SimpleShapesRawText(SimpleShapesDomain):
             caption=self.captions[index], choice=Choice(**self.choices[index])
         )
 
-        if self.transform is not None:
-            return self.transform(item)
-        return item
+        return self.transform(item)
 
 
-class SimpleShapesText(SimpleShapesDomain):
+class SimpleShapesText(SimpleShapesDomain, Generic[T]):
     def __init__(
         self,
         dataset_path: str | Path,
         split: str,
-        transform: Callable[[Any], Any] | None = None,
+        transform: Callable[[Text], T] = default_callback,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
         """
@@ -344,12 +346,12 @@ class SimpleShapesText(SimpleShapesDomain):
         return self.dataset_size
 
     @overload
-    def __getitem__(self, index: int) -> Text: ...
+    def __getitem__(self, index: int) -> T: ...
 
     @overload
-    def __getitem__(self, index: slice) -> list[Text]: ...
+    def __getitem__(self, index: slice) -> list[T]: ...
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> T | list[T]:
         if isinstance(index, slice):
             determined_slice_indices = index.indices(len(self))
             return [self[i] for i in range(*determined_slice_indices)]
@@ -361,9 +363,7 @@ class SimpleShapesText(SimpleShapesDomain):
             attr=self.attributes[index],
         )
 
-        if self.transform is not None:
-            return self.transform(item)
-        return item
+        return self.transform(item)
 
 
 AVAILABLE_DOMAINS: dict[str, type[SimpleShapesDomain]] = {
