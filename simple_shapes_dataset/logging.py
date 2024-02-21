@@ -173,7 +173,7 @@ def get_attribute_figure_grid(
                 image_size,
             )
             ax.set_facecolor("black")
-    image = get_pil_image(figure)  # type: ignore
+    image = get_pil_image(figure)
     plt.close(figure)
     return image
 

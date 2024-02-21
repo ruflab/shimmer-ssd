@@ -139,7 +139,7 @@ def generate_image(
         raise ValueError("Class does not exist.")
 
     ax.add_patch(patch)
-    ax.set_xticks([])  # type: ignore
+    ax.set_xticks([])
     ax.set_yticks([])  # type: ignore
     ax.grid(False)
     ax.set_xlim(0, imsize)
