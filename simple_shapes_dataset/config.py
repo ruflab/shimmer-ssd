@@ -77,7 +77,7 @@ def interpolate(
                     interpolation_key=context.interpolation_key + x,
                 ),
             )
-        case "{" | "}" if context.is_escaped:
+        case "{" | "}" | "\\" if context.is_escaped:
             return letter + interpolate(
                 rest,
                 data,
