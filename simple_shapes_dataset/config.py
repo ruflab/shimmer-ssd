@@ -17,7 +17,7 @@ class ParsingContext:
     interpolation_key: str = ""
 
 
-def from_dotlist(
+def dict_get_from_key_seq(
     dotlist: Sequence[str], data: Mapping[str, Any], full_key: str | None = None
 ) -> str:
     if full_key is None:
@@ -27,7 +27,7 @@ def from_dotlist(
     elif len(dotlist) == 1:
         return str(data[dotlist[0]])
     else:
-        return from_dotlist(dotlist[1:], data[dotlist[0]], full_key)
+        return dict_get_from_key_seq(dotlist[1:], data[dotlist[0]], full_key)
 
 
 def interpolate(
@@ -60,7 +60,9 @@ def interpolate(
                 ),
             )
         case "}" if context.in_interpolation and not context.is_escaped:
-            interpolated = from_dotlist(context.interpolation_key.split("."), data)
+            interpolated = dict_get_from_key_seq(
+                context.interpolation_key.split("."), data
+            )
             return interpolated + interpolate(
                 rest,
                 data,
