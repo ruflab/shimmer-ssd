@@ -45,6 +45,13 @@ def test_interpolation_escaped():
     assert interpolated == "foo bar {test} baz"
 
 
+def test_interpolation_escaped_in_interpolation():
+    data = {"\\a": "baz"}
+    query = "foo bar {\\a}"
+    interpolated = interpolate(query, data)
+    assert interpolated == "foo bar baz"
+
+
 def test_interpolation_escaped_2():
     data = {"a": "baz"}
     query = "foo bar \\{test} {a}"

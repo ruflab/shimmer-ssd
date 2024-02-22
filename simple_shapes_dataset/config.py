@@ -41,7 +41,7 @@ def interpolate(
 
     letter, rest = query[0], query[1:]
     match letter:
-        case "\\" if not context.is_escaped:
+        case "\\" if not context.is_escaped and not context.in_interpolation:
             return interpolate(
                 rest,
                 data,
