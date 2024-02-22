@@ -48,6 +48,7 @@ def interpolate(
                 ParsingContext(
                     context.in_interpolation,
                     is_escaped=True,
+                    interpolation_key=context.interpolation_key,
                 ),
             )
         case "{" if not context.is_escaped:
