@@ -54,32 +54,57 @@ def interpolate(
             return interpolate(
                 rest,
                 data,
-                ParsingContext(True, False, ""),
+                ParsingContext(
+                    in_interpolation=True, is_escaped=False, interpolation_key=""
+                ),
             )
         case "}" if context.in_interpolation and not context.is_escaped:
-            return from_dotlist(
-                context.interpolation_key.split("."), data
-            ) + interpolate(rest, data, ParsingContext(False, False, ""))
+            interpolated = from_dotlist(context.interpolation_key.split("."), data)
+            return interpolated + interpolate(
+                rest,
+                data,
+                ParsingContext(
+                    in_interpolation=False, is_escaped=False, interpolation_key=""
+                ),
+            )
         case x if context.in_interpolation:
             return interpolate(
                 rest,
                 data,
                 ParsingContext(
-                    True,
-                    False,
-                    context.interpolation_key + x,
+                    in_interpolation=True,
+                    is_escaped=False,
+                    interpolation_key=context.interpolation_key + x,
                 ),
             )
-        case "{" | "}" | "\\" if context.is_escaped:
-            return letter + interpolate(rest, data, ParsingContext(False, False, ""))
+        case "{" | "}" if context.is_escaped:
+            return letter + interpolate(
+                rest,
+                data,
+                ParsingContext(
+                    in_interpolation=False, is_escaped=False, interpolation_key=""
+                ),
+            )
         case x if context.is_escaped:
             return (
                 "\\"
                 + letter
-                + interpolate(rest, data, ParsingContext(False, False, ""))
+                + interpolate(
+                    rest,
+                    data,
+                    ParsingContext(
+                        in_interpolation=False, is_escaped=False, interpolation_key=""
+                    ),
+                )
             )
         case x:
-            return letter + interpolate(rest, data, ParsingContext(False, False, ""))
+            return letter + interpolate(
+                rest,
+                data,
+                ParsingContext(
+                    in_interpolation=False, is_escaped=False, interpolation_key=""
+                ),
+            )
 
 
 def parse_args(argv: list[str] | None = None) -> dict[str, Any]:

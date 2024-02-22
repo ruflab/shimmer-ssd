@@ -63,14 +63,21 @@ def test_interpolation_other_2():
     data = {"a": "baz"}
     query = "foo bar \\\\\\{test} {a}"
     interpolated = interpolate(query, data)
-    assert interpolated == "foo bar \\{test} baz"
+    assert interpolated == "foo bar \\\\{test} baz"
 
 
 def test_interpolation_other_3():
     data = {"a": "baz"}
     query = "foo bar \\\\{a} {a}"
     interpolated = interpolate(query, data)
-    assert interpolated == "foo bar \\baz baz"
+    assert interpolated == "foo bar \\\\baz baz"
+
+
+def test_interpolation_other_4():
+    data = {"a": "baz"}
+    query = "foo bar \\\\a {a}"
+    interpolated = interpolate(query, data)
+    assert interpolated == "foo bar \\\\a baz"
 
 
 def test_interpolation_missing():
