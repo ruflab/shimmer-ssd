@@ -45,11 +45,12 @@ def migrate_model(ckpt_path: str | PathLike, migrations: Sequence[Migration], **
     new_ckpt, done_migrations = migrate_ckpt(ckpt, migrations)
     done_migration_log = ", ".join(map(lambda x: x.name, done_migrations))
     LOGGER.debug(f"Migrating: {done_migration_log}")
-    version = 0
-    if ckpt_migration_key in ckpt:
-        version = len(ckpt[ckpt_migration_key])
-    torch.save(ckpt, ckpt_path.with_stem(f"{ckpt_path.stem}-{version}"))
-    torch.save(new_ckpt, ckpt_path)
+    if len(done_migrations) or ckpt_migration_key not in ckpt:
+        version = 0
+        if ckpt_migration_key in ckpt:
+            version = len(ckpt[ckpt_migration_key])
+        torch.save(ckpt, ckpt_path.with_stem(f"{ckpt_path.stem}-{version}"))
+        torch.save(new_ckpt, ckpt_path)
 
 
 class SaveMigrations(Callback):

@@ -1,4 +1,6 @@
 import sys
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -6,6 +8,78 @@ import yaml
 from shimmer import __version__
 
 from simple_shapes_dataset.types import Config
+
+
+@dataclass
+class ParsingContext:
+    in_interpolation: bool = False
+    is_escaped: bool = False
+    interpolation_key: str = ""
+
+
+def from_dotlist(
+    dotlist: Sequence[str], data: Mapping[str, Any], full_key: str | None = None
+) -> str:
+    if full_key is None:
+        full_key = ".".join(dotlist)
+    if len(dotlist) == 0 or dotlist[0] not in data:
+        raise ValueError(f"{full_key} cannot be interpolated because does not exist.")
+    elif len(dotlist) == 1:
+        return str(data[dotlist[0]])
+    else:
+        return from_dotlist(dotlist[1:], data[dotlist[0]], full_key)
+
+
+def interpolate(
+    query: str, data: Mapping[str, Any], context: ParsingContext | None = None
+) -> str:
+    if not len(query):
+        return ""
+
+    if context is None:
+        context = ParsingContext()
+
+    letter, rest = query[0], query[1:]
+    match letter:
+        case "\\" if not context.is_escaped:
+            return interpolate(
+                rest,
+                data,
+                ParsingContext(
+                    context.in_interpolation,
+                    is_escaped=True,
+                ),
+            )
+        case "{" if not context.is_escaped:
+            return interpolate(
+                rest,
+                data,
+                ParsingContext(True, False, ""),
+            )
+        case "}" if context.in_interpolation and not context.is_escaped:
+            return from_dotlist(
+                context.interpolation_key.split("."), data
+            ) + interpolate(rest, data, ParsingContext(False, False, ""))
+        case x if context.in_interpolation:
+            return interpolate(
+                rest,
+                data,
+                ParsingContext(
+                    True,
+                    False,
+                    context.interpolation_key + x,
+                ),
+            )
+        case "{" | "}" | "\\" if context.is_escaped:
+            return letter + interpolate(rest, data, ParsingContext(False, False, ""))
+        case x if context.is_escaped:
+            return (
+                "\\"
+                + letter
+                + interpolate(rest, data, ParsingContext(False, False, ""))
+            )
+        case x:
+            return letter + interpolate(rest, data, ParsingContext(False, False, ""))
 
 
 def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
