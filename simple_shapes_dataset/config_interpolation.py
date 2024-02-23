@@ -166,5 +166,4 @@ class InterpolationModel(BaseModel):
         elif isinstance(data, list):
             return interpolate_list(data, data)
         else:
-            print(type(data))
             return data

@@ -108,6 +108,7 @@ def main():
                 max_lr=config.training.optim.max_lr,
                 total_steps=config.training.max_steps,
             ),
+            learn_logit_scale=config.global_workspace.learn_logit_scale,
         )
     else:
         module = GlobalWorkspace(
@@ -121,6 +122,7 @@ def main():
                 max_lr=config.training.optim.max_lr,
                 total_steps=config.training.max_steps,
             ),
+            learn_logit_scale=config.global_workspace.learn_logit_scale,
         )
 
     train_samples = data_module.get_samples("train", 32)

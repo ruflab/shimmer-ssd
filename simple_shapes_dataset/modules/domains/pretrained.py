@@ -35,7 +35,6 @@ def load_pretrained_module(
             )
 
         case DomainType.v_latents:
-            print(domain_checkpoint, visual_mod_migrations)
             migrate_model(domain_checkpoint, visual_mod_migrations)
             v_module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
