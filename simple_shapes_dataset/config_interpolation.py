@@ -23,7 +23,7 @@ def dict_get_from_key_seq(
         raise KeyError(f"{full_key} cannot be interpolated because does not exist.")
 
     key = dotlist[0]
-    if isinstance(data, Sequence):
+    if isinstance(data, list):
         if not dotlist[0].isdigit():
             raise KeyError(f"{dotlist[0]} should be an int when data is a sequence")
 
@@ -34,7 +34,7 @@ def dict_get_from_key_seq(
 
     elif isinstance(data, Mapping):
         return dict_get_from_key_seq(dotlist[1:], data[key], full_key)
-    elif isinstance(data, Sequence):
+    elif isinstance(data, list):
         return dict_get_from_key_seq(dotlist[1:], data[int(key)], full_key)
     # Should never happen
     raise NotImplementedError
@@ -125,33 +125,33 @@ def interpolate(
             )
 
 
-def interpolate_seq(
+def interpolate_list(
     data: Sequence[Any], base_data: Mapping[str, Any] | Sequence[Any]
 ) -> Sequence[Any]:
     new_data: list[Any] = []
     for val in data:
         if isinstance(val, str) and "{" in val and "}" in val:
             new_data.append(interpolate(val, base_data))
-        elif isinstance(val, Mapping):
-            new_data.append(interpolate_map(val, base_data))
-        elif isinstance(val, Sequence):
-            new_data.append(interpolate_seq(val, base_data))
+        elif isinstance(val, dict):
+            new_data.append(interpolate_dict(val, base_data))
+        elif isinstance(val, list):
+            new_data.append(interpolate_list(val, base_data))
         else:
             new_data.append(val)
     return new_data
 
 
-def interpolate_map(
+def interpolate_dict(
     data: Mapping[str, Any], base_data: Mapping[str, Any] | Sequence[Any]
 ) -> dict[str, Any]:
     new_data: dict[str, Any] = {}
     for key, val in data.items():
         if isinstance(val, str) and "{" in val and "}" in val:
             new_data[key] = interpolate(val, base_data)
-        elif isinstance(val, Mapping):
-            new_data[key] = interpolate_map(val, base_data)
-        elif isinstance(val, Sequence):
-            new_data[key] = interpolate_seq(val, base_data)
+        elif isinstance(val, dict):
+            new_data[key] = interpolate_dict(val, base_data)
+        elif isinstance(val, list):
+            new_data[key] = interpolate_list(val, base_data)
         else:
             new_data[key] = val
     return new_data
@@ -161,10 +161,10 @@ class InterpolationModel(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def interpolate_variables(cls, data: Any) -> Any:
-        if isinstance(data, Mapping):
-            return interpolate_map(data, data)
-        elif isinstance(data, Sequence):
-            return interpolate_seq(data, data)
+        if isinstance(data, dict):
+            return interpolate_dict(data, data)
+        elif isinstance(data, list):
+            return interpolate_list(data, data)
         else:
             print(type(data))
             return data
