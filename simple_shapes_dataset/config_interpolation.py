@@ -132,9 +132,9 @@ def interpolate_seq(
     for val in data:
         if isinstance(val, str) and "{" in val and "}" in val:
             new_data.append(interpolate(val, base_data))
-        elif isinstance(val, dict):
+        elif isinstance(val, Mapping):
             new_data.append(interpolate_map(val, base_data))
-        elif isinstance(val, list):
+        elif isinstance(val, Sequence):
             new_data.append(interpolate_seq(val, base_data))
         else:
             new_data.append(val)
@@ -148,9 +148,9 @@ def interpolate_map(
     for key, val in data.items():
         if isinstance(val, str) and "{" in val and "}" in val:
             new_data[key] = interpolate(val, base_data)
-        elif isinstance(val, dict):
+        elif isinstance(val, Mapping):
             new_data[key] = interpolate_map(val, base_data)
-        elif isinstance(val, list):
+        elif isinstance(val, Sequence):
             new_data[key] = interpolate_seq(val, base_data)
         else:
             new_data[key] = val
