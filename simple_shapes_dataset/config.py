@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, model_validator
 from shimmer import __version__
 
 from simple_shapes_dataset.types import Config
