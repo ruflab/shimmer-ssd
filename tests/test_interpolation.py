@@ -1,6 +1,6 @@
 import pytest
 
-from simple_shapes_dataset.config import interpolate
+from simple_shapes_dataset.config_interpolation import interpolate
 
 
 def test_interpolation():
@@ -90,19 +90,61 @@ def test_interpolation_other_4():
 def test_interpolation_missing():
     data = {"a": "baz"}
     query = "foo bar {b}"
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         interpolate(query, data)
 
 
 def test_interpolation_missing_nested():
     data = {"a": {"b": "baz"}}
     query = "foo bar {b}"
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         interpolate(query, data)
 
 
 def test_interpolation_missing_nested_2():
     data = {"a": {"b": "baz"}}
     query = "foo bar {a.c}"
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         interpolate(query, data)
+
+
+def test_interpolate_sequence():
+    data = ["baz"]
+    query = "foo bar {0}"
+    interpolated = interpolate(query, data)
+    assert interpolated == "foo bar baz"
+
+
+def test_interpolate_sequence_2():
+    data = ["test", "baz"]
+    query = "foo bar {1}"
+    interpolated = interpolate(query, data)
+    assert interpolated == "foo bar baz"
+
+
+def test_interpolate_sequence_error():
+    data = ["baz"]
+    query = "foo bar {1}"
+    with pytest.raises(IndexError):
+        interpolate(query, data)
+
+
+def test_interpolate_sequence_error_2():
+    data = ["baz"]
+    query = "foo bar {a}"
+    with pytest.raises(KeyError):
+        interpolate(query, data)
+
+
+def test_interpolate_nested_sequence():
+    data = {"a": {"b": ["test", "baz"]}}
+    query = "foo bar {a.b.1}"
+    interpolated = interpolate(query, data)
+    assert interpolated == "foo bar baz"
+
+
+def test_interpolate_nested_sequence_2():
+    data = {"a": ["test", {"b": "baz"}]}
+    query = "foo bar {a.1.b}"
+    interpolated = interpolate(query, data)
+    assert interpolated == "foo bar baz"

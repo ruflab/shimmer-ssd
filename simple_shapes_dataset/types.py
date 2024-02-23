@@ -7,6 +7,8 @@ from typing import Any
 from pydantic import BaseModel, field_validator
 from shimmer import __version__ as shimmer_version
 
+from simple_shapes_dataset.config_interpolation import InterpolationModel
+
 
 @dataclass
 class RelativePathToRoot:
@@ -176,6 +178,7 @@ class GlobalWorkspace(BaseModel):
     latent_dim: int = 12
     is_variational: bool = False
     var_contrastive_loss: bool = False
+    learn_logit_scale: bool = False
     domains: Sequence[LoadedDomainConfig]
     encoders: EncodersConfig = EncodersConfig()
     decoders: EncodersConfig = EncodersConfig()
@@ -191,7 +194,7 @@ class ShimmerConfigInfo(BaseModel):
     cli: Any = {}
 
 
-class Config(BaseModel):
+class Config(InterpolationModel):
     seed: int = 0
     ood_seed: int | None = None
     default_root_dir: Path
