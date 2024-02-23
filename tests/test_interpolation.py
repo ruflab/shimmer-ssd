@@ -148,3 +148,10 @@ def test_interpolate_nested_sequence_2():
     query = "foo bar {a.1.b}"
     interpolated = interpolate(query, data)
     assert interpolated == "foo bar baz"
+
+
+def test_interpolated_change_type():
+    data = {"a": 1}
+    query = "{a}"
+    interpolated = interpolate(query, data)
+    assert interpolated == 1

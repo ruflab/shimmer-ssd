@@ -16,7 +16,7 @@ def dict_get_from_key_seq(
     dotlist: Sequence[str],
     data: Any,
     full_key: str | None = None,
-) -> str:
+) -> Any:
     if full_key is None:
         full_key = ".".join(dotlist)
     if len(dotlist) == 0:
@@ -28,9 +28,9 @@ def dict_get_from_key_seq(
             raise KeyError(f"{dotlist[0]} should be an int when data is a sequence")
 
     if len(dotlist) == 1 and isinstance(data, Mapping):
-        return str(data[key])
+        return data[key]
     elif len(dotlist) == 1 and isinstance(data, Sequence):
-        return str(data[int(key)])
+        return data[int(key)]
 
     elif isinstance(data, Mapping):
         return dict_get_from_key_seq(dotlist[1:], data[key], full_key)
@@ -44,7 +44,7 @@ def interpolate(
     query: str,
     data: Mapping[str, Any] | Sequence[Any],
     context: ParsingContext | None = None,
-) -> str:
+) -> Any:
     if not len(query):
         return ""
 
@@ -75,13 +75,16 @@ def interpolate(
             interpolated = dict_get_from_key_seq(
                 context.interpolation_key.split("."), data
             )
-            return interpolated + interpolate(
-                rest,
-                data,
-                ParsingContext(
-                    in_interpolation=False, is_escaped=False, interpolation_key=""
-                ),
-            )
+            if len(rest):
+                interpolated = str(interpolated) + interpolate(
+                    rest,
+                    data,
+                    ParsingContext(
+                        in_interpolation=False, is_escaped=False, interpolation_key=""
+                    ),
+                )
+
+            return interpolated
         case x if context.in_interpolation:
             return interpolate(
                 rest,
