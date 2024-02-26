@@ -2,7 +2,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, field_validator
 from shimmer import __version__ as shimmer_version
@@ -170,7 +170,7 @@ class LossCoeffients(BaseModel):
     cycles: float = 1.0
     demi_cycles: float = 1.0
     translations: float = 1.0
-    contrastives: float = 1.0
+    contrastives: float = 0.01
     kl: float = 0.0
 
 
@@ -179,6 +179,12 @@ class GlobalWorkspace(BaseModel):
     is_variational: bool = False
     var_contrastive_loss: bool = False
     learn_logit_scale: bool = False
+    vsepp_contrastive_loss: bool = False
+    vsepp_margin: float = 0.2
+    vsepp_measure: Literal["cosine", "order"] = "cosine"
+    vsepp_max_violation: bool = True
+    linear_domains: bool = False
+    linear_domains_use_bias: bool = False
     domains: Sequence[LoadedDomainConfig]
     encoders: EncodersConfig = EncodersConfig()
     decoders: EncodersConfig = EncodersConfig()

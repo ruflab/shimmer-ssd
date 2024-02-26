@@ -10,6 +10,7 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
+from shimmer import ContrastiveLossType
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     SchedulerArgs,
@@ -30,6 +31,7 @@ from simple_shapes_dataset.dataset.pre_process import (
     nullify_attribute_rotation,
 )
 from simple_shapes_dataset.logging import LogGWImagesCallback
+from simple_shapes_dataset.modules.contrastive_loss import VSEPPContrastiveLoss
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 
 
@@ -75,6 +77,8 @@ def main():
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
         is_variational=config.global_workspace.is_variational,
+        is_linear=config.global_workspace.linear_domains,
+        bias=config.global_workspace.linear_domains_use_bias,
     )
 
     loss_coefs: dict[str, torch.Tensor] = {
@@ -95,6 +99,15 @@ def main():
     #         [config.global_workspace.loss_coefficients.kl]
     #     )
 
+    contrastive_fn: ContrastiveLossType | None = None
+    if config.global_workspace.vsepp_contrastive_loss:
+        contrastive_fn = VSEPPContrastiveLoss(
+            config.global_workspace.vsepp_margin,
+            config.global_workspace.vsepp_measure,
+            config.global_workspace.vsepp_max_violation,
+            torch.tensor([1 / 0.07]).log(),
+        )
+
     if config.global_workspace.is_variational:
         module = VariationalGlobalWorkspace(
             domain_modules,
@@ -109,6 +122,7 @@ def main():
                 total_steps=config.training.max_steps,
             ),
             learn_logit_scale=config.global_workspace.learn_logit_scale,
+            contrastive_loss=contrastive_fn,
         )
     else:
         module = GlobalWorkspace(
@@ -123,6 +137,7 @@ def main():
                 total_steps=config.training.max_steps,
             ),
             learn_logit_scale=config.global_workspace.learn_logit_scale,
+            contrastive_loss=contrastive_fn,
         )
 
     train_samples = data_module.get_samples("train", 32)

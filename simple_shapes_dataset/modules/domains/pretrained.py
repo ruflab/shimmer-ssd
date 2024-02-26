@@ -1,7 +1,9 @@
 from collections.abc import Sequence
 from pathlib import Path
 
+import torch
 from shimmer import DomainModule, GWInterface, GWInterfaceBase, VariationalGWInterface
+from torch.nn import Linear
 
 from simple_shapes_dataset.ckpt_migrations import (
     attribute_mod_migrations,
@@ -20,6 +22,22 @@ from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainWithUnpairedModule,
 )
 from simple_shapes_dataset.types import DomainType, LoadedDomainConfig
+
+
+class GWLinearInterface(GWInterfaceBase):
+    def __init__(
+        self, domain_module: DomainModule, workspace_dim: int, bias: bool = False
+    ) -> None:
+        super().__init__(domain_module, workspace_dim)
+
+        self.encoder = Linear(domain_module.latent_dim, workspace_dim, bias=bias)
+        self.decoder = Linear(workspace_dim, domain_module.latent_dim, bias=bias)
+
+    def encode(self, x: torch.Tensor) -> torch.Tensor:
+        return self.encoder(x)
+
+    def decode(self, z: torch.Tensor) -> torch.Tensor:
+        return self.decoder(z)
 
 
 def load_pretrained_module(
@@ -77,19 +95,34 @@ def load_pretrained_domain(
     decoder_hidden_dim: int,
     decoder_n_layers: int,
     is_variational: bool = False,
+    is_linear: bool = False,
+    bias: bool = False,
 ) -> tuple[DomainModule, GWInterfaceBase]:
     module = load_pretrained_module(default_root_dir, domain)
 
-    interface_cls = VariationalGWInterface if is_variational else GWInterface
+    interface: GWInterfaceBase
+    if is_linear:
+        interface = GWLinearInterface(module, workspace_dim=workspace_dim, bias=bias)
+    elif is_variational:
+        interface = VariationalGWInterface(
+            module,
+            workspace_dim=workspace_dim,
+            encoder_hidden_dim=encoder_hidden_dim,
+            encoder_n_layers=encoder_n_layers,
+            decoder_hidden_dim=decoder_hidden_dim,
+            decoder_n_layers=decoder_n_layers,
+        )
+    else:
+        interface = GWInterface(
+            module,
+            workspace_dim=workspace_dim,
+            encoder_hidden_dim=encoder_hidden_dim,
+            encoder_n_layers=encoder_n_layers,
+            decoder_hidden_dim=decoder_hidden_dim,
+            decoder_n_layers=decoder_n_layers,
+        )
 
-    return module, interface_cls(
-        module,
-        workspace_dim=workspace_dim,
-        encoder_hidden_dim=encoder_hidden_dim,
-        encoder_n_layers=encoder_n_layers,
-        decoder_hidden_dim=decoder_hidden_dim,
-        decoder_n_layers=decoder_n_layers,
-    )
+    return module, interface
 
 
 def load_pretrained_domains(
@@ -101,6 +134,8 @@ def load_pretrained_domains(
     decoders_hidden_dim: int,
     decoders_n_layers: int,
     is_variational: bool = False,
+    is_linear: bool = False,
+    bias: bool = False,
 ) -> tuple[dict[str, DomainModule], dict[str, GWInterfaceBase]]:
     modules: dict[str, DomainModule] = {}
     interfaces: dict[str, GWInterfaceBase] = {}
@@ -116,6 +151,8 @@ def load_pretrained_domains(
             decoders_hidden_dim,
             decoders_n_layers,
             is_variational,
+            is_linear,
+            bias,
         )
         modules[domain.domain_type.kind] = model
         interfaces[domain.domain_type.kind] = interface

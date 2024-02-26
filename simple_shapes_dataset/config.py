@@ -64,16 +64,16 @@ def load_config(
     if not config_path.is_dir():
         raise FileNotFoundError(f"Config path {config_path} does not exist.")
 
-    load_files = ["default.yaml"]
+    conf_files = ["default.yaml"]
     if load_files is not None:
-        load_files.extend(load_files)
-    load_files.append("local.yaml")
+        conf_files.extend(load_files)
+    conf_files.append("local.yaml")
 
     if debug_mode:
-        load_files.append("debug.yaml")
+        conf_files.append("debug.yaml")
 
     config_dict: dict[str, Any] = {}
-    for file in load_files:
+    for file in conf_files:
         path_file = config_path / file
         if not path_file.is_file():
             raise FileNotFoundError(f"Config file {path_file} does not exist.")
