@@ -177,6 +177,7 @@ class LossCoeffients(BaseModel):
 class GlobalWorkspace(BaseModel):
     latent_dim: int = 12
     is_variational: bool = False
+    use_fusion_model: bool = False
     var_contrastive_loss: bool = False
     learn_logit_scale: bool = False
     vsepp_contrastive_loss: bool = False

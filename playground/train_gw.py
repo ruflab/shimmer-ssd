@@ -13,6 +13,7 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from shimmer import ContrastiveLossType
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
+    GlobalWorkspaceFusion,
     SchedulerArgs,
     VariationalGlobalWorkspace,
 )
@@ -115,6 +116,21 @@ def main():
             config.global_workspace.latent_dim,
             loss_coefs,
             config.global_workspace.var_contrastive_loss,
+            config.training.optim.lr,
+            config.training.optim.weight_decay,
+            scheduler_args=SchedulerArgs(
+                max_lr=config.training.optim.max_lr,
+                total_steps=config.training.max_steps,
+            ),
+            learn_logit_scale=config.global_workspace.learn_logit_scale,
+            contrastive_loss=contrastive_fn,
+        )
+    if config.global_workspace.use_fusion_model:
+        module = GlobalWorkspaceFusion(
+            domain_modules,
+            interfaces,
+            config.global_workspace.latent_dim,
+            loss_coefs,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
