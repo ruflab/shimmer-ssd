@@ -2385,7 +2385,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "4299fbd7ff362e5ae4805e7221b6e692f6394319"
+resolved_reference = "c6cbed620a6bd61457bf5395c991fbe65d3aeddf"
 
 [[package]]
 name = "six"
