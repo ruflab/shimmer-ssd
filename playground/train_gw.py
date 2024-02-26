@@ -125,7 +125,7 @@ def main():
             learn_logit_scale=config.global_workspace.learn_logit_scale,
             contrastive_loss=contrastive_fn,
         )
-    if config.global_workspace.use_fusion_model:
+    elif config.global_workspace.use_fusion_model:
         module = GlobalWorkspaceFusion(
             domain_modules,
             interfaces,
