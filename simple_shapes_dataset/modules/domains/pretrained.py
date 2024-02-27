@@ -34,7 +34,7 @@ class GWLinearInterface(GWInterfaceBase):
         self.decoder = Linear(workspace_dim, domain_module.latent_dim, bias=bias)
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
-        return self.encoder(x)
+        return torch.tanh(self.encoder(x))
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         return self.decoder(z)

@@ -4,10 +4,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Literal
 
+from cfg_tools import ParsedModel
 from pydantic import BaseModel, field_validator
 from shimmer import __version__ as shimmer_version
-
-from simple_shapes_dataset.config_interpolation import InterpolationModel
 
 
 @dataclass
@@ -201,7 +200,7 @@ class ShimmerConfigInfo(BaseModel):
     cli: Any = {}
 
 
-class Config(InterpolationModel):
+class Config(ParsedModel):
     seed: int = 0
     ood_seed: int | None = None
     default_root_dir: Path
