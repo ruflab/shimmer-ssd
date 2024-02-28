@@ -10,7 +10,7 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
-from shimmer import ContrastiveLossType
+from shimmer import ContrastiveLossType, LossCoefs, VariationalLossCoefs
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspaceFusion,
@@ -82,23 +82,15 @@ def main():
         bias=config.global_workspace.linear_domains_use_bias,
     )
 
-    loss_coefs: dict[str, torch.Tensor] = {
-        "demi_cycles": torch.Tensor(
-            [config.global_workspace.loss_coefficients.demi_cycles]
-        ),
-        "cycles": torch.Tensor([config.global_workspace.loss_coefficients.cycles]),
-        "translations": torch.Tensor(
-            [config.global_workspace.loss_coefficients.translations]
-        ),
-        "contrastives": torch.Tensor(
-            [config.global_workspace.loss_coefficients.contrastives]
-        ),
+    loss_coefs: dict[str, float] = {
+        "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+        "cycles": config.global_workspace.loss_coefficients.cycles,
+        "translations": config.global_workspace.loss_coefficients.translations,
+        "contrastives": config.global_workspace.loss_coefficients.contrastives,
     }
 
-    # if config.global_workspace.is_variational:
-    #     loss_coefs["kl"] = torch.Tensor(
-    #         [config.global_workspace.loss_coefficients.kl]
-    #     )
+    if config.global_workspace.is_variational:
+        loss_coefs["kl"] = config.global_workspace.loss_coefficients.kl
 
     contrastive_fn: ContrastiveLossType | None = None
     if config.global_workspace.vsepp_contrastive_loss:
@@ -114,7 +106,7 @@ def main():
             domain_modules,
             interfaces,
             config.global_workspace.latent_dim,
-            loss_coefs,
+            VariationalLossCoefs(**loss_coefs),
             config.global_workspace.var_contrastive_loss,
             config.training.optim.lr,
             config.training.optim.weight_decay,
@@ -130,7 +122,6 @@ def main():
             domain_modules,
             interfaces,
             config.global_workspace.latent_dim,
-            loss_coefs,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
@@ -145,7 +136,7 @@ def main():
             domain_modules,
             interfaces,
             config.global_workspace.latent_dim,
-            loss_coefs,
+            LossCoefs(**loss_coefs),
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
