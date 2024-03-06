@@ -192,6 +192,7 @@ class GlobalWorkspace(BaseModel):
     domain_proportions: Sequence[DomainProportion]
     loss_coefficients: LossCoeffients = LossCoeffients()
     domain_args: Mapping[str, Any]
+    checkpoint: Path | None = None
 
 
 class ShimmerConfigInfo(BaseModel):
