@@ -2404,8 +2404,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "main"
-resolved_reference = "0dc8d1f08ab9c7dfabbb2f19f9658c935e0a2d81"
+reference = "remove_gw_interface"
+resolved_reference = "2c0861c50de2275b769d21b97a20750cb8d0fb08"
 
 [[package]]
 name = "six"
@@ -3062,4 +3062,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "ad607a40fedd22365e8fdccd202749eb1522b329120937623adfdcbfab770cd1"
+content-hash = "715d7b58637f99c3157b5a236aa260ccfbfd805075ac085d5d67c290b4d88b3d"
