@@ -58,6 +58,30 @@ def replace_gw_interfaces_gw_encoders_decoders(ckpt: CkptType) -> CkptType:
     return ckpt
 
 
+def remove_loss_buffers_and_put_models_in_gw_mod(ckpt: CkptType) -> CkptType:
+    new_state_dict = {}
+    for name, val in ckpt["state_dict"].items():
+        if "loss_coefs.buffer" in name:
+            continue
+        if name[:12] == "domain_mods.":
+            name = "gw_mod." + name
+        if name[:18] == "gw_mod.domain_mods":
+            new_state_dict["loss_mod." + name] = val
+        new_state_dict[name] = val
+    ckpt["state_dict"] = new_state_dict
+    return ckpt
+
+
+def remove_coef_buffers(ckpt: CkptType) -> CkptType:
+    new_state_dict = {}
+    for name, val in ckpt["state_dict"].items():
+        if "coef_buffers." in name:
+            continue
+        new_state_dict[name] = val
+    ckpt["state_dict"] = new_state_dict
+    return ckpt
+
+
 add_gw_interfaces_migration = Migration("add-gw-interfaces", add_gw_interfaces)
 remove_gw_interfaces_hparams_migration = Migration(
     "del-gw-interfaces-hparam", remove_gw_interfaces_hparams
@@ -65,16 +89,24 @@ remove_gw_interfaces_hparams_migration = Migration(
 replace_gw_interfaces_gw_encoders_decoders_migration = Migration(
     "del-gw-interfaces", replace_gw_interfaces_gw_encoders_decoders
 )
+remove_loss_buffers_and_put_models_in_gw_mod_migration = Migration(
+    "del-buffers-put-models-in-gw_mod", remove_loss_buffers_and_put_models_in_gw_mod
+)
+remove_coef_buffers_migration = Migration("del-coef-buffers", remove_coef_buffers)
 
 gw_migrations: list[Migration] = [
     add_gw_interfaces_migration,
     remove_gw_interfaces_hparams_migration,
     replace_gw_interfaces_gw_encoders_decoders_migration,
+    remove_loss_buffers_and_put_models_in_gw_mod_migration,
+    remove_coef_buffers_migration,
 ]
 var_gw_migrations: list[Migration] = [
     add_gw_interfaces_migration,
     remove_gw_interfaces_hparams_migration,
     replace_gw_interfaces_gw_encoders_decoders_migration,
+    remove_loss_buffers_and_put_models_in_gw_mod_migration,
+    remove_coef_buffers_migration,
 ]
 visual_mod_migrations: list[Migration] = []
 attribute_mod_migrations: list[Migration] = []
@@ -91,9 +123,8 @@ def migrate_model(ckpt_path: str | PathLike, migrations: Sequence[Migration], **
         version = 0
         if ckpt_migration_key in ckpt:
             version = len(ckpt[ckpt_migration_key])
-        print(new_ckpt.keys())
-        # torch.save(ckpt, ckpt_path.with_stem(f"{ckpt_path.stem}-{version}"))
-        # torch.save(new_ckpt, ckpt_path)
+        torch.save(ckpt, ckpt_path.with_stem(f"{ckpt_path.stem}-{version}"))
+        torch.save(new_ckpt, ckpt_path)
 
 
 class SaveMigrations(Callback):
