@@ -30,10 +30,26 @@ def add_gw_interfaces(ckpt: CkptType) -> CkptType:
     return ckpt
 
 
-add_gw_interfaces_migration = Migration("add-gw-interfaces", add_gw_interfaces)
+def remove_gw_interfaces_hparams(ckpt: CkptType) -> CkptType:
+    if "hyper_parameters" in ckpt.keys():
+        if "gw_interfaces" in ckpt["hyper_parameters"].keys():
+            del ckpt["hyper_parameters"]["gw_interfaces"]
+    return ckpt
 
-gw_migrations: list[Migration] = [add_gw_interfaces_migration]
-var_gw_migrations: list[Migration] = [add_gw_interfaces_migration]
+
+add_gw_interfaces_migration = Migration("add-gw-interfaces", add_gw_interfaces)
+remove_gw_interfaces_hparams_migration = Migration(
+    "del-gw-interfaces-hparam", remove_gw_interfaces_hparams
+)
+
+gw_migrations: list[Migration] = [
+    add_gw_interfaces_migration,
+    remove_gw_interfaces_hparams_migration,
+]
+var_gw_migrations: list[Migration] = [
+    add_gw_interfaces_migration,
+    remove_gw_interfaces_hparams_migration,
+]
 visual_mod_migrations: list[Migration] = []
 attribute_mod_migrations: list[Migration] = []
 text_mod_migrations: list[Migration] = []
