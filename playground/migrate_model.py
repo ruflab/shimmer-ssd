@@ -12,3 +12,7 @@ def main():
     if config.global_workspace.checkpoint is not None:
         migrate_model(config.global_workspace.checkpoint, gw_migrations)
         print("Model was migrated!")
+
+
+if __name__ == "__main__":
+    main()
