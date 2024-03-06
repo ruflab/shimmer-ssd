@@ -37,18 +37,44 @@ def remove_gw_interfaces_hparams(ckpt: CkptType) -> CkptType:
     return ckpt
 
 
+def replace_gw_interfaces_gw_encoders_decoders(ckpt: CkptType) -> CkptType:
+    new_state_dict = {}
+    for name, val in ckpt["state_dict"].items():
+        if "gw_mod.gw_interfaces" in name and "domain_module" in name:
+            continue
+        elif "gw_mod.gw_interfaces" in name and "encoder" in name:
+            new_name = name.replace(".gw_interfaces", ".gw_encoders")
+            new_name = new_name.replace(".encoder", "")
+            new_state_dict[new_name] = val
+        elif "gw_mod.gw_interfaces" in name and "decoder" in name:
+            new_name = name.replace(".gw_interfaces", ".gw_decoders")
+            new_name = new_name.replace(".decoder", "")
+            new_state_dict[new_name] = val
+        elif "gw_interfaces" in name:
+            print(name)
+        else:
+            new_state_dict[name] = val
+    ckpt["state_dict"] = new_state_dict
+    return ckpt
+
+
 add_gw_interfaces_migration = Migration("add-gw-interfaces", add_gw_interfaces)
 remove_gw_interfaces_hparams_migration = Migration(
     "del-gw-interfaces-hparam", remove_gw_interfaces_hparams
+)
+replace_gw_interfaces_gw_encoders_decoders_migration = Migration(
+    "del-gw-interfaces", replace_gw_interfaces_gw_encoders_decoders
 )
 
 gw_migrations: list[Migration] = [
     add_gw_interfaces_migration,
     remove_gw_interfaces_hparams_migration,
+    replace_gw_interfaces_gw_encoders_decoders_migration,
 ]
 var_gw_migrations: list[Migration] = [
     add_gw_interfaces_migration,
     remove_gw_interfaces_hparams_migration,
+    replace_gw_interfaces_gw_encoders_decoders_migration,
 ]
 visual_mod_migrations: list[Migration] = []
 attribute_mod_migrations: list[Migration] = []
@@ -65,8 +91,9 @@ def migrate_model(ckpt_path: str | PathLike, migrations: Sequence[Migration], **
         version = 0
         if ckpt_migration_key in ckpt:
             version = len(ckpt[ckpt_migration_key])
-        torch.save(ckpt, ckpt_path.with_stem(f"{ckpt_path.stem}-{version}"))
-        torch.save(new_ckpt, ckpt_path)
+        print(new_ckpt.keys())
+        # torch.save(ckpt, ckpt_path.with_stem(f"{ckpt_path.stem}-{version}"))
+        # torch.save(new_ckpt, ckpt_path)
 
 
 class SaveMigrations(Callback):
