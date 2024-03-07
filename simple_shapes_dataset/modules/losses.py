@@ -9,7 +9,7 @@ def margin_loss(
     y: torch.Tensor,
     margin: float,
     reduction: Literal["mean", "sum", "none"] = "mean",
-    **kwargs
+    **kwargs,
 ) -> torch.Tensor:
     out = torch.max(
         torch.zeros_like(x),
