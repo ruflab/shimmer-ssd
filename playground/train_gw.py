@@ -69,7 +69,7 @@ def main():
         additional_transforms=additional_transforms,
     )
 
-    domain_modules, interfaces = load_pretrained_domains(
+    domain_modules, gw_encoders, gw_decoders = load_pretrained_domains(
         config.default_root_dir,
         config.global_workspace.domains,
         config.global_workspace.latent_dim,
@@ -104,7 +104,8 @@ def main():
     if config.global_workspace.is_variational:
         module = VariationalGlobalWorkspace(
             domain_modules,
-            interfaces,
+            gw_encoders,
+            gw_decoders,
             config.global_workspace.latent_dim,
             VariationalLossCoefs(**loss_coefs),
             config.global_workspace.var_contrastive_loss,
@@ -120,7 +121,8 @@ def main():
     elif config.global_workspace.use_fusion_model:
         module = GlobalWorkspaceFusion(
             domain_modules,
-            interfaces,
+            gw_encoders,
+            gw_decoders,
             config.global_workspace.latent_dim,
             config.training.optim.lr,
             config.training.optim.weight_decay,
@@ -134,7 +136,8 @@ def main():
     else:
         module = GlobalWorkspace(
             domain_modules,
-            interfaces,
+            gw_encoders,
+            gw_decoders,
             config.global_workspace.latent_dim,
             LossCoefs(**loss_coefs),
             config.training.optim.lr,

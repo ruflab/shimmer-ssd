@@ -1,5 +1,5 @@
 from lightning.pytorch.loggers.wandb import WandbLogger
-from shimmer import GWInterface
+from shimmer import DomainModule, GWDecoder, GWEncoder
 from shimmer.modules.global_workspace import GlobalWorkspace
 from utils import PROJECT_DIR
 
@@ -42,31 +42,45 @@ def test_gw_logger():
 
     workspace_dim = 4
 
+    domains: dict[str, DomainModule]
     domains = {
         "v": VisualDomainModule(3, 4, 16),
         "attr": AttributeDomainModule(4, 16),
     }
 
-    domain_interfaces = {
-        "v": GWInterface(
-            domains["v"],
-            workspace_dim=workspace_dim,
-            encoder_hidden_dim=16,
-            encoder_n_layers=2,
-            decoder_hidden_dim=16,
-            decoder_n_layers=2,
+    gw_encoders = {
+        "v": GWEncoder(
+            in_dim=domains["v"].latent_dim,
+            hidden_dim=16,
+            out_dim=workspace_dim,
+            n_layers=2,
         ),
-        "attr": GWInterface(
-            domains["attr"],
-            workspace_dim=workspace_dim,
-            encoder_hidden_dim=16,
-            encoder_n_layers=2,
-            decoder_hidden_dim=16,
-            decoder_n_layers=2,
+        "attr": GWEncoder(
+            in_dim=domains["attr"].latent_dim,
+            hidden_dim=16,
+            out_dim=workspace_dim,
+            n_layers=2,
         ),
     }
 
-    module = GlobalWorkspace(domains, domain_interfaces, workspace_dim, loss_coefs={})
+    gw_decoders = {
+        "v": GWDecoder(
+            in_dim=workspace_dim,
+            hidden_dim=16,
+            out_dim=domains["v"].latent_dim,
+            n_layers=2,
+        ),
+        "attr": GWDecoder(
+            in_dim=workspace_dim,
+            hidden_dim=16,
+            out_dim=domains["attr"].latent_dim,
+            n_layers=2,
+        ),
+    }
+
+    module = GlobalWorkspace(
+        domains, gw_encoders, gw_decoders, workspace_dim, loss_coefs={}
+    )
     wandb_logger = WandbLogger(mode="disabled")
 
     val_samples = data_module.get_samples("val", 2)

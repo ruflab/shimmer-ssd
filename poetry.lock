@@ -2387,7 +2387,7 @@ testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jar
 
 [[package]]
 name = "shimmer"
-version = "0.4.0"
+version = "0.5.0"
 description = "A light GLoW"
 optional = false
 python-versions = "^3.11"
@@ -2405,7 +2405,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "0dc8d1f08ab9c7dfabbb2f19f9658c935e0a2d81"
+resolved_reference = "0d843f14d77fe887adde519ec56821c2581e8418"
 
 [[package]]
 name = "six"

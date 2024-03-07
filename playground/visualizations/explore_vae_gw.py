@@ -146,7 +146,7 @@ def main() -> None:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    domain_description, interfaces = load_pretrained_domains(
+    domain_description, gw_encoders, gw_decoders = load_pretrained_domains(
         config.default_root_dir,
         config.global_workspace.domains,
         config.global_workspace.latent_dim,
@@ -162,7 +162,8 @@ def main() -> None:
     domain_module = VariationalGlobalWorkspace.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
-        gw_interfaces=interfaces,
+        gw_encoders=gw_encoders,
+        gw_decoders=gw_decoders,
     )
     domain_module.eval().freeze()
 
