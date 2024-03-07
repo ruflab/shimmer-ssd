@@ -39,9 +39,8 @@ types-setuptools = "^67.8.0.0"
 types-tabulate = "^0.9.0.2"
 types-dataclasses = "^0.6.6"
 types-click = "^7.1.8"
-flake8 = "^6.0.0"
 mypy = "^1.4.0"
-isort = "^5.13.2"
+pre-commit = "^3.6.2"
 
 [tool.poetry.group.test.dependencies]
 torchvision = "^0.15.2"
@@ -54,14 +53,18 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 shapesd = "simple_shapes_dataset.cli:cli"
 
-[tool.isort]
-profile = "black"
-line_length = 88
-py_version = 311
-known_third_party = ["wandb"]
 
-[tool.black]
-line-length = 88
+[tool.ruff]
+target-version = "py311"
+extend-exclude = [
+    "__pycache__",
+    ".mypy_cache",
+    ".github",
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+
 
 [tool.mypy]
 ignore_missing_imports = true

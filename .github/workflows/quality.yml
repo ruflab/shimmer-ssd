@@ -18,15 +18,8 @@ jobs:
             eval `ssh-agent -s`
             ssh-add - <<< '${{ secrets.SHIMMER_DEPLOY }}'
             poetry install --with dev
-      - name: isort
-        run: |
-            poetry run isort --profile=black --check-only --diff --line-length=88 simple_shapes_dataset playground
-      - uses: psf/black@stable
-        with:
-          src: "."
-      - name: Analysing the code with flake8
-        run: |
-          poetry run flake8 .
+      - name: Ruff checks
+        uses: chartboost/ruff-action@v1
       - name: Analysing the code with mypy
         run: |
           poetry run mypy --install-types --non-interactive .
