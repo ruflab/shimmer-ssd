@@ -1,5 +1,5 @@
 from lightning.pytorch.loggers.wandb import WandbLogger
-from shimmer import GWDecoder, GWEncoder
+from shimmer import DomainModule, GWDecoder, GWEncoder
 from shimmer.modules.global_workspace import GlobalWorkspace
 from utils import PROJECT_DIR
 
@@ -42,6 +42,7 @@ def test_gw_logger():
 
     workspace_dim = 4
 
+    domains: dict[str, DomainModule]
     domains = {
         "v": VisualDomainModule(3, 4, 16),
         "attr": AttributeDomainModule(4, 16),
