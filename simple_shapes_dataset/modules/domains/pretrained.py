@@ -6,7 +6,7 @@ from shimmer import (
     GWDecoder,
     GWEncoder,
     GWEncoderLinear,
-    VariationalGWEncoder,
+    GWEncoderWithUncertainty,
 )
 from torch.nn import Linear, Module
 
@@ -95,7 +95,7 @@ def load_pretrained_domain(
         gw_encoder = GWEncoderLinear(module.latent_dim, workspace_dim, bias=bias)
         gw_decoder = Linear(workspace_dim, module.latent_dim, bias=bias)
     elif is_variational:
-        gw_encoder = VariationalGWEncoder(
+        gw_encoder = GWEncoderWithUncertainty(
             module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
         )
         gw_decoder = GWDecoder(

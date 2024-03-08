@@ -170,7 +170,6 @@ class LossCoeffients(BaseModel):
     demi_cycles: float = 1.0
     translations: float = 1.0
     contrastives: float = 0.01
-    kl: float = 0.0
 
 
 class GlobalWorkspace(BaseModel):

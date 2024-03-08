@@ -5,7 +5,7 @@ from typing import Any, cast
 import torch
 from shimmer import contrastive_loss
 from shimmer.modules.global_workspace import GlobalWorkspace
-from shimmer.modules.gw_module import VariationalGWModule
+from shimmer.modules.gw_module import GWModuleWithUncertainty
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import gw_migrations, migrate_model
@@ -90,7 +90,7 @@ def main():
     )
     domain_module.eval().freeze()
     domain_module.to(device)
-    gw_mod = cast(VariationalGWModule, domain_module.gw_mod)
+    gw_mod = cast(GWModuleWithUncertainty, domain_module.gw_mod)
 
     val_samples = put_on_device(data_module.get_samples("val", 2048), device)
     encoded_samples = domain_module.encode_domains(val_samples)[

@@ -6,16 +6,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms.functional as F
-import wandb
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.modules.global_workspace import (
     GlobalWorkspaceBase,
-    VariationalGlobalWorkspace,
+    GlobalWorkspaceWithUncertainty,
 )
 from torchvision.utils import make_grid
 
+import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import migrate_model, var_gw_migrations
 from simple_shapes_dataset.config import load_config
@@ -159,7 +159,7 @@ def main() -> None:
 
     ckpt_path = config.default_root_dir / config.visualization.explore_gw.checkpoint
     migrate_model(ckpt_path, var_gw_migrations)
-    domain_module = VariationalGlobalWorkspace.load_from_checkpoint(
+    domain_module = GlobalWorkspaceWithUncertainty.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
         gw_encoders=gw_encoders,

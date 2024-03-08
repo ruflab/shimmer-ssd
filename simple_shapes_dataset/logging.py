@@ -16,7 +16,7 @@ from PIL import Image
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspaceBase,
-    VariationalGlobalWorkspace,
+    GlobalWorkspaceWithUncertainty,
 )
 from torchvision.utils import make_grid
 
@@ -430,7 +430,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "train":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)):
+        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
             return
 
         if (
@@ -449,7 +449,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "val":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)):
+        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
             return
 
         if (
@@ -468,7 +468,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "test":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)):
+        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
             return
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
@@ -481,7 +481,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode == "test":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, VariationalGlobalWorkspace)):
+        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
             return
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)

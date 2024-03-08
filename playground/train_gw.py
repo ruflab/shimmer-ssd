@@ -10,12 +10,12 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
-from shimmer import ContrastiveLossType, LossCoefs, VariationalLossCoefs
+from shimmer import ContrastiveLossType, LossCoefs
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspaceFusion,
+    GlobalWorkspaceWithUncertainty,
     SchedulerArgs,
-    VariationalGlobalWorkspace,
 )
 from torch import set_float32_matmul_precision
 
@@ -89,9 +89,6 @@ def main():
         "contrastives": config.global_workspace.loss_coefficients.contrastives,
     }
 
-    if config.global_workspace.is_variational:
-        loss_coefs["kl"] = config.global_workspace.loss_coefficients.kl
-
     contrastive_fn: ContrastiveLossType | None = None
     if config.global_workspace.vsepp_contrastive_loss:
         contrastive_fn = VSEPPContrastiveLoss(
@@ -102,12 +99,12 @@ def main():
         )
 
     if config.global_workspace.is_variational:
-        module = VariationalGlobalWorkspace(
+        module = GlobalWorkspaceWithUncertainty(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            VariationalLossCoefs(**loss_coefs),
+            LossCoefs(**loss_coefs),
             config.global_workspace.var_contrastive_loss,
             config.training.optim.lr,
             config.training.optim.weight_decay,
