@@ -15,6 +15,7 @@ from matplotlib.figure import Figure
 from PIL import Image
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
+    GlobalWorkspaceFusion,
     GlobalWorkspaceBase,
     GlobalWorkspaceWithUncertainty,
 )
