@@ -10,10 +10,9 @@ from shimmer import (
 )
 from torch.nn import Linear, Module
 
+from simple_shapes_dataset import PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import (
-    attribute_mod_migrations,
     migrate_model,
-    visual_mod_migrations,
 )
 from simple_shapes_dataset.errors import ConfigurationError
 from simple_shapes_dataset.modules.domains.attribute import (
@@ -36,33 +35,33 @@ def load_pretrained_module(
     domain_checkpoint = root_path / domain.checkpoint_path
     match domain.domain_type:
         case DomainType.v:
-            migrate_model(domain_checkpoint, visual_mod_migrations)
+            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
             module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 
         case DomainType.v_latents:
-            migrate_model(domain_checkpoint, visual_mod_migrations)
+            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
             v_module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
             module = VisualLatentDomainModule(v_module)
 
         case DomainType.v_latents_unpaired:
-            migrate_model(domain_checkpoint, visual_mod_migrations)
+            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
             v_module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
 
         case DomainType.attr:
-            migrate_model(domain_checkpoint, attribute_mod_migrations)
+            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "attr_mod")
             module = AttributeDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 
         case DomainType.attr_unpaired:
-            migrate_model(domain_checkpoint, attribute_mod_migrations)
+            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "attr_mod")
             module = AttributeWithUnpairedDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )

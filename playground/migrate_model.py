@@ -1,5 +1,5 @@
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.ckpt_migrations import gw_migrations, migrate_model
+from simple_shapes_dataset.ckpt_migrations import migrate_model
 from simple_shapes_dataset.config import load_config
 
 
@@ -10,7 +10,9 @@ def main():
     )
 
     if config.global_workspace.checkpoint is not None:
-        migrate_model(config.global_workspace.checkpoint, gw_migrations)
+        migrate_model(
+            config.global_workspace.checkpoint, PROJECT_DIR / "migrations" / "gw"
+        )
         print("Model was migrated!")
 
 

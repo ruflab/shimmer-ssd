@@ -1,13 +1,10 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
-import wandb
 
+import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.ckpt_migrations import (
-    attribute_mod_migrations,
-    migrate_model,
-)
+from simple_shapes_dataset.ckpt_migrations import migrate_model
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
@@ -29,7 +26,7 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     ckpt_path = config.default_root_dir / config.visualization.explore_vae.checkpoint
-    migrate_model(ckpt_path, attribute_mod_migrations)
+    migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "attr_mod")
     domain_module = AttributeDomainModule.load_from_checkpoint(ckpt_path)
     domain_module.eval().freeze()
 

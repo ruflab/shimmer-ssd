@@ -5,118 +5,19 @@ from typing import Any
 
 import torch
 from lightning.pytorch import Callback, LightningModule, Trainer
-from migrate_ckpt import CkptType, Migration, ckpt_migration_key, migrate_ckpt
+from migrate_ckpt import (
+    Migration,
+    ckpt_migration_key,
+    migrate_from_folder,
+)
 
 from simple_shapes_dataset import LOGGER
 
 
-def add_gw_interfaces(ckpt: CkptType) -> CkptType:
-    new_state_dict = {}
-    for name, val in ckpt["state_dict"].items():
-        new_name = name.replace(
-            "gw_mod.encoders.resnet", "gw_mod.gw_interfaces.resnet.encoder"
-        )
-        new_name = new_name.replace(
-            "gw_mod.encoders.bge", "gw_mod.gw_interfaces.bge.encoder"
-        )
-        new_name = new_name.replace(
-            "gw_mod.decoders.resnet", "gw_mod.gw_interfaces.resnet.decoder"
-        )
-        new_name = new_name.replace(
-            "gw_mod.decoders.bge", "gw_mod.gw_interfaces.bge.decoder"
-        )
-        new_state_dict[new_name] = val
-    ckpt["state_dict"] = new_state_dict
-    return ckpt
-
-
-def remove_gw_interfaces_hparams(ckpt: CkptType) -> CkptType:
-    if "hyper_parameters" in ckpt.keys():
-        if "gw_interfaces" in ckpt["hyper_parameters"].keys():
-            del ckpt["hyper_parameters"]["gw_interfaces"]
-    return ckpt
-
-
-def replace_gw_interfaces_gw_encoders_decoders(ckpt: CkptType) -> CkptType:
-    new_state_dict = {}
-    for name, val in ckpt["state_dict"].items():
-        if "gw_mod.gw_interfaces" in name and "domain_module" in name:
-            continue
-        elif "gw_mod.gw_interfaces" in name and "encoder" in name:
-            new_name = name.replace(".gw_interfaces", ".gw_encoders")
-            new_name = new_name.replace(".encoder", "")
-            new_state_dict[new_name] = val
-        elif "gw_mod.gw_interfaces" in name and "decoder" in name:
-            new_name = name.replace(".gw_interfaces", ".gw_decoders")
-            new_name = new_name.replace(".decoder", "")
-            new_state_dict[new_name] = val
-        elif "gw_interfaces" in name:
-            print(name)
-        else:
-            new_state_dict[name] = val
-    ckpt["state_dict"] = new_state_dict
-    return ckpt
-
-
-def remove_loss_buffers_and_put_models_in_gw_mod(ckpt: CkptType) -> CkptType:
-    new_state_dict = {}
-    for name, val in ckpt["state_dict"].items():
-        if "loss_coefs.buffer" in name:
-            continue
-        if name[:12] == "domain_mods.":
-            name = "gw_mod." + name
-        if name[:18] == "gw_mod.domain_mods":
-            new_state_dict["loss_mod." + name] = val
-        new_state_dict[name] = val
-    ckpt["state_dict"] = new_state_dict
-    return ckpt
-
-
-def remove_coef_buffers(ckpt: CkptType) -> CkptType:
-    new_state_dict = {}
-    for name, val in ckpt["state_dict"].items():
-        if "coef_buffers." in name:
-            continue
-        new_state_dict[name] = val
-    ckpt["state_dict"] = new_state_dict
-    return ckpt
-
-
-add_gw_interfaces_migration = Migration("add-gw-interfaces", add_gw_interfaces)
-remove_gw_interfaces_hparams_migration = Migration(
-    "del-gw-interfaces-hparam", remove_gw_interfaces_hparams
-)
-replace_gw_interfaces_gw_encoders_decoders_migration = Migration(
-    "del-gw-interfaces", replace_gw_interfaces_gw_encoders_decoders
-)
-remove_loss_buffers_and_put_models_in_gw_mod_migration = Migration(
-    "del-buffers-put-models-in-gw_mod", remove_loss_buffers_and_put_models_in_gw_mod
-)
-remove_coef_buffers_migration = Migration("del-coef-buffers", remove_coef_buffers)
-
-gw_migrations: list[Migration] = [
-    add_gw_interfaces_migration,
-    remove_gw_interfaces_hparams_migration,
-    replace_gw_interfaces_gw_encoders_decoders_migration,
-    remove_loss_buffers_and_put_models_in_gw_mod_migration,
-    remove_coef_buffers_migration,
-]
-gw_with_uncertainty_migrations: list[Migration] = [
-    add_gw_interfaces_migration,
-    remove_gw_interfaces_hparams_migration,
-    replace_gw_interfaces_gw_encoders_decoders_migration,
-    remove_loss_buffers_and_put_models_in_gw_mod_migration,
-    remove_coef_buffers_migration,
-]
-visual_mod_migrations: list[Migration] = []
-attribute_mod_migrations: list[Migration] = []
-text_mod_migrations: list[Migration] = []
-
-
-def migrate_model(ckpt_path: str | PathLike, migrations: Sequence[Migration], **kwargs):
+def migrate_model(ckpt_path: str | PathLike, migration_path: str | PathLike, **kwargs):
     ckpt_path = Path(ckpt_path)
     ckpt = torch.load(ckpt_path, **kwargs)
-    new_ckpt, done_migrations = migrate_ckpt(ckpt, migrations)
+    new_ckpt, done_migrations = migrate_from_folder(ckpt, migration_path)
     done_migration_log = ", ".join(map(lambda x: x.name, done_migrations))
     LOGGER.debug(f"Migrating: {done_migration_log}")
     if len(done_migrations) or ckpt_migration_key not in ckpt:

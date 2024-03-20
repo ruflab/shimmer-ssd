@@ -5,12 +5,12 @@ import matplotlib
 import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms.functional as F
-import wandb
 from PIL.Image import Image
 from torchvision.utils import make_grid
 
+import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.ckpt_migrations import migrate_model, visual_mod_migrations
+from simple_shapes_dataset.ckpt_migrations import migrate_model
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import get_pil_image
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
@@ -41,7 +41,7 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     ckpt_path = config.default_root_dir / config.visualization.explore_vae.checkpoint
-    migrate_model(ckpt_path, visual_mod_migrations)
+    migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "visual_mod")
     domain_module = VisualDomainModule.load_from_checkpoint(ckpt_path)
     domain_module.eval().freeze()
 

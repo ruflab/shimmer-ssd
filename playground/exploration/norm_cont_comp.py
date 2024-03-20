@@ -8,7 +8,7 @@ from shimmer.modules.global_workspace import GlobalWorkspace
 from shimmer.modules.gw_module import GWModuleWithUncertainty
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.ckpt_migrations import gw_migrations, migrate_model
+from simple_shapes_dataset.ckpt_migrations import migrate_model
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
@@ -81,7 +81,7 @@ def main():
     )
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
-    migrate_model(ckpt_path, gw_migrations)
+    migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "gw")
     domain_module = GlobalWorkspace.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
