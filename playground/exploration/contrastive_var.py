@@ -10,7 +10,10 @@ from shimmer import (
 )
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.ckpt_migrations import migrate_model, var_gw_migrations
+from simple_shapes_dataset.ckpt_migrations import (
+    gw_with_uncertainty_migrations,
+    migrate_model,
+)
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
@@ -80,11 +83,11 @@ def main():
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
-        is_variational=True,
+        has_uncertainty=True,
     )
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
-    migrate_model(ckpt_path, var_gw_migrations)
+    migrate_model(ckpt_path, gw_with_uncertainty_migrations)
     domain_module = GlobalWorkspaceWithUncertainty.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
@@ -143,7 +146,7 @@ def main():
 
     contrastive_fn = cast(
         GWLossesWithUncertainty, domain_module.loss_mod
-    ).var_contrastive_fn
+    ).cont_fn_with_uncertainty
     assert contrastive_fn is not None
 
     cont_loss1 = contrastive_fn(

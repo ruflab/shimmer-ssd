@@ -23,7 +23,7 @@ from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import (
     SaveMigrations,
     gw_migrations,
-    var_gw_migrations,
+    gw_with_uncertainty_migrations,
 )
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
@@ -77,7 +77,7 @@ def main():
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
-        is_variational=config.global_workspace.is_variational,
+        has_uncertainty=config.global_workspace.has_uncertainty,
         is_linear=config.global_workspace.linear_domains,
         bias=config.global_workspace.linear_domains_use_bias,
     )
@@ -98,14 +98,14 @@ def main():
             torch.tensor([1 / 0.07]).log(),
         )
 
-    if config.global_workspace.is_variational:
+    if config.global_workspace.has_uncertainty:
         module = GlobalWorkspaceWithUncertainty(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
             LossCoefs(**loss_coefs),
-            config.global_workspace.var_contrastive_loss,
+            config.global_workspace.cont_loss_with_uncertainty,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
@@ -222,7 +222,7 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        gw_type = "var_gw" if config.global_workspace.is_variational else "gw"
+        gw_type = "gw_uncertainty" if config.global_workspace.has_uncertainty else "gw"
         run_name = f"{gw_type}_z={config.global_workspace.latent_dim}"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
@@ -239,8 +239,8 @@ def main():
         callbacks.extend(
             [
                 SaveMigrations(
-                    var_gw_migrations
-                    if config.global_workspace.is_variational
+                    gw_with_uncertainty_migrations
+                    if config.global_workspace.has_uncertainty
                     else gw_migrations
                 ),
                 ModelCheckpoint(

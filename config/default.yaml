@@ -26,8 +26,8 @@ domain_modules:
         color_blind: false
 
 global_workspace:
-    is_variational: false
-    var_contrastive_loss: false
+    has_uncertainty: false
+    cont_loss_with_uncertainty: false
 
     domain_proportions: 
         -   domains: ["v"]

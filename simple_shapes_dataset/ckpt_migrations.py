@@ -101,7 +101,7 @@ gw_migrations: list[Migration] = [
     remove_loss_buffers_and_put_models_in_gw_mod_migration,
     remove_coef_buffers_migration,
 ]
-var_gw_migrations: list[Migration] = [
+gw_with_uncertainty_migrations: list[Migration] = [
     add_gw_interfaces_migration,
     remove_gw_interfaces_hparams_migration,
     replace_gw_interfaces_gw_encoders_decoders_migration,

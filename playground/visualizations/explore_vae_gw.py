@@ -17,7 +17,10 @@ from torchvision.utils import make_grid
 
 import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.ckpt_migrations import migrate_model, var_gw_migrations
+from simple_shapes_dataset.ckpt_migrations import (
+    gw_with_uncertainty_migrations,
+    migrate_model,
+)
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.logging import attribute_image_grid, get_pil_image
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_domains
@@ -154,11 +157,11 @@ def main() -> None:
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
-        is_variational=True,
+        has_uncertainty=True,
     )
 
     ckpt_path = config.default_root_dir / config.visualization.explore_gw.checkpoint
-    migrate_model(ckpt_path, var_gw_migrations)
+    migrate_model(ckpt_path, gw_with_uncertainty_migrations)
     domain_module = GlobalWorkspaceWithUncertainty.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,

@@ -83,7 +83,7 @@ def load_pretrained_domain(
     encoder_n_layers: int,
     decoder_hidden_dim: int,
     decoder_n_layers: int,
-    is_variational: bool = False,
+    has_uncertainty: bool = False,
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[DomainModule, Module, Module]:
@@ -94,7 +94,7 @@ def load_pretrained_domain(
     if is_linear:
         gw_encoder = GWEncoderLinear(module.latent_dim, workspace_dim, bias=bias)
         gw_decoder = Linear(workspace_dim, module.latent_dim, bias=bias)
-    elif is_variational:
+    elif has_uncertainty:
         gw_encoder = GWEncoderWithUncertainty(
             module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
         )
@@ -120,7 +120,7 @@ def load_pretrained_domains(
     encoders_n_layers: int,
     decoders_hidden_dim: int,
     decoders_n_layers: int,
-    is_variational: bool = False,
+    has_uncertainty: bool = False,
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[dict[str, DomainModule], dict[str, Module], dict[str, Module]]:
@@ -138,7 +138,7 @@ def load_pretrained_domains(
             encoders_n_layers,
             decoders_hidden_dim,
             decoders_n_layers,
-            is_variational,
+            has_uncertainty,
             is_linear,
             bias,
         )
