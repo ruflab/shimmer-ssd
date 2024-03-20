@@ -430,7 +430,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "train":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
+        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty, GlobalWorkspaceFusion)):
             return
 
         if (
@@ -449,7 +449,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "val":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
+        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty, GlobalWorkspaceFusion)):
             return
 
         if (
@@ -468,7 +468,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "test":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
+        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty, GlobalWorkspaceFusion)):
             return
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
@@ -481,7 +481,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode == "test":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
+        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty, GlobalWorkspaceFusion)):
             return
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
