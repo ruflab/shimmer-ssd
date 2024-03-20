@@ -6,11 +6,11 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
+from migrate_ckpt.migrate import get_folder_migrations
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import (
     SaveMigrations,
-    attribute_mod_migrations,
 )
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
@@ -91,7 +91,9 @@ def main():
         )
         callbacks.extend(
             [
-                SaveMigrations(attribute_mod_migrations),
+                SaveMigrations(
+                    get_folder_migrations(PROJECT_DIR / "migrations" / "attr_mod")
+                ),
                 ModelCheckpoint(
                     dirpath=checkpoint_dir,
                     filename="{epoch}",
