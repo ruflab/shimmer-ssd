@@ -1145,7 +1145,7 @@ develop = false
 type = "git"
 url = "https://github.com/bdvllrs/migrate-ckpt.git"
 reference = "main"
-resolved_reference = "a443ed7ee522046a0504054d50d1eff1a6ea1ae9"
+resolved_reference = "95fc2ccd0bb443a6f0c4945c6c66c6fd1fc1ec6e"
 
 [[package]]
 name = "mpmath"

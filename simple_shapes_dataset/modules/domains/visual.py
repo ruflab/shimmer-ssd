@@ -56,7 +56,7 @@ class VisualDomainModule(DomainModule):
         out = self.vae.decode(z)[0]
         return out
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
         return self.decode(self.encode(x))
 
     def generic_step(
@@ -76,7 +76,7 @@ class VisualDomainModule(DomainModule):
         self.log(f"{mode}/loss", total_loss)
         return total_loss
 
-    def validation_step(
+    def validation_step(  # type: ignore
         self,
         batch: Mapping[str, torch.Tensor],
         batch_idx: int,
@@ -84,7 +84,7 @@ class VisualDomainModule(DomainModule):
         x = batch["v"]
         return self.generic_step(x, "val")
 
-    def training_step(
+    def training_step(  # type: ignore
         self,
         batch: Mapping[frozenset[str], Mapping[str, torch.Tensor]],
         batch_idx: int,
@@ -92,7 +92,7 @@ class VisualDomainModule(DomainModule):
         x = batch[frozenset(["v"])]["v"]
         return self.generic_step(x, "train")
 
-    def configure_optimizers(
+    def configure_optimizers(  # type: ignore
         self,
     ) -> dict[str, Any]:
         optimizer = torch.optim.AdamW(
