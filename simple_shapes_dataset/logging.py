@@ -14,10 +14,7 @@ from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
 from shimmer.modules.global_workspace import (
-    GlobalWorkspace,
-    GlobalWorkspaceFusion,
     GlobalWorkspaceBase,
-    GlobalWorkspaceWithUncertainty,
 )
 from torchvision.utils import make_grid
 
@@ -431,7 +428,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "train":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty, GlobalWorkspaceFusion)):
+        if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
         if (
@@ -450,7 +447,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "val":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty, GlobalWorkspaceFusion)):
+        if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
         if (
@@ -469,7 +466,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "test":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty, GlobalWorkspaceFusion)):
+        if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
@@ -482,7 +479,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode == "test":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty, GlobalWorkspaceFusion)):
+        if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
