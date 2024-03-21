@@ -13,11 +13,7 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
-from shimmer.modules.global_workspace import (
-    GlobalWorkspace,
-    GlobalWorkspaceBase,
-    GlobalWorkspaceWithUncertainty,
-)
+from shimmer.modules.global_workspace import GlobalWorkspaceBase
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import LOGGER
@@ -430,7 +426,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "train":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
+        if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
         if (
@@ -449,7 +445,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "val":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
+        if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
         if (
@@ -468,7 +464,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode != "test":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
+        if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
@@ -481,7 +477,7 @@ class LogGWImagesCallback(pl.Callback):
         if self.mode == "test":
             return
 
-        if not isinstance(pl_module, (GlobalWorkspace, GlobalWorkspaceWithUncertainty)):
+        if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
         return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
