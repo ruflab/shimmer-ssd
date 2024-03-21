@@ -13,9 +13,7 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
-from shimmer.modules.global_workspace import (
-    GlobalWorkspaceBase,
-)
+from shimmer.modules.global_workspace import GlobalWorkspaceBase
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import LOGGER
