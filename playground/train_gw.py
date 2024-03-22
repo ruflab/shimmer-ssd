@@ -79,7 +79,7 @@ def main():
         bias=config.global_workspace.linear_domains_use_bias,
     )
 
-    loss_coefs: dict[str, float] = {
+    loss_coefs: LossCoefs = {
         "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
         "cycles": config.global_workspace.loss_coefficients.cycles,
         "translations": config.global_workspace.loss_coefficients.translations,
@@ -101,7 +101,7 @@ def main():
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            LossCoefs(**loss_coefs),
+            loss_coefs,
             config.global_workspace.cont_loss_with_uncertainty,
             config.training.optim.lr,
             config.training.optim.weight_decay,
@@ -133,7 +133,7 @@ def main():
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            LossCoefs(**loss_coefs),
+            loss_coefs,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
