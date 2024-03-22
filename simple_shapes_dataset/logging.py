@@ -13,6 +13,7 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
+from shimmer import batch_cycles, batch_demi_cycles, batch_translations
 from shimmer.modules.global_workspace import GlobalWorkspaceBase
 from torchvision.utils import make_grid
 
@@ -384,9 +385,11 @@ class LogGWImagesCallback(pl.Callback):
 
         with torch.no_grad():
             pl_module.eval()
-            prediction_demi_cycles = pl_module.batch_demi_cycles(latents)
-            prediction_cycles = pl_module.batch_cycles(latents)
-            prediction_translations = pl_module.batch_translations(latents)
+            prediction_demi_cycles = batch_demi_cycles(pl_module.gw_mod, latents)
+            prediction_cycles = batch_cycles(
+                pl_module.gw_mod, latents, pl_module.domain_mods.keys()
+            )
+            prediction_translations = batch_translations(pl_module.gw_mod, latents)
             pl_module.train()
 
         for logger in loggers:
