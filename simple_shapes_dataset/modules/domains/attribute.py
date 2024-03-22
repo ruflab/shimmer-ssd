@@ -73,8 +73,8 @@ class Decoder(VAEDecoder):
             nn.Tanh(),
         )
 
-    def forward(self, z: torch.Tensor) -> list[torch.Tensor]:
-        out = self.decoder(z)
+    def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
+        out = self.decoder(x)
         return [self.decoder_categories(out), self.decoder_attributes(out)]
 
 
@@ -125,7 +125,7 @@ class AttributeDomainModule(DomainModule):
         out.append(torch.zeros_like(z[:, -1]))
         return out
 
-    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
+    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:  # type: ignore
         return self.decode(self.encode(x))
 
     def generic_step(
@@ -168,13 +168,13 @@ class AttributeDomainModule(DomainModule):
         self.log(f"{mode}/loss", total_loss)
         return total_loss
 
-    def validation_step(
+    def validation_step(  # type: ignore
         self, batch: Mapping[str, Sequence[torch.Tensor]], _
     ) -> torch.Tensor:
         x = batch["attr"]
         return self.generic_step(x, "val")
 
-    def training_step(
+    def training_step(  # type: ignore
         self,
         batch: Mapping[frozenset[str], Mapping[str, Sequence[torch.Tensor]]],
         _,
@@ -182,7 +182,7 @@ class AttributeDomainModule(DomainModule):
         x = batch[frozenset(["attr"])]["attr"]
         return self.generic_step(x, "train")
 
-    def configure_optimizers(
+    def configure_optimizers(  # type: ignore
         self,
     ) -> dict[str, Any]:
         optimizer = torch.optim.AdamW(
@@ -251,7 +251,7 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         out.append(unpaired)
         return out
 
-    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
+    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:  # type: ignore
         return self.decode(self.encode(x))
 
     def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
@@ -294,5 +294,5 @@ class AttributeLegacyDomainModule(DomainModule):
         unpaired = torch.zeros_like(z[:, 0])
         return [categories, attr, unpaired]
 
-    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:
+    def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:  # type: ignore
         return self.decode(self.encode(x))

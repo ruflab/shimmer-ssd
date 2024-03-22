@@ -11,7 +11,7 @@ from lightning.pytorch.callbacks import (
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
 from migrate_ckpt.migrate import get_folder_migrations
-from shimmer import ContrastiveLossType, LossCoefs
+from shimmer import ContrastiveLossType, GlobalWorkspaceBase, LossCoefs
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspaceFusion,
@@ -95,6 +95,7 @@ def main():
             torch.tensor([1 / 0.07]).log(),
         )
 
+    module: GlobalWorkspaceBase
     if config.global_workspace.has_uncertainty:
         module = GlobalWorkspaceWithUncertainty(
             domain_modules,
