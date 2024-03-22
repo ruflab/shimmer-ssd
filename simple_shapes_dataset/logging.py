@@ -3,6 +3,15 @@ from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal, cast
 
+from shimmer.modules.utils import (
+    batch_cycles,
+    batch_cycles_with_uncertainty,
+    batch_demi_cycles,
+    batch_demi_cycles_with_uncertainty,
+    batch_translations,
+    batch_translations_with_uncertainty,
+)
+
 import lightning.pytorch as pl
 import matplotlib
 import matplotlib.pyplot as plt
@@ -384,9 +393,9 @@ class LogGWImagesCallback(pl.Callback):
 
         with torch.no_grad():
             pl_module.eval()
-            prediction_demi_cycles = pl_module.batch_demi_cycles(latents)
-            prediction_cycles = pl_module.batch_cycles(latents)
-            prediction_translations = pl_module.batch_translations(latents)
+            prediction_demi_cycles = batch_demi_cycles(pl_module.gw_mod,latents)
+            prediction_cycles = batch_cycles(pl_module.gw_mod,latents,pl_module.domain_mods.keys())
+            prediction_translations = batch_translations(pl_module.gw_mod,latents)
             pl_module.train()
 
         for logger in loggers:
