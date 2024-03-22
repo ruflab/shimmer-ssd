@@ -5,11 +5,8 @@ from typing import Any, Literal, cast
 
 from shimmer.modules.utils import (
     batch_cycles,
-    batch_cycles_with_uncertainty,
     batch_demi_cycles,
-    batch_demi_cycles_with_uncertainty,
     batch_translations,
-    batch_translations_with_uncertainty,
 )
 
 import lightning.pytorch as pl
