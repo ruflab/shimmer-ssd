@@ -10,8 +10,7 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
-from migrate_ckpt.migrate import get_folder_migrations
-from shimmer import ContrastiveLossType, GlobalWorkspaceBase, LossCoefs
+from shimmer import ContrastiveLossType, GlobalWorkspaceBase, LossCoefs, SaveMigrations
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspaceFusion,
@@ -21,7 +20,6 @@ from shimmer.modules.global_workspace import (
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.ckpt_migrations import SaveMigrations
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
@@ -236,9 +234,7 @@ def main():
         )
         callbacks.extend(
             [
-                SaveMigrations(
-                    get_folder_migrations(PROJECT_DIR / "migrations" / "gw")
-                ),
+                SaveMigrations(),
                 ModelCheckpoint(
                     dirpath=checkpoint_dir,
                     filename="{epoch}",
