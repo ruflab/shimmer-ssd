@@ -63,6 +63,10 @@ extend-exclude = [
     "data",
 ]
 
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
 [tool.ruff.format]
 docstring-code-format = true
 
