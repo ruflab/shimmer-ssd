@@ -10,11 +10,15 @@ from migrate_ckpt import (
     ckpt_migration_key,
     migrate_from_folder,
 )
+from shimmer import migrate_model as migrate_shimmer_model
 
 from simple_shapes_dataset import LOGGER
 
 
 def migrate_model(ckpt_path: str | PathLike, migration_path: str | PathLike, **kwargs):
+    if Path(migration_path).name == "gw":
+        migrate_shimmer_model(ckpt_path, **kwargs)
+
     ckpt_path = Path(ckpt_path)
     ckpt = torch.load(ckpt_path, **kwargs)
     new_ckpt, done_migrations = migrate_from_folder(ckpt, migration_path)

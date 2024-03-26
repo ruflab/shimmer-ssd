@@ -207,13 +207,13 @@ class TextDomainModule(DomainModule):
         self.log(f"{mode}/loss", total_loss)
         return total_loss
 
-    def validation_step(
+    def validation_step(  # type: ignore
         self, batch: Mapping[str, Mapping[str, torch.Tensor]], _
     ) -> torch.Tensor:
         x = batch["t"]
         return self.generic_step(x, "val")
 
-    def training_step(
+    def training_step(  # type: ignore
         self,
         batch: Mapping[frozenset[str], Mapping[str, Mapping[str, torch.Tensor]]],
         _,
@@ -221,7 +221,7 @@ class TextDomainModule(DomainModule):
         x = batch[frozenset(["t"])]["t"]
         return self.generic_step(x, "train")
 
-    def configure_optimizers(
+    def configure_optimizers(  # type: ignore
         self,
     ) -> dict[str, Any]:
         optimizer = torch.optim.AdamW(

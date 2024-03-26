@@ -10,8 +10,7 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
-from migrate_ckpt.migrate import get_folder_migrations
-from shimmer import ContrastiveLossType, LossCoefs
+from shimmer import ContrastiveLossType, GlobalWorkspaceBase, LossCoefs, SaveMigrations
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspaceFusion,
@@ -21,7 +20,6 @@ from shimmer.modules.global_workspace import (
 from torch import set_float32_matmul_precision
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
-from simple_shapes_dataset.ckpt_migrations import SaveMigrations
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.pre_process import (
@@ -79,7 +77,7 @@ def main():
         bias=config.global_workspace.linear_domains_use_bias,
     )
 
-    loss_coefs: dict[str, float] = {
+    loss_coefs: LossCoefs = {
         "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
         "cycles": config.global_workspace.loss_coefficients.cycles,
         "translations": config.global_workspace.loss_coefficients.translations,
@@ -95,13 +93,14 @@ def main():
             torch.tensor([1 / 0.07]).log(),
         )
 
+    module: GlobalWorkspaceBase
     if config.global_workspace.has_uncertainty:
         module = GlobalWorkspaceWithUncertainty(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            LossCoefs(**loss_coefs),
+            loss_coefs,
             config.global_workspace.cont_loss_with_uncertainty,
             config.training.optim.lr,
             config.training.optim.weight_decay,
@@ -133,7 +132,7 @@ def main():
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            LossCoefs(**loss_coefs),
+            loss_coefs,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
@@ -235,9 +234,7 @@ def main():
         )
         callbacks.extend(
             [
-                SaveMigrations(
-                    get_folder_migrations(PROJECT_DIR / "migrations" / "gw")
-                ),
+                SaveMigrations(),
                 ModelCheckpoint(
                     dirpath=checkpoint_dir,
                     filename="{epoch}",
