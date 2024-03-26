@@ -16,7 +16,8 @@ from simple_shapes_dataset import LOGGER
 
 
 def migrate_model(ckpt_path: str | PathLike, migration_path: str | PathLike, **kwargs):
-    migrate_shimmer_model(ckpt_path, **kwargs)
+    if Path(migration_path).name == "gw":
+        migrate_shimmer_model(ckpt_path, **kwargs)
 
     ckpt_path = Path(ckpt_path)
     ckpt = torch.load(ckpt_path, **kwargs)
