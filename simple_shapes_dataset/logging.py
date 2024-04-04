@@ -385,11 +385,11 @@ class LogGWImagesCallback(pl.Callback):
 
         with torch.no_grad():
             pl_module.eval()
-            prediction_demi_cycles = batch_demi_cycles(pl_module.gw_mod, latents)
+            prediction_demi_cycles = batch_demi_cycles(pl_module.gw_mod, pl_module.loss_mod.selection_mod, latents)
             prediction_cycles = batch_cycles(
-                pl_module.gw_mod, latents, pl_module.domain_mods.keys()
+                pl_module.gw_mod, pl_module.loss_mod.selection_mod, latents, pl_module.domain_mods.keys()
             )
-            prediction_translations = batch_translations(pl_module.gw_mod, latents)
+            prediction_translations = batch_translations(pl_module.gw_mod, pl_module.loss_mod.selection_mod, latents)
             pl_module.train()
 
         for logger in loggers:
