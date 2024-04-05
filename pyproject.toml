@@ -71,12 +71,11 @@ extend-exclude = [
 [tool.ruff.lint]
 select = ["E", "W", "F", "UP", "B", "SIM", "I"]
 
+[tool.ruff.lint.isort]
+known-third-party = ["wandb"]
+
 [tool.ruff.format]
 docstring-code-format = true
-
-[tool.ruff.lint.isort]
-known-first-party = ["simple_shapes_dataset"]
-known-third-party = ["wandb"]
 
 [tool.mypy]
 namespace_packages = true
