@@ -8,7 +8,7 @@ readme = "README.md"
 packages = [{include = "simple_shapes_dataset"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "~3.11"
 matplotlib = "^3.7.1"
 click = "^8.1.3"
 tqdm = "^4.65.0"
