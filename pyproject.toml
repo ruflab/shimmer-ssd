@@ -5,7 +5,6 @@ description = "The Simple Shapes Dataset used in the Global Workspace Paper"
 authors = ["Benjamin Devillers <benjamin.devillers@cnrs.fr>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "simple_shapes_dataset"}]
 
 [tool.poetry.dependencies]
 python = "~3.11"
@@ -75,6 +74,9 @@ select = ["E", "W", "F", "UP", "B", "SIM", "I"]
 [tool.ruff.format]
 docstring-code-format = true
 
+[tool.ruff.lint.isort]
+known-first-party = ["simple_shapes_dataset"]
+known-third-party = ["wandb"]
 
 [tool.mypy]
 namespace_packages = true

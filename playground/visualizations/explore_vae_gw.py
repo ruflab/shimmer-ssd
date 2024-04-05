@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision.transforms.functional as F
+import wandb
 from matplotlib.figure import Figure
 from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
@@ -15,7 +16,6 @@ from shimmer.modules.global_workspace import (
 )
 from torchvision.utils import make_grid
 
-import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import (
     migrate_model,

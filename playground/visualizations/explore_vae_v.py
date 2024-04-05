@@ -5,10 +5,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import torch
 import torchvision.transforms.functional as F
+import wandb
 from PIL.Image import Image
 from torchvision.utils import make_grid
 
-import wandb
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import migrate_model
 from simple_shapes_dataset.config import load_config
