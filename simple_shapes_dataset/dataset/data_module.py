@@ -87,7 +87,7 @@ class SimpleShapesDataModule(LightningDataModule):
 
     def _get_selected_domains(self) -> set[str]:
         selected_domains: set[str] = set()
-        for domains in self.domain_proportions.keys():
+        for domains in self.domain_proportions:
             for domain in domains:
                 if domain == "v" and "v_latents" in self.domain_args:
                     domain = "v_latents"
@@ -156,7 +156,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 dataset_in_dist[k] = Subset(d.dataset, indices)
             else:
                 dataset_in_dist[k] = Subset(d, in_dist)
-        dataset_ood = {k: Subset(dataset[k], ood) for k in dataset.keys()}
+        dataset_ood = {k: Subset(dataset[k], ood) for k in dataset}
         return (dataset_in_dist, dataset_ood)
 
     def setup(self, stage: str | None = None) -> None:

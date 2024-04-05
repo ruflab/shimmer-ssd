@@ -32,16 +32,10 @@ class Graph(Generic[T]):
         return roots
 
     def has_edge_from(self, node: T) -> bool:
-        for source_node, _ in self.edges:
-            if source_node == node:
-                return True
-        return False
+        return any(source_node == node for source_node, _ in self.edges)
 
     def has_edge_to(self, node: T) -> bool:
-        for _, target_node in self.edges:
-            if target_node == node:
-                return True
-        return False
+        return any(target_node == node for _, target_node in self.edges)
 
     def children(self, node: T) -> set[T]:
         children = set()

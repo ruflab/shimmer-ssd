@@ -224,6 +224,7 @@ def save_dataset(path_root: Path, dataset: Dataset, imsize: int) -> None:
                 dataset.sizes,
                 dataset.rotations,
                 dataset.colors,
+                strict=True,
             )
         ),
         total=len(dataset.classes),
@@ -332,6 +333,7 @@ def get_domain_alignment(
         for domain_group, stream in zip(
             alignement_groups_props.keys(),
             rng.spawn(len(alignement_groups_props)),
+            strict=True,
         )
     }
 
@@ -367,11 +369,11 @@ def define_domain_split(
     domain_group: frozenset[str],
 ) -> None:
     nb_selected = alignement_groups_amounts[domain_group]
-    assert 0 <= nb_selected
+    assert nb_selected >= 0
     _, selected = selection[domain_group]
     selected = selected[:nb_selected]
 
-    for target_domain_group in selection.keys():
+    for target_domain_group in selection:
         if target_domain_group <= domain_group:
             target_selected, target_remaining = selection[target_domain_group]
             new_selected = np.unique(np.concatenate([target_selected, selected]))

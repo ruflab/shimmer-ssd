@@ -75,7 +75,7 @@ class MultiBinsBoundary(BoundaryBase):
         return [b.choice() for b in self.bins]
 
     def filter(self, x) -> bool:
-        return all(b.filter(k) for k, b in zip(x, self.bins))
+        return all(b.filter(k) for k, b in zip(x, self.bins, strict=True))
 
     def description(self) -> list[str]:
         return [

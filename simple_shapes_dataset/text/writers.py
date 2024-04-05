@@ -393,20 +393,20 @@ def test_rotation_writer(writer):
 
 
 def test_shapes_writer(writer):
-    for k in range(5):
+    for _k in range(5):
         print(writer(2))
         print(writer(1))
         print(writer(0))
 
 
 def test_size_writer(writer):
-    for k in range(5):
+    for _k in range(5):
         for i in range(5, 32, 3):
             print(writer(i))
 
 
 def test_location_writer(writer):
-    for k in range(5):
+    for _k in range(5):
         for i in range(0, 32, 6):
             for j in range(0, 32, 6):
                 print(i, j, writer(i, j))

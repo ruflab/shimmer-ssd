@@ -52,13 +52,10 @@ def structure_category_from_choice(
                     break
                 class_val += 1
     # variants
-    for name in composer.variants.keys():
-        if name in choice.variants:
-            categories[f"variant_{name}"] = choice.variants[name]
-        else:
-            categories[f"variant_{name}"] = 0
+    for name in composer.variants:
+        categories[f"variant_{name}"] = choice.variants.get(name, 0)
     # writers
-    for name in inspect_writers(composer).keys():
+    for name in inspect_writers(composer):
         split_name = name.split("_")
         writer_name = split_name[1]
         categories[name] = 0

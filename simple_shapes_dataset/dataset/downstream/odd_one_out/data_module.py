@@ -108,7 +108,7 @@ class OddOneOutDataModule(LightningDataModule):
 
     def _get_selected_domains(self) -> set[str]:
         selected_domains: set[str] = set()
-        for domains in self.domain_proportions.keys():
+        for domains in self.domain_proportions:
             for domain in domains:
                 if domain == "v" and "v_latents" in self.domain_args:
                     domain = "v_latents"

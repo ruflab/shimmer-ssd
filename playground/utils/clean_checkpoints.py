@@ -1,7 +1,6 @@
 import shutil
 
 import wandb
-
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config import load_config
 

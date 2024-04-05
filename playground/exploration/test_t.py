@@ -31,7 +31,7 @@ def main():
 
     val_samples = data_module.get_samples("val", 32)
     test_samples = data_module.get_samples("test", 32)
-    for domains in val_samples.keys():
+    for domains in val_samples:
         for domain in domains:
             val_samples[frozenset([domain])] = {domain: val_samples[domains][domain]}
             test_samples[frozenset([domain])] = {domain: test_samples[domains][domain]}

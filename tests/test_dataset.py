@@ -90,7 +90,7 @@ def test_datamodule():
     item, _, _ = next(iter(train_dataloader))
     assert isinstance(item, dict)
     assert len(item) == 1
-    assert frozenset(["attr"]) in item.keys()
+    assert frozenset(["attr"]) in item
 
 
 def test_datamodule_aligned_dataset():
@@ -110,7 +110,7 @@ def test_datamodule_aligned_dataset():
     train_dataloader = datamodule.train_dataloader()
     item, _, _ = next(iter(train_dataloader))
     assert isinstance(item, dict)
-    for domain in item.keys():
+    for domain in item:
         assert domain in [
             frozenset(["v", "attr"]),
             frozenset(["v"]),

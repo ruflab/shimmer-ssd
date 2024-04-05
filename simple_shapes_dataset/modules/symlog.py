@@ -13,7 +13,7 @@ def symexp(x, alpha=1):
 
 class SymLog(nn.Module):
     def __init__(self, alpha=1):
-        super(SymLog, self).__init__()
+        super().__init__()
         self.alpha = alpha
 
     def forward(self, x):

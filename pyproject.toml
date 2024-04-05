@@ -22,7 +22,7 @@ torchdata = "^0.6.1"
 pillow = "^9.5.0"
 numpy = "^1.25"
 torch = "^2.0.1"
-shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "main"}
+shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "b4fbb8d18f5102196d9a806fb0a894c64418df66"}
 wandb = "^0.15.4"
 lightning = "^2.1.0"
 pydantic = "^2.6.0"
@@ -44,6 +44,9 @@ mypy = "^1.4.0"
 ruff = "^0.3.0"
 pre-commit = "^3.6.2"
 types-pyyaml = "^6.0.12.20240311"
+types-protobuf = "^4.24.0.20240311"
+types-requests = "^2.31.0.20240403"
+types-six = "^1.16.21.20240311"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.3.2"
@@ -67,13 +70,14 @@ extend-exclude = [
 
 
 [tool.ruff.lint]
-extend-select = ["I"]
+select = ["E", "W", "F", "UP", "B", "SIM", "I"]
 
 [tool.ruff.format]
 docstring-code-format = true
 
 
 [tool.mypy]
+namespace_packages = true
 ignore_missing_imports = true
 install_types = true
 check_untyped_defs = true

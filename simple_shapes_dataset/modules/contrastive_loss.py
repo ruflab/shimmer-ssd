@@ -36,7 +36,7 @@ class ContrastiveLoss(nn.Module):
         measure: Literal["cosine", "order"],
         max_violation: bool,
     ):
-        super(ContrastiveLoss, self).__init__()
+        super().__init__()
         self.margin = margin
         if measure == "order":
             self.sim = order_sim

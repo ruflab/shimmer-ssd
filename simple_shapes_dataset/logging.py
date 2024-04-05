@@ -279,13 +279,13 @@ class LogTextCallback(LogSamplesCallback):
         if mode == "reference":
             grammar_predictions = {
                 n: samples[n].long()[:, 0].detach().cpu().tolist()
-                for n in samples.keys()
+                for n in samples
                 if n not in ["bert", "cls", "attr", "unpaired"]
             }
         else:
             grammar_predictions = {
                 n: samples[n].argmax(dim=-1).detach().cpu().tolist()
-                for n in samples.keys()
+                for n in samples
                 if n not in ["bert", "cls", "attr", "unpaired"]
             }
         image = attribute_image_grid(
