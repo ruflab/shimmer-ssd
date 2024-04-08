@@ -27,7 +27,6 @@ domain_modules:
 
 global_workspace:
     has_uncertainty: false
-    cont_loss_with_uncertainty: false
 
     domain_proportions: 
         -   domains: ["v"]
