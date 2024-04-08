@@ -2429,24 +2429,22 @@ name = "shimmer"
 version = "0.5.0"
 description = "A light GLoW"
 optional = false
-python-versions = "^3.11"
+python-versions = "~3.11"
 files = []
 develop = false
 
 [package.dependencies]
 click = "^8.1.7"
-lightning = "^2.1.0"
 matplotlib = "^3.7.1"
 migrate-ckpt = {git = "https://github.com/bdvllrs/migrate-ckpt.git", rev = "main"}
 numpy = "^1.25"
 pandas = "^2.0.2"
-torch = "^2.0.1"
 
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "b4fbb8d18f5102196d9a806fb0a894c64418df66"
-resolved_reference = "b4fbb8d18f5102196d9a806fb0a894c64418df66"
+reference = "main"
+resolved_reference = "19a353355ec05d6e2d9d3f9f3ea1d725e74021c7"
 
 [[package]]
 name = "six"
@@ -3170,4 +3168,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "ece338454321f3440455d14f1143a0ff64ebda4fd53bf517fc98c08ca6b5790e"
+content-hash = "efe6ded20118a1e73a6c880a063d64b567b25ff37b880ccd8c61c6d41ec0d2c6"
