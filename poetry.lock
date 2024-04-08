@@ -2446,7 +2446,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "systematic_coeffs_fusion"
-resolved_reference = "8f96caeacad534e767365b59a1eda3f6e8371993"
+resolved_reference = "30b680c420405df316ff3e4024fce773e51918d0"
 
 [[package]]
 name = "six"

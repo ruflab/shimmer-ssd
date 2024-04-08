@@ -10,7 +10,13 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
-from shimmer import ContrastiveLossType, GlobalWorkspaceBase, LossCoefs, SaveMigrations
+from shimmer import (
+    BroadcastLossCoefs,
+    ContrastiveLossType,
+    GlobalWorkspaceBase,
+    LossCoefs,
+    SaveMigrations,
+)
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspaceFusion,
@@ -110,11 +116,16 @@ def main():
             contrastive_loss=contrastive_fn,
         )
     elif config.global_workspace.use_fusion_model:
+        loss_coefs_fusion: BroadcastLossCoefs = {
+            "contrastives": config.global_workspace.loss_coefficients.contrastives,
+            "broadcast": config.global_workspace.loss_coefficients.broadcast,
+        }
         module = GlobalWorkspaceFusion(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
+            loss_coefs_fusion,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
