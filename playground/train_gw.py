@@ -72,7 +72,6 @@ def main():
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
-        has_uncertainty=config.global_workspace.has_uncertainty,
         is_linear=config.global_workspace.linear_domains,
         bias=config.global_workspace.linear_domains_use_bias,
     )
@@ -101,7 +100,6 @@ def main():
             gw_decoders,
             config.global_workspace.latent_dim,
             loss_coefs,
-            config.global_workspace.cont_loss_with_uncertainty,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(

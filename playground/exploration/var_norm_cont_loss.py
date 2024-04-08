@@ -1,10 +1,9 @@
 import logging
 from collections.abc import Callable, Mapping
-from typing import Any, cast
+from typing import Any
 
 import torch
 from shimmer.modules.global_workspace import GlobalWorkspaceWithUncertainty
-from shimmer.modules.gw_module import GWModuleWithUncertainty
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import (
@@ -79,7 +78,6 @@ def main():
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
-        has_uncertainty=True,
     )
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
@@ -92,7 +90,7 @@ def main():
     )
     domain_module.eval().freeze()
     domain_module.to(device)
-    gw_mod = cast(GWModuleWithUncertainty, domain_module.gw_mod)
+    gw_mod = domain_module.gw_mod
 
     val_samples = put_on_device(data_module.get_samples("val", 1), device)
     encoded_samples = domain_module.encode_domains(val_samples)[
@@ -104,11 +102,10 @@ def main():
     attr_test = torch.randn(64, 13).to(device)
     v_test[:, :12] = v_paired[None, :12]
     attr_test[:, :12] = attr_paired[None, :12]
-    gw_states_means, gw_stats_std = gw_mod.encoded_distribution(
-        {"v_latents": v_test, "attr": attr_test}
-    )
-    v_gw_var = (0.5 * gw_stats_std["v_latents"]).exp()  # noqa: F841
-    attr_gw_var = (0.5 * gw_stats_std["attr"]).exp()  # noqa: F841
+    gw_states_means = gw_mod.encode({"v_latents": v_test, "attr": attr_test})
+    gw_states_std = gw_mod.log_uncertainties
+    v_gw_var = (0.5 * gw_states_std["v_latents"]).exp()  # noqa: F841
+    attr_gw_var = (0.5 * gw_states_std["attr"]).exp()  # noqa: F841
     print(gw_states_means)
 
 

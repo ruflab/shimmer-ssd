@@ -156,7 +156,6 @@ def main() -> None:
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
-        has_uncertainty=True,
     )
 
     ckpt_path = config.default_root_dir / config.visualization.explore_gw.checkpoint

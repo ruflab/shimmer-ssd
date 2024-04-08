@@ -1,11 +1,9 @@
 import logging
 from collections.abc import Callable, Mapping
-from typing import Any, cast
+from typing import Any
 
 import torch
-from shimmer import contrastive_loss
-from shimmer.modules.global_workspace import GlobalWorkspace
-from shimmer.modules.gw_module import GWModuleWithUncertainty
+from shimmer import GlobalWorkspaceWithUncertainty, contrastive_loss
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import migrate_model
@@ -82,7 +80,7 @@ def main():
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
     migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "gw")
-    domain_module = GlobalWorkspace.load_from_checkpoint(
+    domain_module = GlobalWorkspaceWithUncertainty.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
         gw_encoders=gw_encoders,
@@ -90,7 +88,7 @@ def main():
     )
     domain_module.eval().freeze()
     domain_module.to(device)
-    gw_mod = cast(GWModuleWithUncertainty, domain_module.gw_mod)
+    gw_mod = domain_module.gw_mod
 
     val_samples = put_on_device(data_module.get_samples("val", 2048), device)
     encoded_samples = domain_module.encode_domains(val_samples)[
@@ -104,12 +102,8 @@ def main():
     attr2 = attr1[:]
     v2[:, -1] = v_unpaired[:, 0]
     attr2[:, -1] = attr_unpaired[:, 0]
-    gw_states_means1, gw_states_std1 = gw_mod.encoded_distribution(
-        {"v_latents": v1, "attr": attr1}
-    )
-    gw_states_means2, gw_states_std2 = gw_mod.encoded_distribution(
-        {"v_latents": v2, "attr": attr2}
-    )
+    gw_states_means1 = gw_mod.encode({"v_latents": v1, "attr": attr1})
+    gw_states_means2 = gw_mod.encode({"v_latents": v2, "attr": attr2})
     lossv1 = contrastive_loss(
         gw_states_means1["v_latents"],
         gw_states_means2["v_latents"],

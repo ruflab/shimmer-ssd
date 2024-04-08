@@ -1,13 +1,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 
-from shimmer import (
-    DomainModule,
-    GWDecoder,
-    GWEncoder,
-    GWEncoderLinear,
-    GWEncoderWithUncertainty,
-)
+from shimmer import DomainModule, GWDecoder, GWEncoder, GWEncoderLinear
 from torch.nn import Linear, Module
 
 from simple_shapes_dataset import PROJECT_DIR
@@ -82,7 +76,6 @@ def load_pretrained_domain(
     encoder_n_layers: int,
     decoder_hidden_dim: int,
     decoder_n_layers: int,
-    has_uncertainty: bool = False,
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[DomainModule, Module, Module]:
@@ -93,13 +86,6 @@ def load_pretrained_domain(
     if is_linear:
         gw_encoder = GWEncoderLinear(module.latent_dim, workspace_dim, bias=bias)
         gw_decoder = Linear(workspace_dim, module.latent_dim, bias=bias)
-    elif has_uncertainty:
-        gw_encoder = GWEncoderWithUncertainty(
-            module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
-        )
-        gw_decoder = GWDecoder(
-            workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
-        )
     else:
         gw_encoder = GWEncoder(
             module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
@@ -119,7 +105,6 @@ def load_pretrained_domains(
     encoders_n_layers: int,
     decoders_hidden_dim: int,
     decoders_n_layers: int,
-    has_uncertainty: bool = False,
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[dict[str, DomainModule], dict[str, Module], dict[str, Module]]:
@@ -137,7 +122,6 @@ def load_pretrained_domains(
             encoders_n_layers,
             decoders_hidden_dim,
             decoders_n_layers,
-            has_uncertainty,
             is_linear,
             bias,
         )

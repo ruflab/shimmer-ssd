@@ -6,7 +6,6 @@ import torch
 from shimmer import (
     GlobalWorkspaceWithUncertainty,
     GWLossesWithUncertainty,
-    GWModuleWithUncertainty,
 )
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
@@ -82,7 +81,6 @@ def main():
         config.global_workspace.encoders.n_layers,
         config.global_workspace.decoders.hidden_dim,
         config.global_workspace.decoders.n_layers,
-        has_uncertainty=True,
     )
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
@@ -95,7 +93,7 @@ def main():
     )
     domain_module.eval().freeze()
     domain_module.to(device)
-    gw_mod = cast(GWModuleWithUncertainty, domain_module.gw_mod)
+    gw_mod = domain_module.gw_mod
 
     batch_size = 128
     n_rep = 128
@@ -118,12 +116,13 @@ def main():
     attr2 = attr1[:]
     v2[:, :, -n_unpaired:] = v_unpaired
     attr2[:, :, -n_unpaired:] = attr_unpaired
-    gw_states_means, gw_states_std = gw_mod.encoded_distribution(
+    gw_states_means = gw_mod.encode(
         {
             "v_latents": v2.reshape(batch_size * n_rep, -1),
             "attr": attr2.reshape(batch_size * n_rep, -1),
         }
     )
+    gw_states_std = gw_mod.log_uncertainties
 
     actual_std_attr = (
         gw_states_means["attr"].reshape(batch_size, n_rep, -1).std(dim=1).mean(dim=0)
@@ -145,21 +144,17 @@ def main():
 
     contrastive_fn = cast(
         GWLossesWithUncertainty, domain_module.loss_mod
-    ).cont_fn_with_uncertainty
+    ).contrastive_fn
     assert contrastive_fn is not None
 
+    norm1 = 1.0 + gw_states_std["attr"].exp() + gw_states_std["v_latents"].exp()
     cont_loss1 = contrastive_fn(
-        gw_states_means["attr"],
-        gw_states_std["attr"],
-        gw_states_means["v_latents"],
-        gw_states_std["v_latents"],
+        gw_states_means["attr"] / norm1, gw_states_means["v_latents"] / norm1
     )
 
+    norm2 = 1.0 + actual_std_attr.exp() + actual_std_v.exp()
     cont_loss2 = contrastive_fn(
-        gw_states_means["attr"],
-        actual_std_attr,
-        gw_states_means["v_latents"],
-        actual_std_v,
+        gw_states_means["attr"] / norm2, gw_states_means["v_latents"] / norm2
     )
 
     print(f"Contrastive loss 1: {cont_loss1}")
