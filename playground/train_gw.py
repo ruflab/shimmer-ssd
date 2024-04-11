@@ -118,7 +118,10 @@ def main():
     elif config.global_workspace.use_fusion_model:
         loss_coefs_fusion: BroadcastLossCoefs = {
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
-            "broadcast": config.global_workspace.loss_coefficients.broadcast,
+            "fused": config.global_workspace.loss_coefficients.broadcast,
+            "translations": config.global_workspace.loss_coefficients.translations,
+            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+            "cycles": config.global_workspace.loss_coefficients.cycles,
         }
         module = GlobalWorkspaceFusion(
             domain_modules,
@@ -227,8 +230,7 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        gw_type = "gw_uncertainty" if config.global_workspace.has_uncertainty else "gw"
-        run_name = f"{gw_type}_z={config.global_workspace.latent_dim}"
+        run_name = "trash_todelete"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
             project=config.wandb.project,
