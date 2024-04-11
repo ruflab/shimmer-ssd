@@ -224,6 +224,8 @@ def create_domain_split(
     domain_alignment: list[tuple[str, float]],
     train_max_index: int = -1,
 ):
+    if not len(domain_alignment):
+        return
     np.random.seed(seed)
     split_path = dataset_path / "domain_splits"
     split_path.mkdir(exist_ok=True)
