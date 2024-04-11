@@ -2454,7 +2454,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "add_coeffs_broadcast"
-resolved_reference = "0f9a711f1043207b959a4b07b80e50a94958f643"
+resolved_reference = "0e7ab498ddab718ee896bd3898eaa18642b1cc1a"
 
 [[package]]
 name = "six"
