@@ -82,13 +82,6 @@ def main():
         bias=config.global_workspace.linear_domains_use_bias,
     )
 
-    loss_coefs: LossCoefs = {
-        "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-        "cycles": config.global_workspace.loss_coefficients.cycles,
-        "translations": config.global_workspace.loss_coefficients.translations,
-        "contrastives": config.global_workspace.loss_coefficients.contrastives,
-    }
-
     contrastive_fn: ContrastiveLossType | None = None
     if config.global_workspace.vsepp_contrastive_loss:
         contrastive_fn = VSEPPContrastiveLoss(
@@ -100,12 +93,20 @@ def main():
 
     module: GlobalWorkspaceBase
     if config.global_workspace.has_uncertainty:
+        loss_coefs_uncertainty: BroadcastLossCoefs = {
+            "contrastives": config.global_workspace.loss_coefficients.contrastives,
+            "fused": config.global_workspace.loss_coefficients.broadcast,
+            "translations": config.global_workspace.loss_coefficients.translations,
+            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+            "cycles": config.global_workspace.loss_coefficients.cycles,
+        }
         module = GlobalWorkspaceWithUncertainty(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            loss_coefs,
+            loss_coefs_uncertainty,
+            config.global_workspace.selection_temperature,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
@@ -140,6 +141,13 @@ def main():
             contrastive_loss=contrastive_fn,
         )
     else:
+        loss_coefs: LossCoefs = {
+            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+            "cycles": config.global_workspace.loss_coefficients.cycles,
+            "translations": config.global_workspace.loss_coefficients.translations,
+            "contrastives": config.global_workspace.loss_coefficients.contrastives,
+        }
+
         module = GlobalWorkspace(
             domain_modules,
             gw_encoders,
