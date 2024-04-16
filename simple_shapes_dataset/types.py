@@ -177,6 +177,7 @@ class GlobalWorkspace(BaseModel):
     latent_dim: int = 12
     has_uncertainty: bool = False
     use_fusion_model: bool = False
+    selection_temperature: float = 0.2
     learn_logit_scale: bool = False
     vsepp_contrastive_loss: bool = False
     vsepp_margin: float = 0.2

@@ -129,6 +129,7 @@ def main():
             gw_decoders,
             config.global_workspace.latent_dim,
             loss_coefs_fusion,
+            config.global_workspace.selection_temperature,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
