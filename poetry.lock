@@ -2445,8 +2445,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "feature/uncertainty_model/use_fusion_loss"
-resolved_reference = "4b715ac2485e44b01c040c3ef0ea1d5e9fbf367d"
+reference = "main"
+resolved_reference = "fea876fa911c3879711544a208b4f9a51b0d6542"
 
 [[package]]
 name = "six"
@@ -3170,4 +3170,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "23efb31525585475431822fb47c872539dc07bd2453e0411b9b6c9cdde2c7279"
+content-hash = "efe6ded20118a1e73a6c880a063d64b567b25ff37b880ccd8c61c6d41ec0d2c6"
