@@ -103,7 +103,7 @@ def main():
     v_test[:, :12] = v_paired[None, :12]
     attr_test[:, :12] = attr_paired[None, :12]
     gw_states_means = gw_mod.encode({"v_latents": v_test, "attr": attr_test})
-    gw_states_std = gw_mod.log_uncertainties
+    gw_states_std = gw_mod.precisions
     v_gw_var = (0.5 * gw_states_std["v_latents"]).exp()  # noqa: F841
     attr_gw_var = (0.5 * gw_states_std["attr"]).exp()  # noqa: F841
     print(gw_states_means)

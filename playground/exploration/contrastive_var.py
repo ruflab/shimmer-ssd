@@ -122,7 +122,7 @@ def main():
             "attr": attr2.reshape(batch_size * n_rep, -1),
         }
     )
-    gw_states_std = gw_mod.log_uncertainties
+    gw_states_std = gw_mod.precisions
 
     actual_std_attr = (
         gw_states_means["attr"].reshape(batch_size, n_rep, -1).std(dim=1).mean(dim=0)

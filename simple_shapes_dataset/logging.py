@@ -438,15 +438,21 @@ class LogGWImagesCallback(pl.Callback):
             if isinstance(pl_module, GlobalWorkspaceWithConfidence):
                 if not isinstance(logger, WandbLogger):
                     continue
-                uncertainties = pl_module.gw_mod.log_uncertainties.items()
                 columns = ["domain"] + [
-                    f"sigma_{k}" for k in range(pl_module.workspace_dim)
+                    f"lambda_{k}" for k in range(pl_module.workspace_dim)
                 ]
                 data = []
-                for domain, confidence in uncertainties:
-                    data.append([domain] + confidence.exp().detach().cpu().tolist())
+                precision_domains = list(pl_module.gw_mod.precisions)
+                precisions = torch.stack(
+                    [
+                        pl_module.gw_mod.precisions[domain]
+                        for domain in precision_domains
+                    ]
+                ).softmax(0)
+                for k, domain in enumerate(precision_domains):
+                    data.append([domain] + precisions[k].detach().cpu().tolist())
 
-                logger.log_table("uncertainties", columns, data)
+                logger.log_table("precisions", columns, data)
 
     def on_train_epoch_end(
         self,
