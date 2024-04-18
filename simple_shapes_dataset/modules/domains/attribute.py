@@ -246,8 +246,6 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         paired = z[:, : self.paired_dim]
         unpaired = z[:, self.paired_dim :]
         out = list(self.vae.decode(paired))
-        if not isinstance(out, Sequence):
-            raise ValueError("The output of vae.decode should be a sequence.")
         out.append(unpaired)
         return out
 

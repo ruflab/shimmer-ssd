@@ -14,6 +14,7 @@ from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
 from shimmer import (
+    GlobalWorkspaceWithUncertainty,
     SingleDomainSelection,
     batch_cycles,
     batch_demi_cycles,
@@ -434,6 +435,18 @@ class LogGWImagesCallback(pl.Callback):
                     domain_t,
                     f"pred_trans_{domain_s}_to_{domain_t}",
                 )
+            if isinstance(pl_module, GlobalWorkspaceWithUncertainty):
+                if not isinstance(logger, WandbLogger):
+                    continue
+                uncertainties = pl_module.gw_mod.log_uncertainties.items()
+                columns = ["domain"] + [
+                    f"sigma_{k}" for k in range(pl_module.workspace_dim)
+                ]
+                data = []
+                for domain, uncertainty in uncertainties:
+                    data.append([domain] + uncertainty.exp().detach().cpu().tolist())
+
+                logger.log_table("uncertainties", columns, data)
 
     def on_train_epoch_end(
         self,

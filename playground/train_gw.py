@@ -239,7 +239,8 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        run_name = "trash_todelete"
+        gw_type = "gw_uncertainty" if config.global_workspace.has_uncertainty else "gw"
+        run_name = f"{gw_type}_z={config.global_workspace.latent_dim}"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
             project=config.wandb.project,
