@@ -3,7 +3,7 @@ from collections.abc import Callable
 from typing import Any
 
 from lightning.pytorch import Trainer
-from shimmer.modules.global_workspace import GlobalWorkspaceWithUncertainty
+from shimmer.modules.global_workspace import GlobalWorkspaceWithConfidence
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import (
@@ -63,7 +63,7 @@ def main():
 
     ckpt_path = config.exploration.gw_checkpoint
     migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "gw")
-    gw = GlobalWorkspaceWithUncertainty.load_from_checkpoint(
+    gw = GlobalWorkspaceWithConfidence.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
         gw_encoders=gw_encoders,

@@ -14,7 +14,7 @@ from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
 from shimmer import (
-    GlobalWorkspaceWithUncertainty,
+    GlobalWorkspaceWithConfidence,
     SingleDomainSelection,
     batch_cycles,
     batch_demi_cycles,
@@ -435,7 +435,7 @@ class LogGWImagesCallback(pl.Callback):
                     domain_t,
                     f"pred_trans_{domain_s}_to_{domain_t}",
                 )
-            if isinstance(pl_module, GlobalWorkspaceWithUncertainty):
+            if isinstance(pl_module, GlobalWorkspaceWithConfidence):
                 if not isinstance(logger, WandbLogger):
                     continue
                 uncertainties = pl_module.gw_mod.log_uncertainties.items()
@@ -443,8 +443,8 @@ class LogGWImagesCallback(pl.Callback):
                     f"sigma_{k}" for k in range(pl_module.workspace_dim)
                 ]
                 data = []
-                for domain, uncertainty in uncertainties:
-                    data.append([domain] + uncertainty.exp().detach().cpu().tolist())
+                for domain, confidence in uncertainties:
+                    data.append([domain] + confidence.exp().detach().cpu().tolist())
 
                 logger.log_table("uncertainties", columns, data)
 

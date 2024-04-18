@@ -3,7 +3,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 import torch
-from shimmer.modules.global_workspace import GlobalWorkspaceWithUncertainty
+from shimmer.modules.global_workspace import GlobalWorkspaceWithConfidence
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import (
@@ -82,7 +82,7 @@ def main():
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
     migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "gw")
-    domain_module = GlobalWorkspaceWithUncertainty.load_from_checkpoint(
+    domain_module = GlobalWorkspaceWithConfidence.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
         gw_encoders=gw_encoders,
