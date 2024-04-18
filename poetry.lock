@@ -2445,8 +2445,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "main"
-resolved_reference = "fea876fa911c3879711544a208b4f9a51b0d6542"
+reference = "feature/uncertainty_eq"
+resolved_reference = "79665c6e10cf46fdac5767f61a361344bcaa2e92"
 
 [[package]]
 name = "six"
@@ -3170,4 +3170,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "efe6ded20118a1e73a6c880a063d64b567b25ff37b880ccd8c61c6d41ec0d2c6"
+content-hash = "233a9af168165b90792853b531ca385fc1094d4a939a21fe24c5cec0bf9cf4cc"
