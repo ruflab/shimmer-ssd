@@ -95,7 +95,7 @@ def main():
     if config.global_workspace.has_confidence:
         loss_coefs_confidence: BroadcastLossCoefs = {
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
-            "fused": config.global_workspace.loss_coefficients.broadcast,
+            "fused": config.global_workspace.loss_coefficients.fused,
             "translations": config.global_workspace.loss_coefficients.translations,
             "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
             "cycles": config.global_workspace.loss_coefficients.cycles,
@@ -119,7 +119,7 @@ def main():
     elif config.global_workspace.use_fusion_model:
         loss_coefs_fusion: BroadcastLossCoefs = {
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
-            "fused": config.global_workspace.loss_coefficients.broadcast,
+            "fused": config.global_workspace.loss_coefficients.fused,
             "translations": config.global_workspace.loss_coefficients.translations,
             "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
             "cycles": config.global_workspace.loss_coefficients.cycles,
