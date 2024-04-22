@@ -2445,8 +2445,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "main"
-resolved_reference = "694da231c7a6f8c4414ea7fe194774f3cbca55ed"
+reference = "systematic_coeffs_fusion"
+resolved_reference = "8f96caeacad534e767365b59a1eda3f6e8371993"
 
 [[package]]
 name = "six"
@@ -3170,4 +3170,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "efe6ded20118a1e73a6c880a063d64b567b25ff37b880ccd8c61c6d41ec0d2c6"
+content-hash = "ad06a158ff2ea47df7c8484ce4f769a263f7803422716b9f6a67bdbaaca4ab85"
