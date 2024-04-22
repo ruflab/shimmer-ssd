@@ -2446,7 +2446,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "feature/uncertainty_to_precision"
-resolved_reference = "46115e6081cd87999ec7a1192a9e954398cd2f76"
+resolved_reference = "cf1d972874ea99018dd899a01c3aa433188ebb6e"
 
 [[package]]
 name = "six"
