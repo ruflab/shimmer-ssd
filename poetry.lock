@@ -2435,16 +2435,18 @@ develop = false
 
 [package.dependencies]
 click = "^8.1.7"
+lightning = "^2.1.0"
 matplotlib = "^3.7.1"
 migrate-ckpt = {git = "https://github.com/bdvllrs/migrate-ckpt.git", rev = "main"}
 numpy = "^1.25"
 pandas = "^2.0.2"
+torch = "^2.0.1"
 
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "19a353355ec05d6e2d9d3f9f3ea1d725e74021c7"
+resolved_reference = "694da231c7a6f8c4414ea7fe194774f3cbca55ed"
 
 [[package]]
 name = "six"
