@@ -135,10 +135,15 @@ class VisualLatentDomainModule(DomainModule):
 
 
 class VisualLatentDomainWithUnpairedModule(DomainModule):
-    def __init__(self, visual_module: VisualDomainModule):
+    def __init__(self, visual_module: VisualDomainModule, coef_unpaired: float = 0.5):
         super().__init__(visual_module.latent_dim + 1)
+
+        if coef_unpaired < 0 or coef_unpaired > 1:
+            raise ValueError("coef_unpaired should be in [0, 1]")
+
         self.visual_module = visual_module
         self.paired_dim = self.visual_module.latent_dim
+        self.coef_unpaired = coef_unpaired
 
     # def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
     #     out = x.clone()
@@ -152,15 +157,18 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
         return z
 
     def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        paired_loss = mse_loss(pred[:, : self.paired_dim], target[:, : self.paired_dim])
+        unpaired_loss = mse_loss(
+            pred[:, self.paired_dim :], target[:, self.paired_dim :]
+        )
+        total_loss = (
+            self.coef_unpaired * unpaired_loss + (1 - self.coef_unpaired) * paired_loss
+        )
         return LossOutput(
-            loss=mse_loss(pred, target, reduction="mean"),
+            loss=total_loss,
             metrics={
-                "unpaired": mse_loss(
-                    pred[:, self.paired_dim :], target[:, self.paired_dim :]
-                ),
-                "paired": mse_loss(
-                    pred[:, : self.paired_dim], target[:, : self.paired_dim]
-                ),
+                "unpaired": unpaired_loss,
+                "paired": paired_loss,
             },
         )
 

@@ -215,8 +215,16 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         optim_lr: float = 1e-3,
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
+        coef_unpaired: float = 0.5,
     ):
         super().__init__(latent_dim + n_unpaired)
+
+        if coef_categories < 0 or coef_categories > 1:
+            raise ValueError("coef_categories should be in [0, 1]")
+        if coef_attributes < 0 or coef_attributes > 1:
+            raise ValueError("coef_attributes should be in [0, 1]")
+        if coef_unpaired < 0 or coef_unpaired > 1:
+            raise ValueError("coef_unpaired should be in [0, 1]")
 
         self.save_hyperparameters()
         self.paired_dim = latent_dim
@@ -224,6 +232,7 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         self.hidden_dim = hidden_dim
         self.coef_categories = coef_categories
         self.coef_attributes = coef_attributes
+        self.coef_unpaired = coef_unpaired
 
         vae_encoder = Encoder(self.hidden_dim, self.latent_dim - self.n_unpaired)
         vae_decoder = Decoder(self.latent_dim - self.n_unpaired, self.hidden_dim)
@@ -253,15 +262,20 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         return self.decode(self.encode(x))
 
     def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        paired_loss = F.mse_loss(
+            pred[:, : self.paired_dim], target[:, : self.paired_dim]
+        )
+        unpaired_loss = F.mse_loss(
+            pred[:, self.paired_dim :], target[:, self.paired_dim :]
+        )
+        total_loss = (
+            self.coef_unpaired * unpaired_loss + (1 - self.coef_unpaired) * paired_loss
+        )
         return LossOutput(
-            loss=F.mse_loss(pred, target, reduction="mean"),
+            loss=total_loss,
             metrics={
-                "unpaired": F.mse_loss(
-                    pred[:, self.paired_dim :], target[:, self.paired_dim :]
-                ),
-                "paired": F.mse_loss(
-                    pred[:, : self.paired_dim], target[:, : self.paired_dim]
-                ),
+                "unpaired": unpaired_loss,
+                "paired": paired_loss,
             },
         )
 
