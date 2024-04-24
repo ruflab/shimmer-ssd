@@ -12,7 +12,7 @@ from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.modules.global_workspace import (
     GlobalWorkspaceBase,
-    GlobalWorkspaceWithConfidence,
+    GlobalWorkspaceBayesian,
 )
 from torchvision.utils import make_grid
 
@@ -160,7 +160,7 @@ def main() -> None:
 
     ckpt_path = config.default_root_dir / config.visualization.explore_gw.checkpoint
     migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "gw")
-    domain_module = GlobalWorkspaceWithConfidence.load_from_checkpoint(
+    domain_module = GlobalWorkspaceBayesian.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
         gw_encoders=gw_encoders,

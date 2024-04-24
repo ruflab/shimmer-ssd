@@ -14,7 +14,7 @@ from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
 from shimmer import (
-    GlobalWorkspaceWithConfidence,
+    GlobalWorkspaceBayesian,
     SingleDomainSelection,
     batch_cycles,
     batch_demi_cycles,
@@ -435,7 +435,7 @@ class LogGWImagesCallback(pl.Callback):
                     domain_t,
                     f"pred_trans_{domain_s}_to_{domain_t}",
                 )
-            if isinstance(pl_module, GlobalWorkspaceWithConfidence):
+            if isinstance(pl_module, GlobalWorkspaceBayesian):
                 if not isinstance(logger, WandbLogger):
                     continue
                 columns = ["domain"] + [

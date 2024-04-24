@@ -19,8 +19,8 @@ from shimmer import (
 )
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
+    GlobalWorkspaceBayesian,
     GlobalWorkspaceFusion,
-    GlobalWorkspaceWithConfidence,
     SchedulerArgs,
 )
 from torch import set_float32_matmul_precision
@@ -92,20 +92,20 @@ def main():
         )
 
     module: GlobalWorkspaceBase
-    if config.global_workspace.has_confidence:
-        loss_coefs_confidence: BroadcastLossCoefs = {
+    if config.global_workspace.bayesian_gw:
+        loss_coefs_bayesian: BroadcastLossCoefs = {
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
             "fused": config.global_workspace.loss_coefficients.fused,
             "translations": config.global_workspace.loss_coefficients.translations,
             "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
             "cycles": config.global_workspace.loss_coefficients.cycles,
         }
-        module = GlobalWorkspaceWithConfidence(
+        module = GlobalWorkspaceBayesian(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            loss_coefs_confidence,
+            loss_coefs_bayesian,
             config.global_workspace.selection_temperature,
             config.training.optim.lr,
             config.training.optim.weight_decay,
@@ -239,7 +239,7 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        gw_type = "gw_confidence" if config.global_workspace.has_confidence else "gw"
+        gw_type = "gw_bayesian" if config.global_workspace.bayesian_gw else "gw"
         run_name = f"{gw_type}_z={config.global_workspace.latent_dim}"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,

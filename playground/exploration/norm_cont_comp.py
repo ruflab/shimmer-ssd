@@ -3,7 +3,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 import torch
-from shimmer import GlobalWorkspaceWithConfidence, contrastive_loss
+from shimmer import GlobalWorkspaceBayesian, contrastive_loss
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import migrate_model
@@ -80,7 +80,7 @@ def main():
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
     migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "gw")
-    domain_module = GlobalWorkspaceWithConfidence.load_from_checkpoint(
+    domain_module = GlobalWorkspaceBayesian.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
         gw_encoders=gw_encoders,

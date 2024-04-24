@@ -4,8 +4,8 @@ from typing import Any, cast
 
 import torch
 from shimmer import (
-    GlobalWorkspaceWithConfidence,
-    GWLossesWithConfidence,
+    GlobalWorkspaceBayesian,
+    GWLossesBayesian,
 )
 
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
@@ -85,7 +85,7 @@ def main():
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
     migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "gw")
-    domain_module = GlobalWorkspaceWithConfidence.load_from_checkpoint(
+    domain_module = GlobalWorkspaceBayesian.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
         gw_encoders=gw_encoders,
@@ -142,7 +142,7 @@ def main():
     print(f"Predicted std attr: {predicted_std_attr}")
     print(f"Predicted std v: {predicted_std_v}")
 
-    contrastive_fn = cast(GWLossesWithConfidence, domain_module.loss_mod).contrastive_fn
+    contrastive_fn = cast(GWLossesBayesian, domain_module.loss_mod).contrastive_fn
     assert contrastive_fn is not None
 
     norm1 = 1.0 + gw_states_std["attr"].exp() + gw_states_std["v_latents"].exp()

@@ -175,7 +175,7 @@ class LossCoeffients(BaseModel):
 
 class GlobalWorkspace(BaseModel):
     latent_dim: int = 12
-    has_confidence: bool = False
+    bayesian_gw: bool = False
     use_fusion_model: bool = False
     selection_temperature: float = 0.2
     learn_logit_scale: bool = False

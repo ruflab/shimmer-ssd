@@ -26,7 +26,7 @@ domain_modules:
         color_blind: false
 
 global_workspace:
-    has_confidence: false
+    bayesian_gw: false
 
     domain_proportions: 
         -   domains: ["v"]
