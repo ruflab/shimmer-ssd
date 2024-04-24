@@ -268,9 +268,7 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         unpaired_loss = F.mse_loss(
             pred[:, self.paired_dim :], target[:, self.paired_dim :]
         )
-        total_loss = (
-            self.coef_unpaired * unpaired_loss + (1 - self.coef_unpaired) * paired_loss
-        )
+        total_loss = unpaired_loss + paired_loss
         return LossOutput(
             loss=total_loss,
             metrics={
