@@ -88,7 +88,7 @@ def dim_exploration_figure(
                 )
                 z[:, q, dim_j] = step
 
-            decoded_z = module.decode(z.reshape(-1, z_size))[domain]
+            decoded_z = module.gw_mod.decode(z.reshape(-1, z_size))[domain]
             decoded_x = module.decode_domain(decoded_z, domain)
 
             match domain:
