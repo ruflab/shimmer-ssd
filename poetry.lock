@@ -2445,8 +2445,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "feature/uncertainty_to_precision"
-resolved_reference = "41047e949d8369663450de0921b3356b622bf63e"
+reference = "main"
+resolved_reference = "824a366c07d04d7003231273a666aa7bcdbab92d"
 
 [[package]]
 name = "six"
@@ -3170,4 +3170,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "0a9413e70b7fbf26c5f272838440bafacb74e48c8e967238e2082e5f94281244"
+content-hash = "efe6ded20118a1e73a6c880a063d64b567b25ff37b880ccd8c61c6d41ec0d2c6"
