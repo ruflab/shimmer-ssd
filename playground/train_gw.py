@@ -92,7 +92,9 @@ def main():
         )
 
     module: GlobalWorkspaceBase
+    gw_type: str
     if config.global_workspace.bayesian_gw:
+        gw_type = "gw_bayesian"
         loss_coefs_bayesian: BroadcastLossCoefs = {
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
             "fused": config.global_workspace.loss_coefficients.fused,
@@ -117,6 +119,7 @@ def main():
             contrastive_loss=contrastive_fn,
         )
     elif config.global_workspace.use_fusion_model:
+        gw_type = "gw_fusion"
         loss_coefs_fusion: BroadcastLossCoefs = {
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
             "fused": config.global_workspace.loss_coefficients.fused,
@@ -141,6 +144,7 @@ def main():
             contrastive_loss=contrastive_fn,
         )
     else:
+        gw_type = "gw"
         loss_coefs: LossCoefs = {
             "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
             "cycles": config.global_workspace.loss_coefficients.cycles,
@@ -239,7 +243,6 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        gw_type = "gw_bayesian" if config.global_workspace.bayesian_gw else "gw"
         run_name = f"{gw_type}_z={config.global_workspace.latent_dim}"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
