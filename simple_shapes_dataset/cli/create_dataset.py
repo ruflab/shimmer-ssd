@@ -12,6 +12,7 @@ from simple_shapes_dataset.cli.ood_splits import filter_dataset, ood_split
 from simple_shapes_dataset.text import composer
 
 from .utils import (
+    ShapeDependentColorSampler,
     generate_dataset,
     get_deterministic_name,
     get_domain_alignment,
@@ -142,6 +143,12 @@ def create_dataset(
 
     np.random.seed(seed)
 
+    color_ranges = {
+        0: (-30, 30),
+        1: (30, 90),
+        2: (90, 150),
+    }
+    color_sampler = ShapeDependentColorSampler(color_ranges)
     train_labels = generate_dataset(
         num_train_examples,
         min_scale,
@@ -149,28 +156,51 @@ def create_dataset(
         min_lightness,
         max_lightness,
         img_size,
+        color_sampler=color_sampler.set_in_dist(),
     )
-    val_labels = generate_dataset(
+    val_labels_in_dist = generate_dataset(
         num_val_examples,
         min_scale,
         max_scale,
         min_lightness,
         max_lightness,
         img_size,
+        color_sampler=color_sampler.set_in_dist(),
     )
-    test_labels = generate_dataset(
+    val_labels_ood = generate_dataset(
+        num_val_examples,
+        min_scale,
+        max_scale,
+        min_lightness,
+        max_lightness,
+        img_size,
+        color_sampler=color_sampler.set_ood(),
+    )
+    test_labels_in_dist = generate_dataset(
         num_test_examples,
         min_scale,
         max_scale,
         min_lightness,
         max_lightness,
         img_size,
+        color_sampler=color_sampler.set_in_dist(),
+    )
+    test_labels_ood = generate_dataset(
+        num_test_examples,
+        min_scale,
+        max_scale,
+        min_lightness,
+        max_lightness,
+        img_size,
+        color_sampler=color_sampler.set_ood(),
     )
 
     print("Save labels...")
     save_labels(dataset_location / "train_labels.npy", train_labels)
-    save_labels(dataset_location / "val_labels.npy", val_labels)
-    save_labels(dataset_location / "test_labels.npy", test_labels)
+    save_labels(dataset_location / "val_labels.npy", val_labels_in_dist)
+    save_labels(dataset_location / "val_ood_labels.npy", val_labels_ood)
+    save_labels(dataset_location / "test_labels.npy", test_labels_in_dist)
+    save_labels(dataset_location / "test_ood_labels.npy", test_labels_ood)
 
     create_domain_split(
         seed, dataset_location, domain_alignment, alignment_train_max_idx
@@ -181,13 +211,21 @@ def create_dataset(
     save_dataset(dataset_location / "train", train_labels, img_size)
     print("Saving validation set...")
     (dataset_location / "val").mkdir(exist_ok=True)
-    save_dataset(dataset_location / "val", val_labels, img_size)
+    save_dataset(dataset_location / "val", val_labels_in_dist, img_size)
     print("Saving test set...")
     (dataset_location / "test").mkdir(exist_ok=True)
-    save_dataset(dataset_location / "test", test_labels, img_size)
+    save_dataset(dataset_location / "test", test_labels_in_dist, img_size)
+    print("Saving ood splits")
+    (dataset_location / "ood").mkdir(exist_ok=True)
+    print("Saving validation set...")
+    (dataset_location / "val").mkdir(exist_ok=True)
+    save_dataset(dataset_location / "ood" / "val", val_labels_ood, img_size)
+    print("Saving test set...")
+    (dataset_location / "test").mkdir(exist_ok=True)
+    save_dataset(dataset_location / "ood" / "test", test_labels_ood, img_size)
 
     print("Saving captions...")
-    for split in ["train", "val", "test"]:
+    for split in ["train", "val", "test", "val_ood", "test_ood"]:
         labels = np.load(str(dataset_location / f"{split}_labels.npy"))
         captions = []
         choices = []

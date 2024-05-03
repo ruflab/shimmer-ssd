@@ -172,6 +172,76 @@ def generate_color(
     return rgb.astype(int), hls[0].astype(int)
 
 
+def generate_color_range(
+    n_samples: int,
+    min_hue: int = 0,
+    max_hue: int = 181,
+    min_lightness: int = 0,
+    max_lightness: int = 256,
+) -> tuple[np.ndarray, np.ndarray]:
+    import cv2
+
+    assert 0 <= max_lightness <= 256
+    assert min_hue > -180
+    assert max_hue < 360
+    hue = np.random.randint(min_hue, max_hue, (1, n_samples), dtype=np.int16)
+    hue[hue < 0] += 180
+    hue[hue > 180] -= 180
+    hue = hue.astype(np.uint8)
+
+    lightness = np.random.randint(
+        min_lightness, max_lightness, (1, n_samples), dtype=np.uint8
+    )
+    saturation = np.random.randint(0, 256, (1, n_samples), dtype=np.uint8)
+    hls = np.stack([hue, lightness, saturation], axis=2)
+
+    rgb = cv2.cvtColor(hls, cv2.COLOR_HLS2RGB)[0]  # type: ignore
+    return rgb.astype(int), hls[0].astype(int)
+
+
+class ShapeDependentColorSampler:
+    def __init__(self, color_ranges: dict[int, tuple[int, int]]):
+        self.color_ranges = color_ranges
+        self.in_dist_mode = True
+
+    def set_ood(self):
+        self.in_dist_mode = False
+        return self
+
+    def set_in_dist(self):
+        self.in_dist_mode = True
+        return self
+
+    def get_ranges(self):
+        if self.in_dist_mode:
+            return self.color_ranges
+        return {
+            k: (90 + min_hue, 90 + max_hue)
+            for k, (min_hue, max_hue) in self.color_ranges.items()
+        }
+
+    def __call__(
+        self,
+        n_samples: int,
+        sampled_attrs: dict[str, np.ndarray],
+        min_lightness: int = 0,
+        max_lightness: int = 256,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        assert 0 <= max_lightness <= 256
+
+        classes = sampled_attrs["classes"]
+        color_ranges = self.get_ranges()
+        hls = np.full((n_samples, 3), -1)
+        rgb = np.full((n_samples, 3), -1)
+        for k in np.unique(classes):
+            mask = classes == k
+            min_hue, max_hue = color_ranges[k]
+            rgb[mask, :], hls[mask, :] = generate_color_range(
+                mask.sum(), min_hue, max_hue, min_lightness, max_lightness
+            )
+        return rgb, hls
+
+
 def generate_rotation(
     n_samples: int, sampled_attrs: dict[str, np.ndarray]
 ) -> np.ndarray:
