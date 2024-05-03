@@ -1,7 +1,7 @@
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
+from typing import TypeAlias, cast
 
 import matplotlib.path as mpath
 import numpy as np
@@ -146,13 +146,18 @@ def generate_image(
     ax.set_ylim(0, imsize)
 
 
-def generate_scale(n_samples: int, min_val: int, max_val: int) -> np.ndarray:
+def generate_scale(
+    n_samples: int, sampled_attrs: dict[str, np.ndarray], min_val: int, max_val: int
+) -> np.ndarray:
     assert max_val > min_val
     return np.random.randint(min_val, max_val + 1, n_samples)
 
 
 def generate_color(
-    n_samples: int, min_lightness: int = 0, max_lightness: int = 256
+    n_samples: int,
+    sampled_attrs: dict[str, np.ndarray],
+    min_lightness: int = 0,
+    max_lightness: int = 256,
 ) -> tuple[np.ndarray, np.ndarray]:
     import cv2
 
@@ -167,12 +172,19 @@ def generate_color(
     return rgb.astype(int), hls[0].astype(int)
 
 
-def generate_rotation(n_samples: int) -> np.ndarray:
+def generate_rotation(
+    n_samples: int, sampled_attrs: dict[str, np.ndarray]
+) -> np.ndarray:
     rotations = np.random.rand(n_samples) * 2 * np.pi
     return rotations
 
 
-def generate_location(n_samples: int, max_scale: int, imsize: int) -> np.ndarray:
+def generate_location(
+    n_samples: int,
+    sampled_attrs: dict[str, np.ndarray],
+    max_scale: int,
+    imsize: int,
+) -> np.ndarray:
     assert max_scale <= imsize
     margin = max_scale // 2
     locations = np.random.randint(margin, imsize - margin, (n_samples, 2))
@@ -183,8 +195,13 @@ def generate_class(n_samples: int) -> np.ndarray:
     return np.random.randint(3, size=n_samples)
 
 
-def generate_unpaired_attr(n_samples: int) -> np.ndarray:
+def generate_unpaired_attr(
+    n_samples: int, sampled_attrs: dict[str, np.ndarray]
+) -> np.ndarray:
     return np.random.rand(n_samples)
+
+
+sample_attr_t: TypeAlias = dict[str, np.ndarray]
 
 
 def generate_dataset(
@@ -195,23 +212,44 @@ def generate_dataset(
     max_lightness: int,
     imsize: int,
     classes: np.ndarray | None = None,
+    *,
+    class_sampler: Callable[[int], np.ndarray] | None = None,
+    scale_sampler: Callable[[int, sample_attr_t, int, int], np.ndarray] | None = None,
+    location_sampler: Callable[[int, sample_attr_t, int, int], np.ndarray]
+    | None = None,
+    rotation_sampler: Callable[[int, sample_attr_t], np.ndarray] | None = None,
+    color_sampler: Callable[
+        [int, sample_attr_t, int, int], tuple[np.ndarray, np.ndarray]
+    ]
+    | None = None,
 ) -> Dataset:
+    if class_sampler is None:
+        class_sampler = generate_class
+    if scale_sampler is None:
+        scale_sampler = generate_scale
+    if location_sampler is None:
+        location_sampler = generate_location
+    if rotation_sampler is None:
+        rotation_sampler = generate_rotation
+    if color_sampler is None:
+        color_sampler = generate_color
+
+    sampled_attrs: sample_attr_t = {}
     if classes is None:
-        classes = generate_class(n_samples)
-    sizes = generate_scale(n_samples, min_scale, max_scale)
-    locations = generate_location(n_samples, max_scale, imsize)
-    rotation = generate_rotation(n_samples)
-    colors_rgb, colors_hls = generate_color(n_samples, min_lightness, max_lightness)
-    unpaired = generate_unpaired_attr(n_samples)
-    return Dataset(
-        classes=classes,
-        locations=locations,
-        sizes=sizes,
-        rotations=rotation,
-        colors=colors_rgb,
-        colors_hls=colors_hls,
-        unpaired=unpaired,
+        classes = class_sampler(n_samples)
+    sampled_attrs["classes"] = classes
+    sampled_attrs["sizes"] = scale_sampler(
+        n_samples, sampled_attrs, min_scale, max_scale
     )
+    sampled_attrs["locations"] = location_sampler(
+        n_samples, sampled_attrs, max_scale, imsize
+    )
+    sampled_attrs["rotations"] = rotation_sampler(n_samples, sampled_attrs)
+    sampled_attrs["colors"], sampled_attrs["colors_hls"] = color_sampler(
+        n_samples, sampled_attrs, min_lightness, max_lightness
+    )
+    sampled_attrs["unpaired"] = generate_unpaired_attr(n_samples, sampled_attrs)
+    return Dataset(**sampled_attrs)
 
 
 def save_dataset(path_root: Path, dataset: Dataset, imsize: int) -> None:
@@ -233,7 +271,7 @@ def save_dataset(path_root: Path, dataset: Dataset, imsize: int) -> None:
         path_file = path_root / f"{k}.png"
 
         fig, ax = plt.subplots(figsize=(imsize / dpi, imsize / dpi), dpi=dpi)
-        ax = cast(plt.Axes, ax)
+        ax = cast(Axes, ax)
         generate_image(ax, cls, location, size, rotation, color, imsize)
         ax.set_facecolor("black")
         plt.tight_layout(pad=0)
