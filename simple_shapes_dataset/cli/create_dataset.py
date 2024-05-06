@@ -144,9 +144,9 @@ def create_dataset(
     np.random.seed(seed)
 
     color_ranges = {
-        0: (-30, 30),
-        1: (30, 90),
-        2: (90, 150),
+        0: (-30, 90),  # -30 = 150 % 180
+        1: (90, 210),  # 210 = 30 % 180
+        2: (30, 150),
     }
     color_sampler = ShapeDependentColorSampler(color_ranges)
     train_labels = generate_dataset(
