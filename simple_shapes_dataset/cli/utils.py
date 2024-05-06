@@ -216,7 +216,7 @@ class ShapeDependentColorSampler:
         if self.in_dist_mode:
             return self.color_ranges
         return {
-            k: (90 + min_hue, 90 + max_hue)
+            k: (max_hue, 180 + min_hue)
             for k, (min_hue, max_hue) in self.color_ranges.items()
         }
 
