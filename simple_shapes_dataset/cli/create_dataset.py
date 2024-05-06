@@ -218,10 +218,10 @@ def create_dataset(
     print("Saving ood splits")
     (dataset_location / "ood").mkdir(exist_ok=True)
     print("Saving validation set...")
-    (dataset_location / "val").mkdir(exist_ok=True)
+    (dataset_location / "ood" / "val").mkdir(exist_ok=True)
     save_dataset(dataset_location / "ood" / "val", val_labels_ood, img_size)
     print("Saving test set...")
-    (dataset_location / "test").mkdir(exist_ok=True)
+    (dataset_location / "ood" / "test").mkdir(exist_ok=True)
     save_dataset(dataset_location / "ood" / "test", test_labels_ood, img_size)
 
     print("Saving captions...")
