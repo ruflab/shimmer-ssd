@@ -173,7 +173,7 @@ class LossCoeffients(BaseModel):
     fused: float = 1.0
 
 
-class GlobalWorkspace(BaseModel):
+class GlobalWorkspace2Domains(BaseModel):
     latent_dim: int = 12
     bayesian_gw: bool = False
     use_fusion_model: bool = False
@@ -212,7 +212,7 @@ class Config(ParsedModel):
     wandb: WanDB
     logging: Logging
     domain_modules: DomainModules
-    global_workspace: GlobalWorkspace
+    global_workspace: GlobalWorkspace2Domains
     visualization: Visualization | None = None
     exploration: Exploration | None = None
     slurm: Slurm | None = None

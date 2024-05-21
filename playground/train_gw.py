@@ -19,8 +19,8 @@ from shimmer import (
 )
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
+    GlobalWorkspace2Domains,
     GlobalWorkspaceBayesian,
-    GlobalWorkspaceFusion,
     SchedulerArgs,
 )
 from torch import set_float32_matmul_precision
@@ -127,7 +127,7 @@ def main():
             "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
             "cycles": config.global_workspace.loss_coefficients.cycles,
         }
-        module = GlobalWorkspaceFusion(
+        module = GlobalWorkspace(
             domain_modules,
             gw_encoders,
             gw_decoders,
@@ -152,7 +152,7 @@ def main():
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
         }
 
-        module = GlobalWorkspace(
+        module = GlobalWorkspace2Domains(
             domain_modules,
             gw_encoders,
             gw_decoders,
