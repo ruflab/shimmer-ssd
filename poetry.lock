@@ -2446,7 +2446,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "824a366c07d04d7003231273a666aa7bcdbab92d"
+resolved_reference = "c0eb83b5c01c95aa62a83b7a600c0a5cc4409575"
 
 [[package]]
 name = "six"
@@ -3170,4 +3170,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "efe6ded20118a1e73a6c880a063d64b567b25ff37b880ccd8c61c6d41ec0d2c6"
+content-hash = "4841cba8ac53c4956a952ad9a6a5e330416c7841372a6351d2f86b5b0eb80360"
