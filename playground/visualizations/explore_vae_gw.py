@@ -12,7 +12,7 @@ from matplotlib.gridspec import GridSpec
 from PIL.Image import Image
 from shimmer.modules.global_workspace import (
     GlobalWorkspaceBase,
-    GlobalWorkspaceWithUncertainty,
+    GlobalWorkspaceBayesian,
 )
 from torchvision.utils import make_grid
 
@@ -88,7 +88,7 @@ def dim_exploration_figure(
                 )
                 z[:, q, dim_j] = step
 
-            decoded_z = module.decode(z.reshape(-1, z_size))[domain]
+            decoded_z = module.gw_mod.decode(z.reshape(-1, z_size))[domain]
             decoded_x = module.decode_domain(decoded_z, domain)
 
             match domain:
@@ -160,7 +160,7 @@ def main() -> None:
 
     ckpt_path = config.default_root_dir / config.visualization.explore_gw.checkpoint
     migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "gw")
-    domain_module = GlobalWorkspaceWithUncertainty.load_from_checkpoint(
+    domain_module = GlobalWorkspaceBayesian.load_from_checkpoint(
         ckpt_path,
         domain_mods=domain_description,
         gw_encoders=gw_encoders,

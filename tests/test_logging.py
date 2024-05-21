@@ -1,6 +1,6 @@
 from lightning.pytorch.loggers.wandb import WandbLogger
 from shimmer import DomainModule, GWDecoder, GWEncoder
-from shimmer.modules.global_workspace import GlobalWorkspace
+from shimmer.modules.global_workspace import GlobalWorkspace2Domains
 from utils import PROJECT_DIR
 
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
@@ -78,7 +78,7 @@ def test_gw_logger():
         ),
     }
 
-    module = GlobalWorkspace(
+    module = GlobalWorkspace2Domains(
         domains, gw_encoders, gw_decoders, workspace_dim, loss_coefs={}
     )
     wandb_logger = WandbLogger(mode="disabled")

@@ -16,7 +16,7 @@ opencv-python = "^4.7.0.72"
 attributes-to-language = {git = "https://github.com/bdvllrs/attributes-to-language.git", rev = "v0.3.0"}
 auto-sbatch = {git = "https://github.com/bdvllrs/auto-sbatch.git", rev = "v0.4.1"}
 migrate-ckpt = {git = "https://github.com/bdvllrs/migrate-ckpt.git", rev = "main"}
-cfg-tools = {git = "https://github.com/bdvllrs/cfg-tools.git", rev = "main"}
+cfg-tools = {git = "https://github.com/bdvllrs/cfg-tools.git", rev = "v0.1.1"}
 torchdata = "^0.6.1"
 pillow = "^9.5.0"
 numpy = "^1.25"

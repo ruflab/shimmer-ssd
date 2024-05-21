@@ -14,6 +14,7 @@ from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
 from shimmer import (
+    GlobalWorkspaceBayesian,
     SingleDomainSelection,
     batch_cycles,
     batch_demi_cycles,
@@ -434,6 +435,24 @@ class LogGWImagesCallback(pl.Callback):
                     domain_t,
                     f"pred_trans_{domain_s}_to_{domain_t}",
                 )
+            if isinstance(pl_module, GlobalWorkspaceBayesian):
+                if not isinstance(logger, WandbLogger):
+                    continue
+                columns = ["domain"] + [
+                    f"lambda_{k}" for k in range(pl_module.workspace_dim)
+                ]
+                data = []
+                precision_domains = list(pl_module.gw_mod.precisions)
+                precisions = torch.stack(
+                    [
+                        pl_module.gw_mod.precisions[domain]
+                        for domain in precision_domains
+                    ]
+                ).softmax(0)
+                for k, domain in enumerate(precision_domains):
+                    data.append([domain] + precisions[k].detach().cpu().tolist())
+
+                logger.log_table("precisions", columns, data)
 
     def on_train_epoch_end(
         self,

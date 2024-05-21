@@ -10,11 +10,17 @@ from lightning.pytorch.callbacks import (
     RichProgressBar,
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
-from shimmer import ContrastiveLossType, GlobalWorkspaceBase, LossCoefs, SaveMigrations
+from shimmer import (
+    BroadcastLossCoefs,
+    ContrastiveLossType,
+    GlobalWorkspaceBase,
+    LossCoefs,
+    SaveMigrations,
+)
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
-    GlobalWorkspaceFusion,
-    GlobalWorkspaceWithUncertainty,
+    GlobalWorkspace2Domains,
+    GlobalWorkspaceBayesian,
     SchedulerArgs,
 )
 from torch import set_float32_matmul_precision
@@ -76,13 +82,6 @@ def main():
         bias=config.global_workspace.linear_domains_use_bias,
     )
 
-    loss_coefs: LossCoefs = {
-        "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-        "cycles": config.global_workspace.loss_coefficients.cycles,
-        "translations": config.global_workspace.loss_coefficients.translations,
-        "contrastives": config.global_workspace.loss_coefficients.contrastives,
-    }
-
     contrastive_fn: ContrastiveLossType | None = None
     if config.global_workspace.vsepp_contrastive_loss:
         contrastive_fn = VSEPPContrastiveLoss(
@@ -93,13 +92,23 @@ def main():
         )
 
     module: GlobalWorkspaceBase
-    if config.global_workspace.has_uncertainty:
-        module = GlobalWorkspaceWithUncertainty(
+    gw_type: str
+    if config.global_workspace.bayesian_gw:
+        gw_type = "gw_bayesian"
+        loss_coefs_bayesian: BroadcastLossCoefs = {
+            "contrastives": config.global_workspace.loss_coefficients.contrastives,
+            "fused": config.global_workspace.loss_coefficients.fused,
+            "translations": config.global_workspace.loss_coefficients.translations,
+            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+            "cycles": config.global_workspace.loss_coefficients.cycles,
+        }
+        module = GlobalWorkspaceBayesian(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            loss_coefs,
+            loss_coefs_bayesian,
+            config.global_workspace.selection_temperature,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
@@ -110,11 +119,21 @@ def main():
             contrastive_loss=contrastive_fn,
         )
     elif config.global_workspace.use_fusion_model:
-        module = GlobalWorkspaceFusion(
+        gw_type = "gw_fusion"
+        loss_coefs_fusion: BroadcastLossCoefs = {
+            "contrastives": config.global_workspace.loss_coefficients.contrastives,
+            "fused": config.global_workspace.loss_coefficients.fused,
+            "translations": config.global_workspace.loss_coefficients.translations,
+            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+            "cycles": config.global_workspace.loss_coefficients.cycles,
+        }
+        module = GlobalWorkspace(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
+            loss_coefs_fusion,
+            config.global_workspace.selection_temperature,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(
@@ -125,7 +144,15 @@ def main():
             contrastive_loss=contrastive_fn,
         )
     else:
-        module = GlobalWorkspace(
+        gw_type = "gw"
+        loss_coefs: LossCoefs = {
+            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
+            "cycles": config.global_workspace.loss_coefficients.cycles,
+            "translations": config.global_workspace.loss_coefficients.translations,
+            "contrastives": config.global_workspace.loss_coefficients.contrastives,
+        }
+
+        module = GlobalWorkspace2Domains(
             domain_modules,
             gw_encoders,
             gw_decoders,
@@ -216,7 +243,6 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        gw_type = "gw_uncertainty" if config.global_workspace.has_uncertainty else "gw"
         run_name = f"{gw_type}_z={config.global_workspace.latent_dim}"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,

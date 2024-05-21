@@ -170,12 +170,14 @@ class LossCoeffients(BaseModel):
     demi_cycles: float = 1.0
     translations: float = 1.0
     contrastives: float = 0.01
+    fused: float = 1.0
 
 
-class GlobalWorkspace(BaseModel):
+class GlobalWorkspace2Domains(BaseModel):
     latent_dim: int = 12
-    has_uncertainty: bool = False
+    bayesian_gw: bool = False
     use_fusion_model: bool = False
+    selection_temperature: float = 0.2
     learn_logit_scale: bool = False
     vsepp_contrastive_loss: bool = False
     vsepp_margin: float = 0.2
@@ -210,7 +212,7 @@ class Config(ParsedModel):
     wandb: WanDB
     logging: Logging
     domain_modules: DomainModules
-    global_workspace: GlobalWorkspace
+    global_workspace: GlobalWorkspace2Domains
     visualization: Visualization | None = None
     exploration: Exploration | None = None
     slurm: Slurm | None = None
