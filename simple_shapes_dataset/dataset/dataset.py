@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +12,22 @@ class SizedDataset(torchdata.Dataset):
         raise NotImplementedError
 
 
-class SimpleShapesDataset(SizedDataset):
+class _SimpleShapesIterator(Iterator[dict[str, Any]]):
+    def __init__(self, dataset: "SimpleShapesDataset"):
+        self._dataset = dataset
+        self._current_index = 0
+
+    def __iter__(self) -> Iterator[dict[str, Any]]:
+        return self
+
+    def __next__(self):
+        if self._current_index >= len(self._dataset):
+            raise StopIteration
+        self._current_index += 1
+        return self._dataset[self._current_index - 1]
+
+
+class SimpleShapesDataset(SizedDataset, Iterable[dict[str, Any]]):
     """
     Dataset class to obtain a SimpleShapesDataset.
     """
@@ -40,6 +55,8 @@ class SimpleShapesDataset(SizedDataset):
         """
         self.dataset_path = Path(dataset_path)
         self.split = split
+        self._selected_domains = selected_domains
+        self._transforms = transforms
 
         self.domains: dict[str, SimpleShapesDomain] = {}
         self.domain_args = domain_args or {}
@@ -61,15 +78,11 @@ class SimpleShapesDataset(SizedDataset):
 
         lengths = {len(domain) for domain in self.domains.values()}
         assert len(lengths) == 1, "Domains have different lengths"
+        self._dataset_len = lengths.pop()
 
     def __len__(self) -> int:
-        """
-        All domains should be the same length.
-        Returns the length of the first domain.
-        """
-        for domain in self.domains.values():
-            return len(domain)
-        return 0
+        # All domains should be the same length.
+        return self._dataset_len
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         """
@@ -83,3 +96,6 @@ class SimpleShapesDataset(SizedDataset):
         return {
             domain_name: domain[index] for domain_name, domain in self.domains.items()
         }
+
+    def __iter__(self):
+        return _SimpleShapesIterator(self)

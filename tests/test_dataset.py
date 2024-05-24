@@ -116,3 +116,16 @@ def test_datamodule_aligned_dataset():
             frozenset(["v"]),
             frozenset(["attr"]),
         ]
+
+
+def test_iterable_dataset():
+    selected_domains = ["v", "attr"]
+    dataset = SimpleShapesDataset(
+        PROJECT_DIR / "sample_dataset",
+        split="train",
+        selected_domains=selected_domains,
+    )
+
+    iter_dataset = iter(dataset)
+    first_item = next(iter_dataset)
+    assert first_item == dataset[0]
