@@ -22,6 +22,7 @@ class SimpleShapesDataset(SizedDataset):
         dataset_path: str | Path,
         split: str,
         selected_domains: Iterable[str],
+        max_size: int = -1,
         transforms: Mapping[str, Callable[[Any], Any]] | None = None,
         domain_args: Mapping[str, Any] | None = None,
     ):
@@ -40,6 +41,7 @@ class SimpleShapesDataset(SizedDataset):
         """
         self.dataset_path = Path(dataset_path)
         self.split = split
+        self.max_size = max_size
 
         self.domains: dict[str, SimpleShapesDomain] = {}
         self.domain_args = domain_args or {}
@@ -61,12 +63,16 @@ class SimpleShapesDataset(SizedDataset):
 
         lengths = {len(domain) for domain in self.domains.values()}
         assert len(lengths) == 1, "Domains have different lengths"
+        if self.max_size != -1:
+            assert self.max_size == lengths.pop()
 
     def __len__(self) -> int:
         """
         All domains should be the same length.
         Returns the length of the first domain.
         """
+        if self.max_size != -1:
+            return self.max_size
         for domain in self.domains.values():
             return len(domain)
         return 0

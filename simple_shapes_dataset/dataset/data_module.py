@@ -26,6 +26,7 @@ class SimpleShapesDataModule(LightningDataModule):
         dataset_path: str | Path,
         domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
+        max_size: int = -1,
         num_workers: int = 0,
         seed: int | None = None,
         ood_seed: int | None = None,
@@ -43,6 +44,7 @@ class SimpleShapesDataModule(LightningDataModule):
         self.domain_args = domain_args or {}
         self.additional_transforms = additional_transforms or {}
 
+        self.max_size = max_size
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -118,6 +120,7 @@ class SimpleShapesDataModule(LightningDataModule):
                     self.dataset_path,
                     split=split,
                     selected_domains=domains,
+                    max_size=self.max_size,
                     transforms=self._get_transforms(domains),
                     domain_args=self.domain_args,
                 )
@@ -127,6 +130,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 self.dataset_path,
                 split=split,
                 selected_domains=[domain],
+                max_size=self.max_size,
                 transforms=self._get_transforms([domain]),
                 domain_args=self.domain_args,
             )

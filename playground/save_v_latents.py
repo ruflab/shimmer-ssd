@@ -29,6 +29,7 @@ def main():
         config.dataset.path,
         {frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
+        max_size=config.dataset.max_size,
         num_workers=config.training.num_workers,
         seed=config.seed,
         additional_transforms=additional_transforms,

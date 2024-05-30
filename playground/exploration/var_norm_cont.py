@@ -45,6 +45,7 @@ def main():
         config.dataset.path,
         domain_proportion,
         batch_size=config.training.batch_size,
+        max_size=config.dataset.max_size,
         num_workers=config.training.num_workers,
         seed=config.seed,
         domain_args=config.global_workspace.domain_args,

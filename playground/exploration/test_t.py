@@ -23,6 +23,7 @@ def main():
         config.dataset.path,
         {frozenset(["t"]): 1.0, frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
+        max_size=config.dataset.max_size,
         num_workers=config.training.num_workers,
         domain_args={
             "t": {"latent_filename": config.domain_modules.text.latent_filename}

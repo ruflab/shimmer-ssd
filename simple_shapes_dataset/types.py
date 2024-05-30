@@ -104,6 +104,7 @@ class Exploration(BaseModel):
 
 class Dataset(BaseModel):
     path: Path
+    max_size: int = -1
 
 
 class VisualModule(BaseModel):
