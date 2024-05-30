@@ -34,6 +34,7 @@ class SimpleShapesDataModule(LightningDataModule):
         additional_transforms: (
             Mapping[str, Sequence[Callable[[Any], Any]]] | None
         ) = None,
+        collate_fn: Callable[[list[Any]], Any] | None = None,
     ) -> None:
         super().__init__()
 
@@ -55,6 +56,8 @@ class SimpleShapesDataModule(LightningDataModule):
         self.train_dataset_ood: Mapping[frozenset[str], DatasetT] | None = None
         self.val_dataset_ood: Mapping[frozenset[str], DatasetT] | None = None
         self.test_dataset_ood: Mapping[frozenset[str], DatasetT] | None = None
+
+        self._collate_fn = collate_fn
 
     def _get_transforms(
         self, domains: Iterable[str]
@@ -194,8 +197,10 @@ class SimpleShapesDataModule(LightningDataModule):
             assert ood_datasets is not None
             datasets = ood_datasets
 
+        collate_fn = self._collate_fn or default_collate
+
         return {
-            domain: default_collate([dataset[k] for k in range(amount)])
+            domain: collate_fn([dataset[k] for k in range(amount)])
             for domain, dataset in datasets.items()
         }
 
@@ -217,6 +222,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 pin_memory=True,
                 shuffle=shuffle,
                 drop_last=drop_last,
+                collate_fn=self._collate_fn,
                 **kwargs,
             )
         return CombinedLoader(dataloaders, mode="min_size")
@@ -233,6 +239,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 pin_memory=True,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
+                collate_fn=self._collate_fn,
             )
             if self.val_dataset_ood is not None:
                 ood_domains = frozenset({d + "_ood" for d in domain})
@@ -241,6 +248,7 @@ class SimpleShapesDataModule(LightningDataModule):
                     pin_memory=True,
                     batch_size=self.batch_size,
                     num_workers=self.num_workers,
+                    collate_fn=self._collate_fn,
                 )
         return CombinedLoader(dataloaders, mode="sequential")
 
@@ -256,6 +264,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 pin_memory=True,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
+                collate_fn=self._collate_fn,
             )
             if self.test_dataset_ood is not None:
                 ood_domains = frozenset({d + "_ood" for d in domain})
@@ -264,6 +273,7 @@ class SimpleShapesDataModule(LightningDataModule):
                     pin_memory=True,
                     batch_size=self.batch_size,
                     num_workers=self.num_workers,
+                    collate_fn=self._collate_fn,
                 )
         return CombinedLoader(dataloaders, mode="sequential")
 
@@ -278,5 +288,6 @@ class SimpleShapesDataModule(LightningDataModule):
                 pin_memory=True,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
+                collate_fn=self._collate_fn,
             )
         return CombinedLoader(dataloaders, mode="sequential")
