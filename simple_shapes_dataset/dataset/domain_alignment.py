@@ -45,6 +45,7 @@ def get_alignment(
 def get_aligned_datasets(
     dataset_path: str | Path,
     split: str,
+    max_size: int,
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
     transforms: Mapping[str, Callable[[Any], Any]] | None = None,
@@ -58,6 +59,7 @@ def get_aligned_datasets(
             dataset_path,
             split,
             list(domain_group),
+            max_size,
             transforms,
             domain_args,
         )

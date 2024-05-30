@@ -108,6 +108,7 @@ class SimpleShapesDataModule(LightningDataModule):
             return get_aligned_datasets(
                 self.dataset_path,
                 split=split,
+                max_size=self.max_size,
                 domain_proportions=self.domain_proportions,
                 seed=self.seed,
                 transforms=self._get_transforms(domains),
