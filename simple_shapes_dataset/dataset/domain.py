@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 from typing import Any, NamedTuple, TypedDict, overload
 
@@ -370,10 +370,14 @@ class SimpleShapesText(SimpleShapesDomain):
         return item
 
 
-AVAILABLE_DOMAINS: dict[str, type[SimpleShapesDomain]] = {
+DEFAULT_DOMAINS: dict[str, type[SimpleShapesDomain]] = {
     "v": SimpleShapesImages,
     "v_latents": SimpleShapesPretrainedVisual,
     "attr": SimpleShapesAttributes,
     "raw_text": SimpleShapesRawText,
     "t": SimpleShapesText,
 }
+
+
+def get_default_domains(domains: Iterable[str]) -> dict[str, type[SimpleShapesDomain]]:
+    return {domain: DEFAULT_DOMAINS[domain] for domain in domains}

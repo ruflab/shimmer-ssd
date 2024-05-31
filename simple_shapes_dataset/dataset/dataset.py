@@ -1,10 +1,10 @@
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
 import torch.utils.data as torchdata
 
-from simple_shapes_dataset.dataset.domain import AVAILABLE_DOMAINS, SimpleShapesDomain
+from simple_shapes_dataset.dataset.domain import SimpleShapesDomain
 
 
 class SizedDataset(torchdata.Dataset):
@@ -21,7 +21,7 @@ class SimpleShapesDataset(SizedDataset):
         self,
         dataset_path: str | Path,
         split: str,
-        selected_domains: Iterable[str],
+        domain_classes: Mapping[str, type[SimpleShapesDomain]],
         max_size: int = -1,
         transforms: Mapping[str, Callable[[Any], Any]] | None = None,
         domain_args: Mapping[str, Any] | None = None,
@@ -30,9 +30,9 @@ class SimpleShapesDataset(SizedDataset):
         Params:
             dataset_path (str | pathlib.Path): Path to the dataset.
             split (str): Split to use. One of 'train', 'val', 'test'.
-            selected_domains (Iterable[str]): Domains to include in the dataset.
-                If "v" is given and "v_latents" key is in domain_args, then "v" is
-                replaced by the "v_latents" domain.
+            domain_classes (Mapping[str, type[SimpleShapesDomain]]): Classes of
+                domain loaders to include in the dataset.
+            max_size (int): Max size of the dataset.
             transforms (Mapping[str, (Any) -> Any]): Optional transforms to apply
                 to the domains. The keys are the domain names,
                 the values are the transforms.
@@ -46,15 +46,12 @@ class SimpleShapesDataset(SizedDataset):
         self.domains: dict[str, SimpleShapesDomain] = {}
         self.domain_args = domain_args or {}
 
-        for domain in selected_domains:
-            if domain == "v" and "v_latents" in self.domain_args:
-                domain = "v_latents"
-
+        for domain, domain_cls in domain_classes.items():
             transform = None
             if transforms is not None and domain in transforms:
                 transform = transforms[domain]
 
-            self.domains[domain] = AVAILABLE_DOMAINS[domain](
+            self.domains[domain] = domain_cls(
                 dataset_path,
                 split,
                 transform,

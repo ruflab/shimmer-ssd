@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset, SizedDataset
+from simple_shapes_dataset.dataset.domain import SimpleShapesDomain
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
 from simple_shapes_dataset.dataset.pre_process import (
     NormalizeAttributes,
@@ -24,6 +25,7 @@ class SimpleShapesDataModule(LightningDataModule):
     def __init__(
         self,
         dataset_path: str | Path,
+        domain_classes: Mapping[str, type[SimpleShapesDomain]],
         domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
         max_size: int = -1,
@@ -39,6 +41,7 @@ class SimpleShapesDataModule(LightningDataModule):
         super().__init__()
 
         self.dataset_path = Path(dataset_path)
+        self.domain_classes = domain_classes
         self.domain_proportions = domain_proportions
         self.seed = seed
         self.ood_seed = ood_seed
@@ -110,33 +113,34 @@ class SimpleShapesDataModule(LightningDataModule):
 
             return get_aligned_datasets(
                 self.dataset_path,
-                split=split,
-                max_size=self.max_size,
-                domain_proportions=self.domain_proportions,
-                seed=self.seed,
-                transforms=self._get_transforms(domains),
-                domain_args=self.domain_args,
+                split,
+                self.domain_classes,
+                self.domain_proportions,
+                self.seed,
+                self.max_size,
+                self._get_transforms(domains),
+                self.domain_args,
             )
 
         if split in ("val", "test"):
             return {
                 frozenset(domains): SimpleShapesDataset(
                     self.dataset_path,
-                    split=split,
-                    selected_domains=domains,
-                    max_size=self.max_size,
-                    transforms=self._get_transforms(domains),
-                    domain_args=self.domain_args,
+                    split,
+                    self.domain_classes,
+                    self.max_size,
+                    self._get_transforms(domains),
+                    self.domain_args,
                 )
             }
         return {
             frozenset([domain]): SimpleShapesDataset(
                 self.dataset_path,
-                split=split,
-                selected_domains=[domain],
-                max_size=self.max_size,
-                transforms=self._get_transforms([domain]),
-                domain_args=self.domain_args,
+                split,
+                {domain: self.domain_classes[domain]},
+                self.max_size,
+                self._get_transforms([domain]),
+                self.domain_args,
             )
             for domain in domains
         }

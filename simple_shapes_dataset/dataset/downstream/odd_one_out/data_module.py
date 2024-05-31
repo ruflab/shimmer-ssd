@@ -7,6 +7,7 @@ from lightning.pytorch.utilities.combined_loader import CombinedLoader
 from torch.utils.data import DataLoader, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
+from simple_shapes_dataset.dataset.domain import SimpleShapesDomain
 from simple_shapes_dataset.dataset.domain_alignment import get_alignment
 from simple_shapes_dataset.dataset.downstream.odd_one_out.dataset import (
     OddOneOutDataset,
@@ -24,8 +25,10 @@ DatasetT = OddOneOutDataset | Subset[OddOneOutDataset]
 def get_aligned_datasets(
     dataset_path: str | Path,
     split: str,
+    domain_classes: Mapping[str, type[SimpleShapesDomain]],
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
+    max_size: int = -1,
     transforms: Mapping[str, Callable[[Any], Any]] | None = None,
     domain_args: Mapping[str, Any] | None = None,
 ) -> dict[frozenset[str], Subset]:
@@ -36,7 +39,8 @@ def get_aligned_datasets(
         dataset = OddOneOutDataset(
             dataset_path,
             split,
-            list(domain_group),
+            {name: domain_classes[name] for name in domain_group},
+            max_size,
             transforms,
             domain_args,
         )

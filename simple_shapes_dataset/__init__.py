@@ -6,7 +6,7 @@ import simple_shapes_dataset.cli as cli
 import simple_shapes_dataset.text as text
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 from simple_shapes_dataset.dataset.domain import (
-    AVAILABLE_DOMAINS,
+    DEFAULT_DOMAINS,
     Attribute,
     RawText,
     SimpleShapesAttributes,
@@ -41,7 +41,7 @@ __all__ = [
     "Attribute",
     "RawText",
     "Text",
-    "AVAILABLE_DOMAINS",
+    "DEFAULT_DOMAINS",
     "get_aligned_datasets",
     "PROJECT_DIR",
     "DEBUG_MODE",

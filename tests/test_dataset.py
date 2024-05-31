@@ -4,15 +4,17 @@ from utils import PROJECT_DIR
 
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
+from simple_shapes_dataset.dataset.domain import (
+    get_default_domains,
+)
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
 
 
 def test_dataset():
-    selected_domains = ["v", "attr"]
     dataset = SimpleShapesDataset(
         PROJECT_DIR / "sample_dataset",
         split="train",
-        selected_domains=selected_domains,
+        domain_classes=get_default_domains(["v", "attr"]),
     )
 
     assert len(dataset) == 4
@@ -23,11 +25,10 @@ def test_dataset():
 
 
 def test_dataset_val():
-    selected_domains = ["v", "attr"]
     dataset = SimpleShapesDataset(
         PROJECT_DIR / "sample_dataset",
         split="val",
-        selected_domains=selected_domains,
+        domain_classes=get_default_domains(["v", "attr"]),
     )
 
     assert len(dataset) == 2
@@ -44,7 +45,7 @@ def test_dataloader():
     dataset = SimpleShapesDataset(
         PROJECT_DIR / "sample_dataset",
         split="train",
-        selected_domains=["v", "attr"],
+        domain_classes=get_default_domains(["v", "attr"]),
         transforms=transform,
     )
 
@@ -58,6 +59,7 @@ def test_get_aligned_datasets():
     datasets = get_aligned_datasets(
         PROJECT_DIR / "sample_dataset",
         "train",
+        domain_classes=get_default_domains(["v", "t"]),
         domain_proportions={
             frozenset(["v", "t"]): 0.5,
             frozenset("v"): 1.0,
@@ -78,6 +80,7 @@ def test_get_aligned_datasets():
 def test_datamodule():
     datamodule = SimpleShapesDataModule(
         PROJECT_DIR / "sample_dataset",
+        get_default_domains(["attr"]),
         domain_proportions={
             frozenset(["attr"]): 1.0,
         },
@@ -96,6 +99,7 @@ def test_datamodule():
 def test_datamodule_aligned_dataset():
     datamodule = SimpleShapesDataModule(
         PROJECT_DIR / "sample_dataset",
+        get_default_domains(["v", "attr"]),
         domain_proportions={
             frozenset(["v", "attr"]): 0.5,
             frozenset(["v"]): 1.0,
