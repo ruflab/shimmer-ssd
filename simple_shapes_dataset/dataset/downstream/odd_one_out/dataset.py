@@ -8,6 +8,7 @@ import torch.utils.data as torchdata
 from torch.utils.data.dataset import Subset
 
 from simple_shapes_dataset.dataset.domain import SimpleShapesDomain
+from simple_shapes_dataset.types import DomainType
 
 
 class OddOneOutDataset(Subset, torchdata.Dataset):
@@ -19,7 +20,7 @@ class OddOneOutDataset(Subset, torchdata.Dataset):
         self,
         dataset_path: str | Path,
         split: str,
-        domain_classes: Mapping[str, type[SimpleShapesDomain]],
+        domain_classes: Mapping[DomainType, type[SimpleShapesDomain]],
         max_size: int = -1,
         transforms: Mapping[str, Callable[[Any], Any]] | None = None,
         domain_args: Mapping[str, Any] | None = None,
@@ -51,13 +52,13 @@ class OddOneOutDataset(Subset, torchdata.Dataset):
         for domain, domain_cls in domain_classes.items():
             transform = None
             if transforms is not None and domain in transforms:
-                transform = transforms[domain]
+                transform = transforms[domain.kind]
 
-            self.domains[domain] = domain_cls(
+            self.domains[domain.kind] = domain_cls(
                 dataset_path,
                 split,
                 transform,
-                self.domain_args.get(domain, None),
+                self.domain_args.get(domain.kind, None),
             )
 
         lengths = {len(domain) for domain in self.domains.values()}

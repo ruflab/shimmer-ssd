@@ -12,7 +12,7 @@ from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_module
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
-from simple_shapes_dataset.types import DomainType
+from simple_shapes_dataset.types import DomainModelVariantType
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
     assert (
         config.domain_checkpoint is not None
     ), "Please add domain_checkpoint entry in the configuration"
-    assert config.domain_checkpoint.domain_type == DomainType.v
+    assert config.domain_checkpoint.domain_type == DomainModelVariantType.v
 
     visual_domain = cast(
         VisualDomainModule,

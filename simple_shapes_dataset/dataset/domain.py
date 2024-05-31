@@ -7,6 +7,8 @@ import numpy as np
 import torch
 from PIL import Image
 
+from simple_shapes_dataset.types import DomainType
+
 # TODO: Consider handling CPU usage
 # with a workaround in:
 # https://github.com/pytorch/pytorch/issues/13246#issuecomment-905703662
@@ -378,14 +380,13 @@ DEFAULT_DOMAINS: dict[str, type[SimpleShapesDomain]] = {
     "t": SimpleShapesText,
 }
 
-DOMAIN_ORIGIN_FROM_DOMAIN_KIND = {
-    "v": "v",
-    "v_latents": "v",
-    "attr": "attr",
-    "raw_text": "t",
-    "t": "t",
-}
 
-
-def get_default_domains(domains: Iterable[str]) -> dict[str, type[SimpleShapesDomain]]:
-    return {domain: DEFAULT_DOMAINS[domain] for domain in domains}
+def get_default_domains(
+    domains: Iterable[DomainType | str],
+) -> dict[DomainType, type[SimpleShapesDomain]]:
+    domain_classes = {}
+    for domain in domains:
+        if isinstance(domain, str):
+            domain = DomainType[domain]
+        domain_classes[domain] = DEFAULT_DOMAINS[domain.kind]
+    return domain_classes

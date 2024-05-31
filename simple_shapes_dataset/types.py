@@ -15,14 +15,26 @@ class RelativePathToRoot:
 
 
 class DomainType(Enum):
-    v = ("v", "default")
-    attr = ("attr", "default")
-    attr_legacy = ("attr", "legacy")
-    attr_unpaired = ("attr", "unpaired")
-    v_latents = ("v_latents", "default")
-    v_latents_unpaired = ("v_latents", "unpaired")
+    v = ("v", "v")
+    v_latents = ("v", "v_latents")
+    attr = ("attr", "attr")
+    t = ("t", "t")
+    raw_text = ("t", "raw_text")
 
-    def __init__(self, kind: str, model_variant: str) -> None:
+    def __init__(self, base: str, kind: str) -> None:
+        self.base = base
+        self.kind = kind
+
+
+class DomainModelVariantType(Enum):
+    v = (DomainType.v, "default")
+    attr = (DomainType.attr, "default")
+    attr_legacy = (DomainType.attr, "legacy")
+    attr_unpaired = (DomainType.attr, "unpaired")
+    v_latents = (DomainType.v_latents, "default")
+    v_latents_unpaired = (DomainType.v_latents, "unpaired")
+
+    def __init__(self, kind: DomainType, model_variant: str) -> None:
         self.kind = kind
         self.model_variant = model_variant
 
@@ -147,18 +159,16 @@ class EncodersConfig(BaseModel):
 
 class LoadedDomainConfig(BaseModel):
     checkpoint_path: str
-    domain_type: DomainType
+    domain_type: DomainModelVariantType
     args: Mapping[str, Any] = {}
 
     @field_validator("domain_type", mode="before")
     @classmethod
-    def validate_domain_type(cls, v: str) -> DomainType:
+    def validate_domain_type(cls, v: str) -> DomainModelVariantType:
         """
         Use names instead of values to select enums
         """
-        if not hasattr(DomainType, v):
-            raise ValueError(f"{v} is not part of enum DomainType")
-        return getattr(DomainType, v)
+        return DomainModelVariantType[v]
 
 
 class DomainProportion(BaseModel):

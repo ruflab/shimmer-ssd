@@ -17,6 +17,7 @@ from simple_shapes_dataset.dataset.pre_process import (
     attribute_to_tensor,
 )
 from simple_shapes_dataset.dataset.repeated_dataset import RepeatedDataset
+from simple_shapes_dataset.types import DomainType
 
 DatasetT = SizedDataset | Subset
 
@@ -25,7 +26,7 @@ class SimpleShapesDataModule(LightningDataModule):
     def __init__(
         self,
         dataset_path: str | Path,
-        domain_classes: Mapping[str, type[SimpleShapesDomain]],
+        domain_classes: Mapping[DomainType, type[SimpleShapesDomain]],
         domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
         max_train_size: int = -1,
@@ -94,7 +95,7 @@ class SimpleShapesDataModule(LightningDataModule):
         return False
 
     def _get_selected_domains(self) -> set[str]:
-        return set(self.domain_classes.keys())
+        return {domain.kind for domain in self.domain_classes}
 
     def _get_dataset(self, split: str) -> Mapping[frozenset[str], DatasetT]:
         assert split in ("train", "val", "test")
@@ -130,7 +131,11 @@ class SimpleShapesDataModule(LightningDataModule):
             frozenset([domain]): SimpleShapesDataset(
                 self.dataset_path,
                 split,
-                {domain: self.domain_classes[domain]},
+                {
+                    domain_type: domain_cls
+                    for domain_type, domain_cls in self.domain_classes.items()
+                    if domain_type.kind == domain
+                },
                 self.max_train_size,
                 self._get_transforms([domain]),
                 self.domain_args,

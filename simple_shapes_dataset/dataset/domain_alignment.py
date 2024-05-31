@@ -8,9 +8,9 @@ from torch.utils.data import Subset
 from simple_shapes_dataset.cli.utils import get_deterministic_name
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 from simple_shapes_dataset.dataset.domain import (
-    DOMAIN_ORIGIN_FROM_DOMAIN_KIND,
     SimpleShapesDomain,
 )
+from simple_shapes_dataset.types import DomainType
 
 
 def get_alignment(
@@ -49,7 +49,7 @@ def get_alignment(
 def get_aligned_datasets(
     dataset_path: str | Path,
     split: str,
-    domain_classes: Mapping[str, type[SimpleShapesDomain]],
+    domain_classes: Mapping[DomainType, type[SimpleShapesDomain]],
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
     max_size: int = -1,
@@ -63,7 +63,7 @@ def get_aligned_datasets(
         sub_domain_cls = {
             domain_type: domain_cls
             for domain_type, domain_cls in domain_classes.items()
-            if DOMAIN_ORIGIN_FROM_DOMAIN_KIND[domain_type] in domain_group
+            if domain_type.base in domain_group
         }
         dataset = SimpleShapesDataset(
             dataset_path,
