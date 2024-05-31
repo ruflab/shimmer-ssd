@@ -15,17 +15,16 @@ class RelativePathToRoot:
 
 
 class DomainType(Enum):
-    v = ("v", "v", "default")
-    attr = ("attr", "attr", "default")
-    attr_legacy = ("attr", "attr", "legacy")
-    attr_unpaired = ("attr", "attr", "unpaired")
-    v_latents = ("v", "v_latents", "default")
-    v_latents_unpaired = ("v", "v_latents", "unpaired")
+    v = ("v", "default")
+    attr = ("attr", "default")
+    attr_legacy = ("attr", "legacy")
+    attr_unpaired = ("attr", "unpaired")
+    v_latents = ("v_latents", "default")
+    v_latents_unpaired = ("v_latents", "unpaired")
 
-    def __init__(self, domain: str, kind: str, variant: str) -> None:
-        self.domain = domain
+    def __init__(self, kind: str, model_variant: str) -> None:
         self.kind = kind
-        self.variant = variant
+        self.model_variant = model_variant
 
 
 class Logging(BaseModel):

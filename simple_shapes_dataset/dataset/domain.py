@@ -378,6 +378,14 @@ DEFAULT_DOMAINS: dict[str, type[SimpleShapesDomain]] = {
     "t": SimpleShapesText,
 }
 
+DOMAIN_ORIGIN_FROM_DOMAIN_KIND = {
+    "v": "v",
+    "v_latents": "v",
+    "attr": "attr",
+    "raw_text": "t",
+    "t": "t",
+}
+
 
 def get_default_domains(domains: Iterable[str]) -> dict[str, type[SimpleShapesDomain]]:
     return {domain: DEFAULT_DOMAINS[domain] for domain in domains}
