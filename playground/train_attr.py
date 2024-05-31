@@ -33,7 +33,7 @@ def main():
         get_default_domains(["attr"]),
         {frozenset(["attr"]): 1.0},
         batch_size=config.training.batch_size,
-        max_size=config.dataset.max_size,
+        max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
     )
 

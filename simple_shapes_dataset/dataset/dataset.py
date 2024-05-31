@@ -60,17 +60,18 @@ class SimpleShapesDataset(SizedDataset):
 
         lengths = {len(domain) for domain in self.domains.values()}
         assert len(lengths) == 1, "Domains have different lengths"
+        self.dataset_size = next(iter(lengths))
+        if self.max_size != -1:
+            assert (
+                self.max_size <= self.dataset_size
+            ), "Max sizes can only be lower than actual size."
+            self.dataset_size = self.max_size
 
     def __len__(self) -> int:
         """
         All domains should be the same length.
-        Returns the length of the first domain.
         """
-        if self.max_size != -1:
-            return self.max_size
-        for domain in self.domains.values():
-            return len(domain)
-        return 0
+        return self.dataset_size
 
     def __getitem__(self, index: int) -> dict[str, Any]:
         """
