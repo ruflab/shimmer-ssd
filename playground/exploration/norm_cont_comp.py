@@ -52,7 +52,7 @@ def main():
     }
 
     domain_classes = get_default_domains(
-        {domain for domains in domain_proportion for domain in domains}
+        {domain.domain_type.kind for domain in config.global_workspace.domains}
     )
 
     additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}

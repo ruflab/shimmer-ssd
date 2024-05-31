@@ -55,8 +55,10 @@ class OddOneOutDataModule(LightningDataModule):
     def __init__(
         self,
         dataset_path: str | Path,
+        domain_classes: Mapping[str, type[SimpleShapesDomain]],
         domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
+        max_size: int = -1,
         num_workers: int = 0,
         seed: int | None = None,
         domain_args: Mapping[str, Any] | None = None,
@@ -67,11 +69,13 @@ class OddOneOutDataModule(LightningDataModule):
         super().__init__()
 
         self.dataset_path = dataset_path
+        self.domain_classes = domain_classes
         self.domain_proportions = domain_proportions
         self.seed = seed
         self.domain_args = domain_args or {}
         self.additional_transforms = additional_transforms or {}
 
+        self.max_size = max_size
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -111,13 +115,7 @@ class OddOneOutDataModule(LightningDataModule):
         return False
 
     def _get_selected_domains(self) -> set[str]:
-        selected_domains: set[str] = set()
-        for domains in self.domain_proportions:
-            for domain in domains:
-                if domain == "v" and "v_latents" in self.domain_args:
-                    domain = "v_latents"
-                selected_domains.add(domain)
-        return selected_domains
+        return set(self.domain_classes.keys())
 
     def _get_dataset(self, split: str) -> Mapping[frozenset[str], DatasetT]:
         assert split in ("train", "val", "test")
@@ -130,30 +128,34 @@ class OddOneOutDataModule(LightningDataModule):
 
             return get_aligned_datasets(
                 self.dataset_path,
-                split=split,
-                domain_proportions=self.domain_proportions,
-                seed=self.seed,
-                transforms=self._get_transforms(domains),
-                domain_args=self.domain_args,
+                split,
+                self.domain_classes,
+                self.domain_proportions,
+                self.seed,
+                self.max_size,
+                self._get_transforms(domains),
+                self.domain_args,
             )
 
         if split in ("val", "test"):
             return {
                 frozenset(domains): OddOneOutDataset(
                     self.dataset_path,
-                    split=split,
-                    selected_domains=domains,
-                    transforms=self._get_transforms(domains),
-                    domain_args=self.domain_args,
+                    split,
+                    self.domain_classes,
+                    self.max_size,
+                    self._get_transforms(domains),
+                    self.domain_args,
                 )
             }
         return {
             frozenset([domain]): OddOneOutDataset(
                 self.dataset_path,
-                split=split,
-                selected_domains=[domain],
-                transforms=self._get_transforms([domain]),
-                domain_args=self.domain_args,
+                split,
+                {domain: self.domain_classes[domain]},
+                self.max_size,
+                self._get_transforms([domain]),
+                self.domain_args,
             )
             for domain in domains
         }

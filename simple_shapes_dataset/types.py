@@ -15,14 +15,15 @@ class RelativePathToRoot:
 
 
 class DomainType(Enum):
-    v = ("v", "default")
-    attr = ("attr", "default")
-    attr_legacy = ("attr", "legacy")
-    attr_unpaired = ("attr", "unpaired")
-    v_latents = ("v_latents", "default")
-    v_latents_unpaired = ("v_latents", "unpaired")
+    v = ("v", "v", "default")
+    attr = ("attr", "attr", "default")
+    attr_legacy = ("attr", "attr", "legacy")
+    attr_unpaired = ("attr", "attr", "unpaired")
+    v_latents = ("v", "v_latents", "default")
+    v_latents_unpaired = ("v", "v_latents", "unpaired")
 
-    def __init__(self, kind: str, variant: str) -> None:
+    def __init__(self, domain: str, kind: str, variant: str) -> None:
+        self.domain = domain
         self.kind = kind
         self.variant = variant
 
@@ -174,7 +175,7 @@ class LossCoeffients(BaseModel):
     fused: float = 1.0
 
 
-class GlobalWorkspace2Domains(BaseModel):
+class GlobalWorkspace(BaseModel):
     latent_dim: int = 12
     bayesian_gw: bool = False
     use_fusion_model: bool = False
@@ -213,7 +214,7 @@ class Config(ParsedModel):
     wandb: WanDB
     logging: Logging
     domain_modules: DomainModules
-    global_workspace: GlobalWorkspace2Domains
+    global_workspace: GlobalWorkspace
     visualization: Visualization | None = None
     exploration: Exploration | None = None
     slurm: Slurm | None = None

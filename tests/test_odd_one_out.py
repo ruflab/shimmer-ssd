@@ -1,5 +1,6 @@
 from utils import PROJECT_DIR
 
+from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.dataset.downstream.odd_one_out.dataset import (
     OddOneOutDataset,
 )
@@ -10,7 +11,7 @@ def test_dataset():
     dataset = OddOneOutDataset(
         PROJECT_DIR / "sample_dataset",
         split="train",
-        selected_domains=selected_domains,
+        domain_classes=get_default_domains(selected_domains),
     )
 
     assert len(dataset) == 4

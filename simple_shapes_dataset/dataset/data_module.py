@@ -87,27 +87,21 @@ class SimpleShapesDataModule(LightningDataModule):
             transforms[domain] = Compose(domain_transforms)
         return transforms
 
-    def _require_aligned_dataset(self) -> bool:
+    def _requires_aligned_dataset(self) -> bool:
         for domain, prop in self.domain_proportions.items():
             if len(domain) > 1 or prop < 1:
                 return True
         return False
 
     def _get_selected_domains(self) -> set[str]:
-        selected_domains: set[str] = set()
-        for domains in self.domain_proportions:
-            for domain in domains:
-                if domain == "v" and "v_latents" in self.domain_args:
-                    domain = "v_latents"
-                selected_domains.add(domain)
-        return selected_domains
+        return set(self.domain_classes.keys())
 
     def _get_dataset(self, split: str) -> Mapping[frozenset[str], DatasetT]:
         assert split in ("train", "val", "test")
 
         domains = self._get_selected_domains()
 
-        if split == "train" and self._require_aligned_dataset():
+        if split == "train" and self._requires_aligned_dataset():
             if self.seed is None:
                 raise ValueError("Seed must be provided when using aligned dataset")
 
