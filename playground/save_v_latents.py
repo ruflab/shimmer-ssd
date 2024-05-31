@@ -8,6 +8,7 @@ from tqdm import tqdm
 from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
 from simple_shapes_dataset.modules.domains.pretrained import load_pretrained_module
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
@@ -27,6 +28,7 @@ def main():
 
     data_module = SimpleShapesDataModule(
         config.dataset.path,
+        get_default_domains(["v"]),
         {frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
         max_size=config.dataset.max_size,

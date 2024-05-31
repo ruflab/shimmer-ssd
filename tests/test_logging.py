@@ -4,6 +4,7 @@ from shimmer.modules.global_workspace import GlobalWorkspace2Domains
 from utils import PROJECT_DIR
 
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.logging import LogGWImagesCallback, attribute_image_grid
 from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
@@ -12,6 +13,7 @@ from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
 def test_attribute_figure_grid():
     data_module = SimpleShapesDataModule(
         PROJECT_DIR / "sample_dataset",
+        get_default_domains(["attr"]),
         domain_proportions={
             frozenset(["attr"]): 1.0,
         },
@@ -30,6 +32,7 @@ def test_attribute_figure_grid():
 def test_gw_logger():
     data_module = SimpleShapesDataModule(
         PROJECT_DIR / "sample_dataset",
+        get_default_domains(["attr"]),
         domain_proportions={
             frozenset(["v", "attr"]): 0.5,
             frozenset(["v"]): 1.0,
