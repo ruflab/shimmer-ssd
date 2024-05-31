@@ -62,14 +62,14 @@ Load the dataset:
 import torchvision
 
 from simple_shapes_dataset.dataset import (
-    SimpleShapesDataset, NormalizeAttributes, attribute_to_tensor
+    SimpleShapesDataset, NormalizeAttributes, attribute_to_tensor, get_default_domains
 )
 
 
 dataset = SimpleShapesDataset(
     "/path/to/dataset",
     split="train",
-    selected_domains=["v", "attr"],  # Will only load the visual and attr domains
+    domain_classes=get_default_domains(["v", "attr"]),  # Will only load the visual and attr domains
 
     # transform to apply to the domains domain
     transforms={
@@ -90,11 +90,12 @@ attr_domain = item["attr"]
 
 If you need to use the alignment splits, use:
 ```python
-from simple_shapes_dataset.dataset import get_aligned_datasets
+from simple_shapes_dataset.dataset import get_aligned_datasets, get_default_domains
 
 datasets = get_aligned_datasets(
     "/path/to/dataset",
     split="train",
+    domain_classes=get_default_domains(["v", "t"]),
     # Node that this will load the file created using `shapesd alignement`
     # if the requested configuration does not exist, it will fail.
     domain_proportions={
@@ -128,7 +129,7 @@ to the latent vectors (probably something like `train_bert-base-uncased.npy`).
 SimpleShapesDataset(
     "/path/to/dataset",
     split="train",
-    selected_domains=["t"],  # Will only load the text domain
+    domain_classes=get_default_domains(["t"]),  # Will only load the text domain
     domain_args={
         "t": {
             "latent_filename": "bert-base-uncased"

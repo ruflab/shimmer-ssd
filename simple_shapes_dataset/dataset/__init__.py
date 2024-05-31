@@ -9,6 +9,7 @@ from simple_shapes_dataset.dataset.domain import (
     SimpleShapesRawText,
     SimpleShapesText,
     Text,
+    get_default_domains,
 )
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
 from simple_shapes_dataset.dataset.pre_process import (
@@ -29,6 +30,7 @@ __all__ = [
     "RawText",
     "Text",
     "DEFAULT_DOMAINS",
+    "get_default_domains",
     "get_aligned_datasets",
     "NormalizeAttributes",
     "UnnormalizeAttributes",
