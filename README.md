@@ -35,7 +35,7 @@ shapesd create --help
 
 ## Add a domain alignment split
 ```
-shapesd alignment --dataset_path "/path/to/dataset" --seed 0 --da t,v 0.01 --da t 1. --da v 1.
+shapesd alignment add --dataset_path "/path/to/dataset" --seed 0 --da t,v 0.01 --da t 1. --da v 1.
 ```
 will create an alignment split where 0.01% of the example between domains "t" and "v" will
 be aligned, and that contains all data for "t" and "v".
