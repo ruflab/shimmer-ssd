@@ -1,4 +1,5 @@
 import logging
+import shutil
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
@@ -139,7 +140,7 @@ def list_domain_alignment(dataset_path: str, split: str, seed: str) -> None:
     dataset_location = Path(dataset_path)
     assert dataset_location.exists()
     split_path = dataset_location / "domain_splits_v2"
-    table = {"split": [], "max_size": [], "seed": [], "props": []}
+    table: dict[str, list[str]] = {"split": [], "max_size": [], "seed": [], "props": []}
     for file in split_path.iterdir():
         if file.name.endswith("_domain_split.npy"):
             parts = file.name.removesuffix("_domain_split.npy").split("_")
@@ -178,6 +179,8 @@ def update_alignment_split_format(dataset_path: str, dry_run: bool) -> None:
     dataset_location = Path(dataset_path)
     assert dataset_location.exists()
     split_path = dataset_location / "domain_splits_v2"
+    if not split_path.exists():
+        shutil.copytree(dataset_location / "domain_splits", split_path)
     for file in split_path.iterdir():
         if file.name.endswith("_domain_split.npy"):
             if ":1.0_" not in file.name:
