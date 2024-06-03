@@ -40,6 +40,13 @@ shapesd alignment add --dataset_path "/path/to/dataset" --seed 0 --da t,v 0.01 -
 will create an alignment split where 0.01% of the example between domains "t" and "v" will
 be aligned, and that contains all data for "t" and "v".
 
+You can list all available alignment with:
+```
+shapesd alignment list --dataset_path "/path/to/dataset"
+```
+You can also filter for a particular split with e.g. `--split train` or seed 
+(e.g. `--seed 0`)
+
 ## Create an out of distribution split
 ```
 shapesd ood --dataset_path "/path/to/dataset" --seed 0
