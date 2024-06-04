@@ -2445,8 +2445,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "feature/add_dataloading"
-resolved_reference = "835a2846f70d36dd9e9fbb76c714ca0a4044f2ea"
+reference = "main"
+resolved_reference = "102476622afc418a7666625da3ee58b314489b2a"
 
 [[package]]
 name = "six"
@@ -3170,4 +3170,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "13cbfc36461a82aa250b9c3e6ff2022086c607a4cad005cdbe8d97d9ca72c19d"
+content-hash = "ddb33d6a8f62a0bbb6deec4de23cf66e1f3ca2b13feea78aff2a2e6cc30429df"
