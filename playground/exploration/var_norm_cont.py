@@ -11,6 +11,7 @@ from simple_shapes_dataset.ckpt_migrations import (
 )
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.dataset.pre_process import (
     color_blind_visual_domain,
     nullify_attribute_rotation,
@@ -33,6 +34,10 @@ def main():
         for item in config.global_workspace.domain_proportions
     }
 
+    domain_classes = get_default_domains(
+        {domain.domain_type.kind for domain in config.global_workspace.domains}
+    )
+
     additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
     if config.domain_modules.attribute.nullify_rotation:
         logging.info("Nullifying rotation in the attr domain.")
@@ -43,9 +48,10 @@ def main():
 
     data_module = SimpleShapesDataModule(
         config.dataset.path,
+        domain_classes,
         domain_proportion,
         batch_size=config.training.batch_size,
-        max_size=config.dataset.max_size,
+        max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
         seed=config.seed,
         domain_args=config.global_workspace.domain_args,

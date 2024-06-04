@@ -4,6 +4,7 @@ from typing import Any
 
 from lightning.pytorch import LightningDataModule
 from lightning.pytorch.utilities.combined_loader import CombinedLoader
+from shimmer import DataDomain
 from torch.utils.data import DataLoader, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
@@ -17,6 +18,7 @@ from simple_shapes_dataset.dataset.pre_process import (
     attribute_to_tensor,
 )
 from simple_shapes_dataset.dataset.repeated_dataset import RepeatedDataset
+from simple_shapes_dataset.types import DomainType
 
 DatasetT = OddOneOutDataset | Subset[OddOneOutDataset]
 
@@ -24,8 +26,10 @@ DatasetT = OddOneOutDataset | Subset[OddOneOutDataset]
 def get_aligned_datasets(
     dataset_path: str | Path,
     split: str,
+    domain_classes: Mapping[DomainType, type[DataDomain]],
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
+    max_size: int = -1,
     transforms: Mapping[str, Callable[[Any], Any]] | None = None,
     domain_args: Mapping[str, Any] | None = None,
 ) -> dict[frozenset[str], Subset]:
@@ -33,10 +37,16 @@ def get_aligned_datasets(
 
     datasets: dict[frozenset[str], Subset] = {}
     for domain_group, indices in domain_split.items():
+        sub_domain_cls = {
+            domain_type: domain_cls
+            for domain_type, domain_cls in domain_classes.items()
+            if domain_type.base in domain_group
+        }
         dataset = OddOneOutDataset(
             dataset_path,
             split,
-            list(domain_group),
+            sub_domain_cls,
+            max_size,
             transforms,
             domain_args,
         )
@@ -51,8 +61,10 @@ class OddOneOutDataModule(LightningDataModule):
     def __init__(
         self,
         dataset_path: str | Path,
+        domain_classes: Mapping[DomainType, type[DataDomain]],
         domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
+        max_train_size: int = -1,
         num_workers: int = 0,
         seed: int | None = None,
         domain_args: Mapping[str, Any] | None = None,
@@ -63,11 +75,13 @@ class OddOneOutDataModule(LightningDataModule):
         super().__init__()
 
         self.dataset_path = dataset_path
+        self.domain_classes = domain_classes
         self.domain_proportions = domain_proportions
         self.seed = seed
         self.domain_args = domain_args or {}
         self.additional_transforms = additional_transforms or {}
 
+        self.max_train_size = max_train_size
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -107,13 +121,7 @@ class OddOneOutDataModule(LightningDataModule):
         return False
 
     def _get_selected_domains(self) -> set[str]:
-        selected_domains: set[str] = set()
-        for domains in self.domain_proportions:
-            for domain in domains:
-                if domain == "v" and "v_latents" in self.domain_args:
-                    domain = "v_latents"
-                selected_domains.add(domain)
-        return selected_domains
+        return {domain.kind for domain in self.domain_classes}
 
     def _get_dataset(self, split: str) -> Mapping[frozenset[str], DatasetT]:
         assert split in ("train", "val", "test")
@@ -126,19 +134,21 @@ class OddOneOutDataModule(LightningDataModule):
 
             return get_aligned_datasets(
                 self.dataset_path,
-                split=split,
-                domain_proportions=self.domain_proportions,
-                seed=self.seed,
-                transforms=self._get_transforms(domains),
-                domain_args=self.domain_args,
+                split,
+                self.domain_classes,
+                self.domain_proportions,
+                self.seed,
+                self.max_train_size,
+                self._get_transforms(domains),
+                self.domain_args,
             )
 
         if split in ("val", "test"):
             return {
                 frozenset(domains): OddOneOutDataset(
                     self.dataset_path,
-                    split=split,
-                    selected_domains=domains,
+                    split,
+                    self.domain_classes,
                     transforms=self._get_transforms(domains),
                     domain_args=self.domain_args,
                 )
@@ -146,10 +156,15 @@ class OddOneOutDataModule(LightningDataModule):
         return {
             frozenset([domain]): OddOneOutDataset(
                 self.dataset_path,
-                split=split,
-                selected_domains=[domain],
-                transforms=self._get_transforms([domain]),
-                domain_args=self.domain_args,
+                split,
+                {
+                    domain_type: domain_cls
+                    for domain_type, domain_cls in self.domain_classes.items()
+                    if domain_type.kind == domain
+                },
+                self.max_train_size,
+                self._get_transforms([domain]),
+                self.domain_args,
             )
             for domain in domains
         }

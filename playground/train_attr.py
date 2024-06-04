@@ -14,6 +14,7 @@ from simple_shapes_dataset.ckpt_migrations import (
 )
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.logging import LogAttributesCallback
 from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
 
@@ -29,9 +30,10 @@ def main():
 
     data_module = SimpleShapesDataModule(
         config.dataset.path,
+        get_default_domains(["attr"]),
         {frozenset(["attr"]): 1.0},
         batch_size=config.training.batch_size,
-        max_size=config.dataset.max_size,
+        max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
     )
 

@@ -3,6 +3,7 @@ import torch.utils.data
 from utils import PROJECT_DIR
 
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
+from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.dataset.pre_process import attribute_to_tensor
 
 
@@ -13,7 +14,7 @@ def test_attr_preprocess():
     dataset = SimpleShapesDataset(
         PROJECT_DIR / "sample_dataset",
         split="train",
-        selected_domains=["attr"],
+        domain_classes=get_default_domains(["attr"]),
         transforms=transform,
     )
 

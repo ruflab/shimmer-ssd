@@ -4,6 +4,7 @@ from simple_shapes_dataset import DEBUG_MODE, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import migrate_model
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.modules.domains.text import TextDomainModule
 
 
@@ -21,9 +22,10 @@ def main():
 
     data_module = SimpleShapesDataModule(
         config.dataset.path,
+        get_default_domains(["t", "v"]),
         {frozenset(["t"]): 1.0, frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
-        max_size=config.dataset.max_size,
+        max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
         domain_args={
             "t": {"latent_filename": config.domain_modules.text.latent_filename}

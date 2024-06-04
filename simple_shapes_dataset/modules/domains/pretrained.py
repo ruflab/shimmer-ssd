@@ -19,7 +19,7 @@ from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainModule,
     VisualLatentDomainWithUnpairedModule,
 )
-from simple_shapes_dataset.types import DomainType, LoadedDomainConfig
+from simple_shapes_dataset.types import DomainModelVariantType, LoadedDomainConfig
 
 
 def load_pretrained_module(
@@ -28,39 +28,39 @@ def load_pretrained_module(
 ) -> DomainModule:
     domain_checkpoint = root_path / domain.checkpoint_path
     match domain.domain_type:
-        case DomainType.v:
+        case DomainModelVariantType.v:
             migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
             module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 
-        case DomainType.v_latents:
+        case DomainModelVariantType.v_latents:
             migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
             v_module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
             module = VisualLatentDomainModule(v_module)
 
-        case DomainType.v_latents_unpaired:
+        case DomainModelVariantType.v_latents_unpaired:
             migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
             v_module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
 
-        case DomainType.attr:
+        case DomainModelVariantType.attr:
             migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "attr_mod")
             module = AttributeDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 
-        case DomainType.attr_unpaired:
+        case DomainModelVariantType.attr_unpaired:
             migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "attr_mod")
             module = AttributeWithUnpairedDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 
-        case DomainType.attr_legacy:
+        case DomainModelVariantType.attr_legacy:
             module = AttributeLegacyDomainModule()
 
         case _:
@@ -112,7 +112,7 @@ def load_pretrained_domains(
     gw_encoders: dict[str, Module] = {}
     gw_decoders: dict[str, Module] = {}
     for domain in domains:
-        if domain.domain_type.kind in modules:
+        if domain.domain_type.kind.kind in modules:
             raise ConfigurationError("Cannot load multiple domains of the same kind.")
         model, encoder, decoder = load_pretrained_domain(
             default_root_dir,
@@ -125,7 +125,7 @@ def load_pretrained_domains(
             is_linear,
             bias,
         )
-        modules[domain.domain_type.kind] = model
-        gw_encoders[domain.domain_type.kind] = encoder
-        gw_decoders[domain.domain_type.kind] = decoder
+        modules[domain.domain_type.kind.kind] = model
+        gw_encoders[domain.domain_type.kind.kind] = encoder
+        gw_decoders[domain.domain_type.kind.kind] = decoder
     return modules, gw_encoders, gw_decoders

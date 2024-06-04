@@ -15,6 +15,7 @@ from simple_shapes_dataset import DEBUG_MODE, LOGGER, PROJECT_DIR
 from simple_shapes_dataset.ckpt_migrations import SaveMigrations
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
+from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.dataset.pre_process import color_blind_visual_domain
 from simple_shapes_dataset.logging import LogVisualCallback
 from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
@@ -38,9 +39,10 @@ def main():
 
     data_module = SimpleShapesDataModule(
         config.dataset.path,
+        get_default_domains(["v"]),
         {frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
-        max_size=config.dataset.max_size,
+        max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
         additional_transforms=additional_transforms,
     )

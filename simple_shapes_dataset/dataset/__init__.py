@@ -1,7 +1,7 @@
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 from simple_shapes_dataset.dataset.domain import (
-    AVAILABLE_DOMAINS,
+    DEFAULT_DOMAINS,
     Attribute,
     RawText,
     SimpleShapesAttributes,
@@ -9,6 +9,7 @@ from simple_shapes_dataset.dataset.domain import (
     SimpleShapesRawText,
     SimpleShapesText,
     Text,
+    get_default_domains,
 )
 from simple_shapes_dataset.dataset.domain_alignment import get_aligned_datasets
 from simple_shapes_dataset.dataset.pre_process import (
@@ -28,7 +29,8 @@ __all__ = [
     "Attribute",
     "RawText",
     "Text",
-    "AVAILABLE_DOMAINS",
+    "DEFAULT_DOMAINS",
+    "get_default_domains",
     "get_aligned_datasets",
     "NormalizeAttributes",
     "UnnormalizeAttributes",

@@ -1,58 +1,16 @@
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any, NamedTuple, TypedDict, overload
+from typing import Any, NamedTuple, TypedDict
 
 import numpy as np
 import torch
 from PIL import Image
+from shimmer import DataDomain
 
-# TODO: Consider handling CPU usage
-# with a workaround in:
-# https://github.com/pytorch/pytorch/issues/13246#issuecomment-905703662
-
-
-class SimpleShapesDomain(ABC):
-    """
-    Base class for a domain of the SimpleShapesDataset.
-    All domains extend this base class and implement the
-    __getitem__ and __len__ methods.
-    """
-
-    @abstractmethod
-    def __init__(
-        self,
-        dataset_path: str | Path,
-        split: str,
-        transform: Callable[[Any], Any] | None = None,
-        additional_args: dict[str, Any] | None = None,
-    ) -> None:
-        """
-        Params:
-            dataset_path (str | pathlib.Path): Path to the dataset.
-            split (str): The split of the dataset to use. One of "train", "val", "test".
-            transform (Any -> Any): Optional transform to apply to the data.
-            additional_args (dict[str, Any]): Optional additional arguments to pass
-                to the domain.
-        """
-        ...
-
-    @abstractmethod
-    def __len__(self) -> int: ...
-
-    @overload
-    @abstractmethod
-    def __getitem__(self, index: int) -> Any: ...
-
-    @overload
-    @abstractmethod
-    def __getitem__(self, index: slice) -> Sequence[Any]: ...
-
-    @abstractmethod
-    def __getitem__(self, index: int | slice) -> Any | Sequence[Any]: ...
+from simple_shapes_dataset.types import DomainType
 
 
-class SimpleShapesImages(SimpleShapesDomain):
+class SimpleShapesImages(DataDomain):
     """
     Domain for the images of the SimpleShapesDataset.
     """
@@ -76,23 +34,13 @@ class SimpleShapesImages(SimpleShapesDomain):
     def __len__(self) -> int:
         return self.dataset_size
 
-    @overload
-    def __getitem__(self, index: int) -> Any: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[Any]: ...
-
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         """
         Params:
             index: The index of the image to retrieve.
         Returns:
             A PIL image at the given index.
         """
-        if isinstance(index, slice):
-            determined_slice_indices = index.indices(len(self))
-            return [self[i] for i in range(*determined_slice_indices)]
-
         path = self.image_path / f"{index}.png"
         with Image.open(path) as image:
             image = image.convert("RGB")
@@ -106,7 +54,7 @@ class PretrainedVisualAdditionalArgs(TypedDict):
     presaved_path: str
 
 
-class SimpleShapesPretrainedVisual(SimpleShapesDomain):
+class SimpleShapesPretrainedVisual(DataDomain):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -137,17 +85,7 @@ class SimpleShapesPretrainedVisual(SimpleShapesDomain):
     def __len__(self) -> int:
         return self.dataset_size
 
-    @overload
-    def __getitem__(self, index: int) -> Any: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[Any]: ...
-
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            determined_slice_indices = index.indices(len(self))
-            return [self[i] for i in range(*determined_slice_indices)]
-
+    def __getitem__(self, index: int):
         x = torch.cat([self.latents[index], self.unpaired[index].unsqueeze(0)], dim=0)
 
         if self.transform is not None:
@@ -176,7 +114,7 @@ class AttributesAdditionalArgs(TypedDict):
     n_unpaired: int
 
 
-class SimpleShapesAttributes(SimpleShapesDomain):
+class SimpleShapesAttributes(DataDomain):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -208,21 +146,11 @@ class SimpleShapesAttributes(SimpleShapesDomain):
     def __len__(self) -> int:
         return self.dataset_size
 
-    @overload
-    def __getitem__(self, index: int) -> Any: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[Any]: ...
-
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         """
         Returns:
             An Attribute named tuple at the given index.
         """
-        if isinstance(index, slice):
-            determined_slice_indices = index.indices(len(self))
-            return [self[i] for i in range(*determined_slice_indices)]
-
         label = self.labels[index]
         item = Attribute(
             category=label[0].long(),
@@ -260,7 +188,7 @@ class Text(NamedTuple):
     attr: Attribute
 
 
-class SimpleShapesRawText(SimpleShapesDomain):
+class SimpleShapesRawText(DataDomain):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -285,17 +213,7 @@ class SimpleShapesRawText(SimpleShapesDomain):
     def __len__(self) -> int:
         return self.dataset_size
 
-    @overload
-    def __getitem__(self, index: int) -> Any: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[Any]: ...
-
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            determined_slice_indices = index.indices(len(self))
-            return [self[i] for i in range(*determined_slice_indices)]
-
+    def __getitem__(self, index: int):
         item = RawText(
             caption=self.captions[index], choice=Choice(**self.choices[index])
         )
@@ -305,7 +223,7 @@ class SimpleShapesRawText(SimpleShapesDomain):
         return item
 
 
-class SimpleShapesText(SimpleShapesDomain):
+class SimpleShapesText(DataDomain):
     def __init__(
         self,
         dataset_path: str | Path,
@@ -347,17 +265,7 @@ class SimpleShapesText(SimpleShapesDomain):
     def __len__(self) -> int:
         return self.dataset_size
 
-    @overload
-    def __getitem__(self, index: int) -> Any: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> list[Any]: ...
-
-    def __getitem__(self, index):
-        if isinstance(index, slice):
-            determined_slice_indices = index.indices(len(self))
-            return [self[i] for i in range(*determined_slice_indices)]
-
+    def __getitem__(self, index: int):
         item = Text(
             caption=self.raw_text[index].caption,
             bert=self.bert_data[index],
@@ -370,10 +278,21 @@ class SimpleShapesText(SimpleShapesDomain):
         return item
 
 
-AVAILABLE_DOMAINS: dict[str, type[SimpleShapesDomain]] = {
+DEFAULT_DOMAINS: dict[str, type[DataDomain]] = {
     "v": SimpleShapesImages,
     "v_latents": SimpleShapesPretrainedVisual,
     "attr": SimpleShapesAttributes,
     "raw_text": SimpleShapesRawText,
     "t": SimpleShapesText,
 }
+
+
+def get_default_domains(
+    domains: Iterable[DomainType | str],
+) -> dict[DomainType, type[DataDomain]]:
+    domain_classes = {}
+    for domain in domains:
+        if isinstance(domain, str):
+            domain = DomainType[domain]
+        domain_classes[domain] = DEFAULT_DOMAINS[domain.kind]
+    return domain_classes
