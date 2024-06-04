@@ -8,7 +8,6 @@ import torch.utils.data as torchdata
 from shimmer import DataDomain
 from torch.utils.data.dataset import Subset
 
-from simple_shapes_dataset.dataset.domain import SimpleShapesDomain
 from simple_shapes_dataset.types import DomainType
 
 
@@ -21,7 +20,7 @@ class OddOneOutDataset(Subset, torchdata.Dataset):
         self,
         dataset_path: str | Path,
         split: str,
-        domain_classes: Mapping[DomainType, type[SimpleShapesDomain]],
+        domain_classes: Mapping[DomainType, type[DataDomain]],
         max_size: int = -1,
         transforms: Mapping[str, Callable[[Any], Any]] | None = None,
         domain_args: Mapping[str, Any] | None = None,
