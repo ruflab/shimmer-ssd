@@ -21,6 +21,8 @@ def get_alignment(
     assert split in ["train", "val", "test"]
 
     dataset_path = Path(dataset_path)
+    if max_size == -1:
+        max_size = np.load(dataset_path / f"{split}_labels.npy").shape[0]
 
     alignment_split_name = get_deterministic_name(domain_proportions, seed, max_size)
 
