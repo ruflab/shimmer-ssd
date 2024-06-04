@@ -2426,7 +2426,7 @@ testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jar
 
 [[package]]
 name = "shimmer"
-version = "0.5.0"
+version = "0.6.0.dev"
 description = "A light GLoW"
 optional = false
 python-versions = "~3.11"
@@ -2437,7 +2437,7 @@ develop = false
 click = "^8.1.7"
 lightning = "^2.1.0"
 matplotlib = "^3.7.1"
-migrate-ckpt = {git = "https://github.com/bdvllrs/migrate-ckpt.git", rev = "main"}
+migrate-ckpt = {git = "https://github.com/bdvllrs/migrate-ckpt.git", rev = "v0.2.0"}
 numpy = "^1.25"
 pandas = "^2.0.2"
 torch = "^2.0.1"
@@ -2445,8 +2445,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "main"
-resolved_reference = "c0eb83b5c01c95aa62a83b7a600c0a5cc4409575"
+reference = "feature/add_dataloading"
+resolved_reference = "835a2846f70d36dd9e9fbb76c714ca0a4044f2ea"
 
 [[package]]
 name = "six"
@@ -3170,4 +3170,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "4841cba8ac53c4956a952ad9a6a5e330416c7841372a6351d2f86b5b0eb80360"
+content-hash = "13cbfc36461a82aa250b9c3e6ff2022086c607a4cad005cdbe8d97d9ca72c19d"

@@ -5,6 +5,7 @@ from typing import Any
 import numpy as np
 import torch
 import torch.utils.data as torchdata
+from shimmer import DataDomain
 from torch.utils.data.dataset import Subset
 
 from simple_shapes_dataset.dataset.domain import SimpleShapesDomain
@@ -46,7 +47,7 @@ class OddOneOutDataset(Subset, torchdata.Dataset):
             str(self.dataset_path / f"{self.split}_odd_one_out_labels.npy")
         )
 
-        self.domains: dict[str, SimpleShapesDomain] = {}
+        self.domains: dict[str, DataDomain] = {}
         self.domain_args = domain_args or {}
 
         for domain, domain_cls in domain_classes.items():

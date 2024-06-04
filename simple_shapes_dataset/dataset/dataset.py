@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any
 
 import torch.utils.data as torchdata
+from shimmer import DataDomain
 
-from simple_shapes_dataset.dataset.domain import SimpleShapesDomain
 from simple_shapes_dataset.types import DomainType
 
 
@@ -22,7 +22,7 @@ class SimpleShapesDataset(SizedDataset):
         self,
         dataset_path: str | Path,
         split: str,
-        domain_classes: Mapping[DomainType, type[SimpleShapesDomain]],
+        domain_classes: Mapping[DomainType, type[DataDomain]],
         max_size: int = -1,
         transforms: Mapping[str, Callable[[Any], Any]] | None = None,
         domain_args: Mapping[str, Any] | None = None,
@@ -44,7 +44,7 @@ class SimpleShapesDataset(SizedDataset):
         self.split = split
         self.max_size = max_size
 
-        self.domains: dict[str, SimpleShapesDomain] = {}
+        self.domains: dict[str, DataDomain] = {}
         self.domain_args = domain_args or {}
 
         for domain, domain_cls in domain_classes.items():
