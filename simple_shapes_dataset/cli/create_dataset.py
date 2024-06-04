@@ -1,5 +1,4 @@
 import csv
-import logging
 from pathlib import Path
 
 import click
@@ -8,13 +7,12 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+from simple_shapes_dataset.cli.alignments import create_domain_split
 from simple_shapes_dataset.cli.ood_splits import filter_dataset, ood_split
 from simple_shapes_dataset.text import composer
 
 from .utils import (
     generate_dataset,
-    get_deterministic_name,
-    get_domain_alignment,
     load_labels,
     save_bert_latents,
     save_dataset,
@@ -216,86 +214,6 @@ def create_dataset(
         )
 
     create_unpaired_attributes(seed, dataset_location)
-
-
-def create_domain_split(
-    seed: int,
-    dataset_path: Path,
-    domain_alignment: list[tuple[str, float]],
-    train_max_index: int = -1,
-):
-    if not len(domain_alignment):
-        return
-    np.random.seed(seed)
-    split_path = dataset_path / "domain_splits"
-    split_path.mkdir(exist_ok=True)
-
-    domain_sets = {}
-    for domain, prop in domain_alignment:
-        domain_set = frozenset(domain.split(","))
-        if domain_set in domain_sets:
-            logging.warning(
-                f"Domain set {domain_set} is defined multiple times. "
-                f"The value will be overwritten by {prop}."
-            )
-        domain_sets[domain_set] = prop
-
-    split_name = get_deterministic_name(domain_sets, seed)
-
-    for split in ["train", "val", "test"]:
-        labels = np.load(str(dataset_path / f"{split}_labels.npy"))
-        allowed_indices = np.arange(labels.shape[0])
-        if split == "train":
-            allowed_indices = allowed_indices[:train_max_index]
-        domain_split = get_domain_alignment(
-            seed,
-            allowed_indices,
-            domain_sets,
-        )
-
-        np.save(
-            split_path / f"{split}_{split_name}_domain_split.npy",
-            domain_split,  # type: ignore
-        )
-
-
-@click.command("alignment", help="Create a dataset alignment split")
-@click.option("--seed", "-s", default=0, type=int, help="Random seed")
-@click.option(
-    "--dataset_path",
-    "-p",
-    default="./",
-    type=str,
-    help="Path to the dataset",
-)
-@click.option(
-    "--alignment_train_max_idx",
-    default=-1,
-    type=int,
-    help="Max index to use for the train set.",
-)
-@click.option(
-    "--domain_alignment",
-    "--da",
-    "-a",
-    multiple=True,
-    type=click.Tuple([str, float]),
-    help=(
-        "Domain alignment proportions. " "Format: 'domain1,domain2,...,domainN prop'."
-    ),
-)
-def add_alignment_split(
-    seed: int,
-    dataset_path: str,
-    alignment_train_max_idx: int,
-    domain_alignment: list[tuple[str, float]],
-) -> None:
-    dataset_location = Path(dataset_path)
-    assert dataset_location.exists()
-
-    create_domain_split(
-        seed, dataset_location, domain_alignment, alignment_train_max_idx
-    )
 
 
 @click.command("unpaired", help="Create an unpaired attribute for each domains")

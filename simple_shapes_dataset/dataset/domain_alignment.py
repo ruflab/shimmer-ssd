@@ -16,17 +16,19 @@ def get_alignment(
     split: str,
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
+    max_size: int,
 ) -> Mapping[frozenset[str], np.ndarray]:
     assert split in ["train", "val", "test"]
 
     dataset_path = Path(dataset_path)
 
-    alignment_split_name = get_deterministic_name(domain_proportions, seed)
+    alignment_split_name = get_deterministic_name(domain_proportions, seed, max_size)
 
-    alignement_split_path = (
-        dataset_path / f"domain_splits/{split}_{alignment_split_name}_domain_split.npy"
+    alignment_split_path = (
+        dataset_path
+        / f"domain_splits_v2/{split}_{alignment_split_name}_domain_split.npy"
     )
-    if not alignement_split_path.exists():
+    if not alignment_split_path.exists():
         domain_alignment = [
             f'--domain_alignment {",".join(sorted(list(domain)))} {prop}'
             for domain, prop in domain_proportions.items()
@@ -38,7 +40,7 @@ def get_alignment(
             f"--seed {seed} {' '.join(domain_alignment)}`"
         )
     domain_split: Mapping[frozenset[str], np.ndarray] = np.load(
-        alignement_split_path, allow_pickle=True
+        alignment_split_path, allow_pickle=True
     ).item()
 
     return domain_split
@@ -54,7 +56,9 @@ def get_aligned_datasets(
     transforms: Mapping[str, Callable[[Any], Any]] | None = None,
     domain_args: Mapping[str, Any] | None = None,
 ) -> dict[frozenset[str], Subset]:
-    domain_split = get_alignment(dataset_path, split, domain_proportions, seed)
+    domain_split = get_alignment(
+        dataset_path, split, domain_proportions, seed, max_size
+    )
 
     datasets: dict[frozenset[str], Subset] = {}
     for domain_group, indices in domain_split.items():
