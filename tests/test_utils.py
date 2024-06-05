@@ -6,24 +6,27 @@ from simple_shapes_dataset.cli.utils import get_deterministic_name, get_domain_a
 def test_get_deterministic_name():
     domain_alignment = {frozenset(["v"]): 0.2, frozenset(["t"]): 0.3}
     seed = 3
-    name = get_deterministic_name(domain_alignment, seed)
+    max_size = 10
+    name = get_deterministic_name(domain_alignment, seed, max_size)
 
-    assert name == "t:0.3_v:0.2_seed:3"
+    assert name == "t:0.3_v:0.2_seed:3_ms:10"
 
 
 def test_get_deterministic_name_mutiple_domain():
     domain_alignment = {frozenset(["v"]): 0.2, frozenset(["t", "v"]): 0.3}
     seed = 3
-    name = get_deterministic_name(domain_alignment, seed)
+    max_size = 10
+    name = get_deterministic_name(domain_alignment, seed, max_size)
 
-    assert name == "t,v:0.3_v:0.2_seed:3"
+    assert name == "t,v:0.3_v:0.2_seed:3_ms:10"
 
 
 def test_get_deterministic_name_mutiple_domain_different_order():
     domain_alignment = {frozenset(["v"]): 0.2, frozenset(["v", "t"]): 0.3}
     seed = 3
-    name = get_deterministic_name(domain_alignment, seed)
-    assert name == "t,v:0.3_v:0.2_seed:3"
+    max_size = 10
+    name = get_deterministic_name(domain_alignment, seed, max_size)
+    assert name == "t,v:0.3_v:0.2_seed:3_ms:10"
 
 
 def test_get_domain_alignment_split():
@@ -31,7 +34,7 @@ def test_get_domain_alignment_split():
     domain_groups = get_domain_alignment(
         seed=0,
         allowed_indices=np.arange(dataset_size),
-        alignement_groups_props={
+        alignment_groups_props={
             frozenset(["v"]): 0.8,
             frozenset(["t"]): 0.9,
             frozenset(["a"]): 1.0,

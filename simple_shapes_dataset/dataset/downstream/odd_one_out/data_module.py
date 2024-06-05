@@ -33,7 +33,9 @@ def get_aligned_datasets(
     transforms: Mapping[str, Callable[[Any], Any]] | None = None,
     domain_args: Mapping[str, Any] | None = None,
 ) -> dict[frozenset[str], Subset]:
-    domain_split = get_alignment(dataset_path, split, domain_proportions, seed)
+    domain_split = get_alignment(
+        dataset_path, split, domain_proportions, seed, max_size
+    )
 
     datasets: dict[frozenset[str], Subset] = {}
     for domain_group, indices in domain_split.items():

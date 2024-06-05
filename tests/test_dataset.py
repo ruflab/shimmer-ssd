@@ -65,6 +65,7 @@ def test_get_aligned_datasets():
             frozenset("v"): 1.0,
             frozenset("t"): 1.0,
         },
+        max_size=4,
         seed=0,
     )
 
