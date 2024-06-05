@@ -2446,7 +2446,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "feature/fix_dataset_types"
-resolved_reference = "0c0a0f867ca0a00aa23c08f4ce100048025d2403"
+resolved_reference = "7051737541bb9daf63689504770b4237656e57dc"
 
 [[package]]
 name = "six"
