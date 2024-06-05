@@ -38,6 +38,7 @@ class SimpleShapesDataModule(LightningDataModule):
             Mapping[str, Sequence[Callable[[Any], Any]]] | None
         ) = None,
         collate_fn: Callable[[list[Any]], Any] | None = None,
+        use_default_transforms: bool = True,
     ) -> None:
         super().__init__()
 
@@ -48,6 +49,7 @@ class SimpleShapesDataModule(LightningDataModule):
         self.ood_seed = ood_seed
         self.domain_args = domain_args or {}
         self.additional_transforms = additional_transforms or {}
+        self._use_default_transforms = use_default_transforms
 
         self.max_train_size = max_train_size
         self.batch_size = batch_size
@@ -69,7 +71,7 @@ class SimpleShapesDataModule(LightningDataModule):
         transforms: dict[str, Callable[[Any], Any]] = {}
         for domain in domains:
             domain_transforms: list[Callable[[Any], Any]] = []
-            if domain == "attr":
+            if domain == "attr" and self._use_default_transforms:
                 domain_transforms.extend(
                     [
                         NormalizeAttributes(image_size=32),
@@ -77,10 +79,10 @@ class SimpleShapesDataModule(LightningDataModule):
                     ]
                 )
 
-            if domain == "v":
+            if domain == "v" and self._use_default_transforms:
                 domain_transforms.append(ToTensor())
 
-            if domain == "t":
+            if domain == "t" and self._use_default_transforms:
                 domain_transforms.append(TextAndAttrs(image_size=32))
 
             if domain in self.additional_transforms:
