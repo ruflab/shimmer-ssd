@@ -5,7 +5,7 @@ from typing import Any, Literal
 import numpy as np
 from lightning.pytorch import LightningDataModule
 from lightning.pytorch.utilities.combined_loader import CombinedLoader
-from shimmer import DataDomain, DomainDesc, ShimmerDataset
+from shimmer import DataDomain, DomainDesc, RepeatedDataset, ShimmerDataset
 from torch.utils.data import DataLoader, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
@@ -15,7 +15,6 @@ from simple_shapes_dataset.dataset.pre_process import (
     TextAndAttrs,
     attribute_to_tensor,
 )
-from simple_shapes_dataset.dataset.repeated_dataset import RepeatedDataset
 
 DatasetT = ShimmerDataset | Subset
 
@@ -218,7 +217,7 @@ class SimpleShapesDataModule(LightningDataModule):
         max_sized_dataset = max(len(dataset) for dataset in self.train_dataset.values())
         for domain, dataset in self.train_dataset.items():
             dataloaders[domain] = DataLoader(
-                RepeatedDataset(dataset, max_sized_dataset, drop_last=False),
+                RepeatedDataset(dataset, max_sized_dataset, drop_last=False),  # type: ignore
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=True,
