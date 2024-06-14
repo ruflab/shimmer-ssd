@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 from cfg_tools import ParsedModel
 from pydantic import BaseModel, field_validator
+from shimmer import DomainDesc
 from shimmer import __version__ as shimmer_version
 
 
@@ -15,15 +16,11 @@ class RelativePathToRoot:
 
 
 class DomainType(Enum):
-    v = ("v", "v")
-    v_latents = ("v", "v_latents")
-    attr = ("attr", "attr")
-    t = ("t", "t")
-    raw_text = ("t", "raw_text")
-
-    def __init__(self, base: str, kind: str) -> None:
-        self.base = base
-        self.kind = kind
+    v = DomainDesc("v", "v")
+    v_latents = DomainDesc("v", "v_latents")
+    attr = DomainDesc("attr", "attr")
+    t = DomainDesc("t", "t")
+    raw_text = DomainDesc("t", "raw_text")
 
 
 class DomainModelVariantType(Enum):

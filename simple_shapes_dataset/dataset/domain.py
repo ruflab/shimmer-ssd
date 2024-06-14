@@ -5,14 +5,14 @@ from typing import Any, NamedTuple, TypedDict
 import numpy as np
 import torch
 from PIL import Image
-from shimmer import DataDomain
+from shimmer import DataDomain, DomainDesc
 
 from simple_shapes_dataset.types import DomainType
 
 
 class SimpleShapesImages(DataDomain):
     """
-    Domain for the images of the SimpleShapesDataset.
+    Domain for the images of the ShimmerDataset.
     """
 
     def __init__(
@@ -95,7 +95,7 @@ class SimpleShapesPretrainedVisual(DataDomain):
 
 class Attribute(NamedTuple):
     """
-    NamedTuple for the attributes of the SimpleShapesDataset.
+    NamedTuple for the attributes of the ShimmerDataset.
     NamedTuples are used as they are correcly handled by pytorch's collate function.
     """
 
@@ -288,11 +288,11 @@ DEFAULT_DOMAINS: dict[str, type[DataDomain]] = {
 
 
 def get_default_domains(
-    domains: Iterable[DomainType | str],
-) -> dict[DomainType, type[DataDomain]]:
+    domains: Iterable[DomainDesc | str],
+) -> dict[DomainDesc, type[DataDomain]]:
     domain_classes = {}
     for domain in domains:
         if isinstance(domain, str):
-            domain = DomainType[domain]
+            domain = DomainType[domain].value
         domain_classes[domain] = DEFAULT_DOMAINS[domain.kind]
     return domain_classes
