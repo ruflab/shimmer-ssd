@@ -210,8 +210,8 @@ pyyaml = "^6.0.1"
 [package.source]
 type = "git"
 url = "https://github.com/bdvllrs/cfg-tools.git"
-reference = "main"
-resolved_reference = "6afb3d2c461da4995011ce25b7b4245bbd0e022c"
+reference = "v0.2.0"
+resolved_reference = "ecf75e8b02b9569ce044cc4bd26f08babb286cd9"
 
 [[package]]
 name = "cfgv"
@@ -3170,4 +3170,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "ddb33d6a8f62a0bbb6deec4de23cf66e1f3ca2b13feea78aff2a2e6cc30429df"
+content-hash = "c76bf33f6f2a0fca9a08d03593d8a54b3603b7e1e21aee3e6fab419e5b2cbe62"
