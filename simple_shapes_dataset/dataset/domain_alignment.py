@@ -3,12 +3,10 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from shimmer import DataDomain
+from shimmer import DataDomain, DomainDesc, ShimmerDataset
 from torch.utils.data import Subset
 
 from simple_shapes_dataset.cli.utils import get_deterministic_name
-from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
-from simple_shapes_dataset.types import DomainType
 
 
 def get_alignment(
@@ -51,7 +49,7 @@ def get_alignment(
 def get_aligned_datasets(
     dataset_path: str | Path,
     split: str,
-    domain_classes: Mapping[DomainType, type[DataDomain]],
+    domain_classes: Mapping[DomainDesc, type[DataDomain]],
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
     max_size: int = -1,
@@ -69,7 +67,7 @@ def get_aligned_datasets(
             for domain_type, domain_cls in domain_classes.items()
             if domain_type.base in domain_group
         }
-        dataset = SimpleShapesDataset(
+        dataset = ShimmerDataset(
             dataset_path,
             split,
             sub_domain_cls,

@@ -68,12 +68,14 @@ Load the dataset:
 ```python
 import torchvision
 
+from shimmer import ShimmerDataset
+
 from simple_shapes_dataset.dataset import (
-    SimpleShapesDataset, NormalizeAttributes, attribute_to_tensor, get_default_domains
+    NormalizeAttributes, attribute_to_tensor, get_default_domains
 )
 
 
-dataset = SimpleShapesDataset(
+dataset = ShimmerDataset(
     "/path/to/dataset",
     split="train",
     domain_classes=get_default_domains(["v", "attr"]),  # Will only load the visual and attr domains
@@ -125,7 +127,7 @@ vt_dataset = datasets[frozenset(["v", "t"])]  # 50% of items
 ```
 
 `v_dataset`, `t_dataset`, and `vt_dataset` are `torch.utils.data.Subset` of
-the `SimpleShapesDataset`.
+the `ShimmerDataset`.
 
 ## Old style dataset
 If `train_latent.npy` is not available in your dataset, you may need to specify to path
@@ -133,7 +135,7 @@ to the latent vectors (probably something like `train_bert-base-uncased.npy`).
 
 
 ```python
-SimpleShapesDataset(
+ShimmerDataset(
     "/path/to/dataset",
     split="train",
     domain_classes=get_default_domains(["t"]),  # Will only load the text domain

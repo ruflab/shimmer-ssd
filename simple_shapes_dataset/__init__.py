@@ -4,7 +4,6 @@ from pathlib import Path
 
 import simple_shapes_dataset.cli as cli
 import simple_shapes_dataset.text as text
-from simple_shapes_dataset.dataset.dataset import SimpleShapesDataset
 from simple_shapes_dataset.dataset.domain import (
     DEFAULT_DOMAINS,
     Attribute,
@@ -37,7 +36,6 @@ __all__ = [
     "SimpleShapesAttributes",
     "SimpleShapesText",
     "SimpleShapesRawText",
-    "SimpleShapesDataset",
     "Attribute",
     "RawText",
     "Text",

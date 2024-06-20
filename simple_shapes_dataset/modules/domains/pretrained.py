@@ -112,7 +112,7 @@ def load_pretrained_domains(
     gw_encoders: dict[str, Module] = {}
     gw_decoders: dict[str, Module] = {}
     for domain in domains:
-        if domain.domain_type.kind.kind in modules:
+        if domain.domain_type.kind.value.kind in modules:
             raise ConfigurationError("Cannot load multiple domains of the same kind.")
         model, encoder, decoder = load_pretrained_domain(
             default_root_dir,
@@ -125,7 +125,7 @@ def load_pretrained_domains(
             is_linear,
             bias,
         )
-        modules[domain.domain_type.kind.kind] = model
-        gw_encoders[domain.domain_type.kind.kind] = encoder
-        gw_decoders[domain.domain_type.kind.kind] = decoder
+        modules[domain.domain_type.kind.value.kind] = model
+        gw_encoders[domain.domain_type.kind.value.kind] = encoder
+        gw_decoders[domain.domain_type.kind.value.kind] = decoder
     return modules, gw_encoders, gw_decoders

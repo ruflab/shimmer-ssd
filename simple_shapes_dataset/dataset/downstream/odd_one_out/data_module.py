@@ -4,7 +4,7 @@ from typing import Any
 
 from lightning.pytorch import LightningDataModule
 from lightning.pytorch.utilities.combined_loader import CombinedLoader
-from shimmer import DataDomain
+from shimmer import DataDomain, DomainDesc, RepeatedDataset
 from torch.utils.data import DataLoader, Subset, default_collate
 from torchvision.transforms import Compose, ToTensor
 
@@ -17,8 +17,6 @@ from simple_shapes_dataset.dataset.pre_process import (
     TextAndAttrs,
     attribute_to_tensor,
 )
-from simple_shapes_dataset.dataset.repeated_dataset import RepeatedDataset
-from simple_shapes_dataset.types import DomainType
 
 DatasetT = OddOneOutDataset | Subset[OddOneOutDataset]
 
@@ -26,7 +24,7 @@ DatasetT = OddOneOutDataset | Subset[OddOneOutDataset]
 def get_aligned_datasets(
     dataset_path: str | Path,
     split: str,
-    domain_classes: Mapping[DomainType, type[DataDomain]],
+    domain_classes: Mapping[DomainDesc, type[DataDomain]],
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
     max_size: int = -1,
@@ -63,7 +61,7 @@ class OddOneOutDataModule(LightningDataModule):
     def __init__(
         self,
         dataset_path: str | Path,
-        domain_classes: Mapping[DomainType, type[DataDomain]],
+        domain_classes: Mapping[DomainDesc, type[DataDomain]],
         domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
         max_train_size: int = -1,
@@ -200,7 +198,7 @@ class OddOneOutDataModule(LightningDataModule):
         max_sized_dataset = max(len(dataset) for dataset in self.train_dataset.values())
         for domain, dataset in self.train_dataset.items():
             dataloaders[domain] = DataLoader(
-                RepeatedDataset(dataset, max_sized_dataset, drop_last=False),
+                RepeatedDataset(dataset, max_sized_dataset, drop_last=False),  # type: ignore
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=True,
