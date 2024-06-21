@@ -34,6 +34,7 @@ class SimpleShapesDataModule(LightningDataModule):
         additional_transforms: (
             Mapping[str, Sequence[Callable[[Any], Any]]] | None
         ) = None,
+        train_transforms: (Mapping[str, Sequence[Callable[[Any], Any]]] | None) = None,
         collate_fn: Callable[[list[Any]], Any] | None = None,
         use_default_transforms: bool = True,
     ) -> None:
@@ -46,6 +47,7 @@ class SimpleShapesDataModule(LightningDataModule):
         self.ood_seed = ood_seed
         self.domain_args = domain_args or {}
         self.additional_transforms = additional_transforms or {}
+        self._train_transform = train_transforms or {}
         self._use_default_transforms = use_default_transforms
 
         self.max_train_size = max_train_size
@@ -63,7 +65,7 @@ class SimpleShapesDataModule(LightningDataModule):
         self._collate_fn = collate_fn
 
     def _get_transforms(
-        self, domains: Iterable[str]
+        self, domains: Iterable[str], mode: str
     ) -> dict[str, Callable[[Any], Any]]:
         transforms: dict[str, Callable[[Any], Any]] = {}
         for domain in domains:
@@ -84,6 +86,8 @@ class SimpleShapesDataModule(LightningDataModule):
 
             if domain in self.additional_transforms:
                 domain_transforms.extend(self.additional_transforms[domain])
+            if domain in self._train_transform and mode == "train":
+                domain_transforms.extend(self._train_transform[domain])
             transforms[domain] = Compose(domain_transforms)
         return transforms
 
@@ -112,7 +116,7 @@ class SimpleShapesDataModule(LightningDataModule):
                 self.domain_proportions,
                 self.seed,
                 self.max_train_size,
-                self._get_transforms(domains),
+                self._get_transforms(domains, split),
                 self.domain_args,
             )
 
@@ -122,7 +126,7 @@ class SimpleShapesDataModule(LightningDataModule):
                     self.dataset_path,
                     split,
                     self.domain_classes,
-                    transforms=self._get_transforms(domains),
+                    transforms=self._get_transforms(domains, split),
                     domain_args=self.domain_args,
                 )
             }
@@ -136,7 +140,7 @@ class SimpleShapesDataModule(LightningDataModule):
                     if domain_type.kind == domain
                 },
                 self.max_train_size,
-                self._get_transforms([domain]),
+                self._get_transforms([domain], split),
                 self.domain_args,
             )
             for domain in domains
