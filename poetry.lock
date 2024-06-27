@@ -133,7 +133,7 @@ files = [
 
 [[package]]
 name = "attributes-to-language"
-version = "0.4.0.dev"
+version = "0.4.0"
 description = "Parameterized language from attributes and grammar"
 optional = false
 python-versions = "~3.11"
@@ -146,8 +146,8 @@ numpy = "^1.26"
 [package.source]
 type = "git"
 url = "https://github.com/bdvllrs/attributes-to-language.git"
-reference = "main"
-resolved_reference = "cbf1dd3c71c8913d0a76e0db4238700afa325137"
+reference = "v0.4.0"
+resolved_reference = "c3d3c6823a1a8d968a71f786a2384a8b14c3be77"
 
 [[package]]
 name = "attrs"
@@ -3144,4 +3144,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "e2fa9428b76c5726c31cb5494f554f65487f1b42a1be47d79f00b9ece1ec8ee9"
+content-hash = "550795e37812e72c9f65c6269bf0cb387998eb10b9936cd102e64999b7862e38"
