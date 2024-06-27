@@ -1,4 +1,7 @@
+from typing import Any
+
 import numpy as np
+from attributes_to_language.types import ChoicesT
 from attributes_to_language.utils import COLORS_LARGE_SET, COLORS_SPARSE, COLORS_XKCD
 from attributes_to_language.writers import (
     Bins2dWriter,
@@ -15,7 +18,11 @@ class AngleWriter(Writer):
         super().__init__()
         self.writer = writer
 
-    def __call__(self, angle, choices=None):
+    def __call__(
+        self, *val: Any, choices: ChoicesT | None = None
+    ) -> tuple[str, ChoicesT]:
+        assert len(val) == 1
+        angle = val[0]
         if angle < 0:
             angle += 2 * np.pi
         return self.writer(angle, choices=choices)
@@ -349,7 +356,9 @@ location_precision_writer_bins = Bins2dWriter(
                 "{at_the} very {top}, {on_the} very right{side?}",
             ],
         ]
-    ).transpose(),
+    )
+    .transpose()
+    .tolist(),
 )
 
 color_large_set_writer = QuantizedWriter(
@@ -393,20 +402,20 @@ def test_rotation_writer(writer):
 
 
 def test_shapes_writer(writer):
-    for _k in range(5):
+    for _ in range(5):
         print(writer(2))
         print(writer(1))
         print(writer(0))
 
 
 def test_size_writer(writer):
-    for _k in range(5):
+    for _ in range(5):
         for i in range(5, 32, 3):
             print(writer(i))
 
 
 def test_location_writer(writer):
-    for _k in range(5):
+    for _ in range(5):
         for i in range(0, 32, 6):
             for j in range(0, 32, 6):
                 print(i, j, writer(i, j))
