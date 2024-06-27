@@ -17,13 +17,13 @@ def a_has_n(sentence: str):
 
 
 # or from a kwargs given to the composer method.
-script_structures = [
+script_structures_simple = [
     "{start} <{size}>{link}<{color}>{link}<{shape}>{link}<{location}>{"
     "link}<{rotation}>.",
 ]
 
 # Elements in the list of each variant is randomly chosen.
-variants: VariantsT = {
+variants_simple: VariantsT = {
     "start": [
         "",
         "It is",
@@ -37,7 +37,7 @@ variants: VariantsT = {
     "link": [". It is ", ", and is ", " ", ", it's ", ". It's "],
 }
 
-random_composer = Composer(script_structures, writers, variants)
+random_composer = Composer(script_structures_simple, writers, variants_simple)
 
 script_structures = [
     "{start} {size} {colorBefore} {shape}{link} <{location}>{link} <{" "rotation}>.",
