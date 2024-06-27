@@ -41,9 +41,10 @@ def structure_category_from_choice(
         if choice.structure != k:
             class_val += math.factorial(len(groups))
         else:
-            for permutation in permutations(range(len(groups))):
+            for i, permutation in enumerate(permutations(range(len(groups)))):
                 if choice.groups == list(permutation):
                     categories["structure"] = class_val
+                    class_val += len(groups) - i
                     break
                 class_val += 1
     # variants
