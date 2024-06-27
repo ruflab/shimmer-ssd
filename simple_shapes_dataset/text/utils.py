@@ -1,5 +1,4 @@
 import math
-import re
 from itertools import permutations
 from typing import Any
 
@@ -21,11 +20,8 @@ def inspect_writers(composer: Composer) -> dict[str, int]:
 
 
 def inspect_all_choices(composer: Composer) -> dict[str, int]:
-    num_structures = 0
     choices: dict[str, int] = {}
-    for structure in composer.script_structures:
-        num_structures += math.factorial(len(re.findall(r"<[^>]+>", structure)))
-    choices["structure"] = num_structures
+    choices["structure"] = sum(math.factorial(len(group)) for group in composer.groups)
 
     for variant_name, variant in composer.variants.items():
         if len(variant) > 1:
@@ -41,8 +37,7 @@ def structure_category_from_choice(
     categories: dict[str, int] = {}
     # structure
     class_val = 0
-    for k, structure in enumerate(composer.script_structures):
-        groups = re.findall(r"<[^>]+>", structure)
+    for k, groups in enumerate(composer.groups):
         if choice.structure != k:
             class_val += math.factorial(len(groups))
         else:
@@ -104,8 +99,7 @@ def choices_from_structure_categories(
                         choices["writers"][writer_name][variant_name] = variant[i]
         # structure
         category = grammar_predictions["structure"][i]
-        for k, structure in enumerate(composer.script_structures):
-            groups = re.findall(r"<[^>]+>", structure)
+        for k, groups in enumerate(composer.groups):
             if category < math.factorial(len(groups)):
                 choices["structure"] = k
                 choices["groups"] = list(
