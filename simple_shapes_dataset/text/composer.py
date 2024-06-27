@@ -1,4 +1,4 @@
-from attributes_to_language.composer import Composer
+from attributes_to_language.composer import Composer, VariantsT
 from attributes_to_language.types import ComputedAttributeT, VariantT
 
 from simple_shapes_dataset.text.writers import writers
@@ -23,7 +23,7 @@ script_structures = [
 ]
 
 # Elements in the list of each variant is randomly chosen.
-variants = {
+variants: VariantsT = {
     "start": [
         "",
         "It is",
@@ -69,7 +69,7 @@ start_variant: list[VariantT] = [a_has_n(x + "{n?}") for x in pre_start_variant]
 ]
 
 # Elements in the list of each variant is randomly chosen.
-variants = {
+variants: VariantsT = {
     "start": start_variant,
     "a": [a_has_n("a{n?}")],
     "object": ["shape", "object"],
