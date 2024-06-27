@@ -1,11 +1,14 @@
 from attributes_to_language.composer import Composer
+from attributes_to_language.types import ComputedAttributeT, VariantT
 
 from simple_shapes_dataset.text.writers import writers
 
 
-def a_has_n(sentence):
-    def aux(attributes):
+def a_has_n(sentence: str):
+    def aux(attributes: ComputedAttributeT | None) -> str:
         vowels = ["a", "e", "i", "o", "u"]
+        if attributes is None:
+            return sentence.format(**{"n?": ""})
         if attributes[attributes["_next"]][0] in vowels:
             return sentence.format(**{"n?": "n"})
         return sentence.format(**{"n?": ""})
@@ -52,7 +55,7 @@ script_structures = [
     "link} <{rotation}>.",
 ]
 
-start_variant = [
+pre_start_variant = [
     "A",
     "It is a",
     "This is a",
@@ -61,7 +64,9 @@ start_variant = [
     "The image represents a",
     "The image contains a",
 ]
-start_variant = [a_has_n(x + "{n?}") for x in start_variant] + ["A kind of"]
+start_variant: list[VariantT] = [a_has_n(x + "{n?}") for x in pre_start_variant] + [
+    "A kind of"
+]
 
 # Elements in the list of each variant is randomly chosen.
 variants = {
