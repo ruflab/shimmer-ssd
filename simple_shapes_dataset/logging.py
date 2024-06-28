@@ -185,8 +185,8 @@ def attribute_image_grid(
     unnormalizer = UnnormalizeAttributes(image_size=image_size)
     attributes = unnormalizer(tensor_to_attribute(samples))
 
-    categories = attributes.category.cpu().numpy()
-    locations = torch.stack([attributes.x, attributes.y], dim=1).cpu().numpy()
+    categories = attributes.category.detach().cpu().numpy()
+    locations = torch.stack([attributes.x, attributes.y], dim=1).detach().cpu().numpy()
     colors = (
         (
             torch.stack(
@@ -201,8 +201,8 @@ def attribute_image_grid(
         .cpu()
         .numpy()
     )
-    sizes = attributes.size.cpu().numpy()
-    rotations = attributes.rotation.cpu().numpy()
+    sizes = attributes.size.detach().cpu().numpy()
+    rotations = attributes.rotation.detach().cpu().numpy()
 
     return get_attribute_figure_grid(
         categories,
@@ -334,6 +334,7 @@ class LogGWImagesCallback(pl.Callback):
         every_n_epochs: int | None = 1,
         image_size: int = 32,
         ncols: int = 8,
+        filter: Sequence[str] | None = None,
     ) -> None:
         super().__init__()
         self.mode = mode
@@ -342,6 +343,7 @@ class LogGWImagesCallback(pl.Callback):
         self.log_key = log_key
         self.image_size = image_size
         self.ncols = ncols
+        self.filter = filter
 
     def to(
         self,
@@ -389,48 +391,55 @@ class LogGWImagesCallback(pl.Callback):
         if not (len(loggers)):
             return
 
-        latent_groups = pl_module.encode_domains(self.reference_samples)
-        predictions = cast(GWPredictionsBase, pl_module(latent_groups))
+        with torch.no_grad():
+            latent_groups = pl_module.encode_domains(self.reference_samples)
+            predictions = cast(GWPredictionsBase, pl_module(latent_groups))
 
-        for logger in loggers:
-            for domains, preds in predictions["broadcasts"].items():
-                domain_from = ",".join(domains)
-                for domain, pred in preds.items():
-                    self.log_samples(
-                        logger,
-                        pl_module,
-                        pl_module.decode_domain(pred, domain),
-                        domain,
-                        f"pred_trans_{domain_from}_to_{domain}",
-                    )
-            for domains, preds in predictions["cycles"].items():
-                domain_from = ",".join(domains)
-                for domain, pred in preds.items():
-                    self.log_samples(
-                        logger,
-                        pl_module,
-                        pl_module.decode_domain(pred, domain),
-                        domain,
-                        f"pred_cycle_{domain_from}_to_{domain}",
-                    )
-            if isinstance(pl_module, GlobalWorkspaceBayesian):
-                if not isinstance(logger, WandbLogger):
-                    continue
-                columns = ["domain"] + [
-                    f"lambda_{k}" for k in range(pl_module.workspace_dim)
-                ]
-                data = []
-                precision_domains = list(pl_module.gw_mod.precisions)
-                precisions = torch.stack(
-                    [
-                        pl_module.gw_mod.precisions[domain]
-                        for domain in precision_domains
+            for logger in loggers:
+                for domains, preds in predictions["broadcasts"].items():
+                    domain_from = ",".join(domains)
+                    for domain, pred in preds.items():
+                        log_name = f"pred_trans_{domain_from}_to_{domain}"
+                        if self.filter is not None and log_name not in self.filter:
+                            continue
+                        self.log_samples(
+                            logger,
+                            pl_module,
+                            pl_module.decode_domain(pred, domain),
+                            domain,
+                            log_name,
+                        )
+                for domains, preds in predictions["cycles"].items():
+                    domain_from = ",".join(domains)
+                    for domain, pred in preds.items():
+                        log_name = f"pred_cycle_{domain_from}_to_{domain}"
+                        if self.filter is not None and log_name not in self.filter:
+                            continue
+                        self.log_samples(
+                            logger,
+                            pl_module,
+                            pl_module.decode_domain(pred, domain),
+                            domain,
+                            log_name,
+                        )
+                if isinstance(pl_module, GlobalWorkspaceBayesian):
+                    if not isinstance(logger, WandbLogger):
+                        continue
+                    columns = ["domain"] + [
+                        f"lambda_{k}" for k in range(pl_module.workspace_dim)
                     ]
-                ).softmax(0)
-                for k, domain in enumerate(precision_domains):
-                    data.append([domain] + precisions[k].detach().cpu().tolist())
+                    data = []
+                    precision_domains = list(pl_module.gw_mod.precisions)
+                    precisions = torch.stack(
+                        [
+                            pl_module.gw_mod.precisions[domain]
+                            for domain in precision_domains
+                        ]
+                    ).softmax(0)
+                    for k, domain in enumerate(precision_domains):
+                        data.append([domain] + precisions[k].detach().cpu().tolist())
 
-                logger.log_table("precisions", columns, data)
+                    logger.log_table("precisions", columns, data)
 
     def on_train_epoch_end(
         self,

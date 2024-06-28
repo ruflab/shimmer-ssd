@@ -91,4 +91,4 @@ def test_gw_logger():
         val_samples, log_key="test", mode="test", every_n_epochs=1
     )
 
-    callback.on_callback(current_epoch=0, loggers=[wandb_logger], pl_module=module)
+    callback.on_callback(loggers=[wandb_logger], pl_module=module)

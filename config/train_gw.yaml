@@ -9,3 +9,20 @@ training:
 logging:
     log_val_medias_every_n_epochs: 10
     log_train_medias_every_n_epochs: 10
+    filter_images:
+        - pred_trans_attr_to_attr
+        - pred_trans_v_latents_to_v_latents
+        - pred_trans_t_to_t
+        - pred_trans_attr_to_v_latents
+        - pred_trans_attr_to_t
+        - pred_trans_t_to_v_latents
+        - pred_trans_t_to_attr
+        - pred_trans_v_latents_to_attr
+        - pred_trans_v_latents_to_t
+        - pred_cycle_v_latents_to_attr
+        - pred_cycle_v_latents_to_t
+        - pred_cycle_t_to_attr
+        - pred_cycle_t_to_v_latents
+        - pred_cycle_attr_to_v_latents
+        - pred_cycle_attr_to_t
+
