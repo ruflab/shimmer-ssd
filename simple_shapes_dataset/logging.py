@@ -15,12 +15,8 @@ from matplotlib.figure import Figure
 from PIL import Image
 from shimmer import (
     GlobalWorkspaceBayesian,
-    SingleDomainSelection,
-    batch_cycles,
-    batch_demi_cycles,
-    batch_translations,
 )
-from shimmer.modules.global_workspace import GlobalWorkspaceBase
+from shimmer.modules.global_workspace import GlobalWorkspaceBase, GWPredictionsBase
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import LOGGER
@@ -365,76 +361,58 @@ class LogGWImagesCallback(pl.Callback):
             out[domain_names] = latents
         return out
 
+    def setup(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str
+    ) -> None:
+        if stage != "fit":
+            return
+        assert isinstance(pl_module, GlobalWorkspaceBase)
+        device = trainer.strategy.root_device
+        self.reference_samples = self.to(self.reference_samples, device)
+
+        for domain_names, domains in self.reference_samples.items():
+            for domain_name, domain_tensor in domains.items():
+                for logger in trainer.loggers:
+                    self.log_samples(
+                        logger,
+                        pl_module,
+                        domain_tensor,
+                        domain_name,
+                        f"ref_{'-'.join(domain_names)}_{domain_name}",
+                    )
+
     def on_callback(
         self,
-        current_epoch: int,
         loggers: Sequence[Logger],
         pl_module: GlobalWorkspaceBase,
     ) -> None:
         if not (len(loggers)):
             return
 
-        samples = self.to(self.reference_samples, pl_module.device)
-        if current_epoch == 0:
-            for domain_names, domains in samples.items():
-                for domain_name, domain_tensor in domains.items():
-                    for logger in loggers:
-                        self.log_samples(
-                            logger,
-                            pl_module,
-                            domain_tensor,
-                            domain_name,
-                            f"ref_{'-'.join(domain_names)}_{domain_name}",
-                        )
-
-        latent_groups = pl_module.encode_domains(samples)
-
-        selection_mod = SingleDomainSelection()
-
-        with torch.no_grad():
-            pl_module.eval()
-            prediction_demi_cycles = batch_demi_cycles(
-                pl_module.gw_mod, selection_mod, latent_groups
-            )
-            prediction_cycles = batch_cycles(
-                pl_module.gw_mod,
-                selection_mod,
-                latent_groups,
-                pl_module.domain_mods.keys(),
-            )
-            prediction_translations = batch_translations(
-                pl_module.gw_mod, selection_mod, latent_groups
-            )
-            pl_module.train()
+        latent_groups = pl_module.encode_domains(self.reference_samples)
+        predictions = cast(GWPredictionsBase, pl_module(latent_groups))
 
         for logger in loggers:
-            for domain_s, prediction in prediction_demi_cycles.items():
-                self.log_samples(
-                    logger,
-                    pl_module,
-                    pl_module.decode_domain(prediction, domain_s),
-                    domain_s,
-                    f"pred_dcy_{domain_s}",
-                )
-            for (domain_s, domain_t), prediction in prediction_cycles.items():
-                self.log_samples(
-                    logger,
-                    pl_module,
-                    pl_module.decode_domain(prediction, domain_s),
-                    domain_s,
-                    f"pred_cy_{domain_s}_in_{domain_t}",
-                )
-            for (
-                domain_s,
-                domain_t,
-            ), prediction in prediction_translations.items():
-                self.log_samples(
-                    logger,
-                    pl_module,
-                    pl_module.decode_domain(prediction, domain_t),
-                    domain_t,
-                    f"pred_trans_{domain_s}_to_{domain_t}",
-                )
+            for domains, preds in predictions["broadcasts"].items():
+                domain_from = ",".join(domains)
+                for domain, pred in preds.items():
+                    self.log_samples(
+                        logger,
+                        pl_module,
+                        pl_module.decode_domain(pred, domain),
+                        domain,
+                        f"pred_trans_{domain_from}_to_{domain}",
+                    )
+            for domains, preds in predictions["cycles"].items():
+                domain_from = ",".join(domains)
+                for domain, pred in preds.items():
+                    self.log_samples(
+                        logger,
+                        pl_module,
+                        pl_module.decode_domain(pred, domain),
+                        domain,
+                        f"pred_cycle_{domain_from}_to_{domain}",
+                    )
             if isinstance(pl_module, GlobalWorkspaceBayesian):
                 if not isinstance(logger, WandbLogger):
                     continue
@@ -471,7 +449,7 @@ class LogGWImagesCallback(pl.Callback):
         ):
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def on_validation_epoch_end(
         self,
@@ -490,7 +468,7 @@ class LogGWImagesCallback(pl.Callback):
         ):
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def on_test_epoch_end(
         self,
@@ -503,7 +481,7 @@ class LogGWImagesCallback(pl.Callback):
         if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def on_fit_end(
         self,
@@ -516,7 +494,7 @@ class LogGWImagesCallback(pl.Callback):
         if not isinstance(pl_module, GlobalWorkspaceBase):
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def log_samples(
         self,

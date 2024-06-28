@@ -104,7 +104,7 @@ def main():
     )
 
     for pred in predictions:
-        for k in range(pred["states"]["attr"].size(0)):
+        for k in range(pred["states"][frozenset(["attr"])].size(0)):
             for domain in pred["states"]:
                 print(domain, pred["states"][domain][k])
             print("--")
