@@ -191,18 +191,21 @@ def main():
             log_key="images/val",
             mode="val",
             every_n_epochs=config.logging.log_val_medias_every_n_epochs,
+            filter=config.logging.filter_images,
         ),
         LogGWImagesCallback(
             val_samples,
             log_key="images/test",
             mode="test",
             every_n_epochs=None,
+            filter=config.logging.filter_images,
         ),
         LogGWImagesCallback(
             train_samples,
             log_key="images/train",
             mode="train",
             every_n_epochs=config.logging.log_train_medias_every_n_epochs,
+            filter=config.logging.filter_images,
         ),
     ]
 
@@ -228,18 +231,21 @@ def main():
                     log_key="images/val/ood",
                     mode="val",
                     every_n_epochs=config.logging.log_val_medias_every_n_epochs,
+                    filter=config.logging.filter_images,
                 ),
                 LogGWImagesCallback(
                     val_samples_ood,
                     log_key="images/test/ood",
                     mode="test",
                     every_n_epochs=None,
+                    filter=config.logging.filter_images,
                 ),
                 LogGWImagesCallback(
                     train_samples_ood,
                     log_key="images/train/ood",
                     mode="train",
                     every_n_epochs=config.logging.log_train_medias_every_n_epochs,
+                    filter=config.logging.filter_images,
                 ),
             ]
         )
