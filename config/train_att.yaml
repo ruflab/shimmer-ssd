@@ -1,0 +1,11 @@
+training:
+    optim:
+        lr: 0.001
+        max_lr: 0.001
+        weight_decay: 1e-6
+
+    max_steps: 100_000
+
+logging:
+    log_val_medias_every_n_epochs: 10
+    log_train_medias_every_n_epochs: 10
