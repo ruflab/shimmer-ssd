@@ -2755,7 +2755,7 @@ develop = false
 
 [package.dependencies]
 click = "^8.1.7"
-lightning = "^2.3.3"
+lightning = ">=2.1.0"
 matplotlib = "^3.9.1"
 migrate-ckpt = {git = "https://github.com/bdvllrs/migrate-ckpt.git", rev = "v0.2.0"}
 numpy = "^1.26"
@@ -2765,8 +2765,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "main"
-resolved_reference = "da92b0ab6e3afc6631af32e004dcbe8204b8bc96"
+reference = "optional_domain_loss"
+resolved_reference = "c01df8ddd0841d66f9be0c3f5a471e98443e4f9f"
 
 [[package]]
 name = "six"
@@ -3578,4 +3578,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "c3b4fe3fd7e0ccba6396cd49e24d0399784c6cf1c37a63351efc1780a63178c9"
+content-hash = "74a32b59859a64b5d2d8790ab792ebb798202b9ceddc42e94235f28a491182c4"
