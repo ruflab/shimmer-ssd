@@ -27,6 +27,7 @@ def load_pretrained_module(
     domain: LoadedDomainConfig,
 ) -> DomainModule:
     domain_checkpoint = root_path / domain.checkpoint_path
+    module: DomainModule
     match domain.domain_type:
         case DomainModelVariantType.v:
             migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")

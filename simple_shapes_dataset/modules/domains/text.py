@@ -73,7 +73,7 @@ class Decoder(VAEDecoder):
             nn.Tanh(),
         )
 
-    def forward(self, z: torch.Tensor) -> list[torch.Tensor]:
+    def forward(self, z: torch.Tensor) -> list[torch.Tensor]:  # type: ignore
         return [self.decoder(z)]
 
 
