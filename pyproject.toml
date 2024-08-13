@@ -17,16 +17,15 @@ attributes-to-language = {git = "https://github.com/bdvllrs/attributes-to-langua
 auto-sbatch = {git = "https://github.com/bdvllrs/auto-sbatch.git", rev = "v0.4.1"}
 migrate-ckpt = {git = "https://github.com/bdvllrs/migrate-ckpt.git", rev = "v0.2.0"}
 cfg-tools = {git = "https://github.com/bdvllrs/cfg-tools.git", rev = "v0.2.0"}
-torchdata = "^0.6.1"
+torchdata = ">=0.6.1"
 pillow = "^10.3.0"
 numpy = "^1.26"
 torch = "^2.0.1"
 shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "main"}
-wandb = "^0.15.4"
-lightning = "^2.1.0"
+wandb = ">=0.15.4"
+lightning = "^2.4.0"
 pydantic = "^2.6.0"
-torchmetrics = "<1.0.0"
-torchvision = "^0.15.2"
+torchvision = ">=0.15.2"
 rich = "^13.4.2"
 
 [tool.poetry.group.dev.dependencies]
