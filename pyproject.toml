@@ -23,7 +23,7 @@ numpy = "^1.26"
 torch = "^2.0.1"
 shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "optional_domain_loss"}
 wandb = "^0.17.7"
-lightning = "^2.4.0"
+lightning = ">=2.1.0"
 pydantic = "^2.6.0"
 torchvision = ">=0.15.2"
 rich = "^13.4.2"
