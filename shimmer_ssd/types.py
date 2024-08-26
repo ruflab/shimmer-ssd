@@ -30,6 +30,8 @@ class DomainModelVariantType(Enum):
     attr_unpaired = (DomainType.attr, "unpaired")
     v_latents = (DomainType.v_latents, "default")
     v_latents_unpaired = (DomainType.v_latents, "unpaired")
+    t = (DomainType.t, "default")
+    t_attr = (DomainType.t, "t2attr")
 
     def __init__(self, kind: DomainType, model_variant: str) -> None:
         self.kind = kind
@@ -138,8 +140,12 @@ class AttributeModule(BaseModel):
 
 class TextModule(BaseModel):
     latent_filename: str = "latent"
+    vocab_path: str
+    merges_path: str
+    seq_length: int = 64
+    vocab_size: int = 822
 
-    latent_dim: int = 24
+    latent_dim: int = 64
     hidden_dim: int = 256
     beta: float = 0.1
 

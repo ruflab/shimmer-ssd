@@ -88,6 +88,19 @@
         {
             "type": "python",
             "request": "launch",
+            "name": "Train text2attr",
+            "program": "${workspaceFolder}/playground/train_text2attr.py",
+            "justMyCode": false,
+            "env": {
+                "DEBUG": "1",
+                "CUDA_VISIBLE_DEVICES": "1",
+                "CUDA_DEVICE_ORDER": "PCI_BUS_ID"
+            }
+        },
+
+        {
+            "type": "python",
+            "request": "launch",
             "name": "Slurm launch",
             "program": "${workspaceFolder}/slurm/launch.py",
             "justMyCode": false,
