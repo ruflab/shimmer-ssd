@@ -2766,7 +2766,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "fb9673129067a7074c13b5a6efae24df1264af23"
+resolved_reference = "e3dea0d77ab8ddc1a9db9f2613f2c3c525d40597"
 
 [[package]]
 name = "six"
@@ -3431,18 +3431,19 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 
 [[package]]
 name = "wandb"
-version = "0.17.5"
+version = "0.17.7"
 description = "A CLI and library for interacting with the Weights & Biases API."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "wandb-0.17.5-py3-none-any.whl", hash = "sha256:1c0f60446b51561b67280a060388ffad2a6078fcfdf5024b9998252d237b4639"},
-    {file = "wandb-0.17.5-py3-none-macosx_10_14_x86_64.whl", hash = "sha256:653252c57df550edc70607da827bc68c670932d6775e2f6556909575e17c544b"},
-    {file = "wandb-0.17.5-py3-none-macosx_11_0_arm64.whl", hash = "sha256:233b02d3643142cce8c0ae7986c233fe976b3f7ec0f7aded7478dad0d5a74d43"},
-    {file = "wandb-0.17.5-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ca55edb64f0256a4d4961c3d9dd281a5928037827a21315a8ca67e92ccc60d06"},
-    {file = "wandb-0.17.5-py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:10e4b954ce7ff8615ee64b2dd5a04e51e8c64568d47ec39f5995dbbc9df172db"},
-    {file = "wandb-0.17.5-py3-none-win32.whl", hash = "sha256:04013a6974dd5ff8d69cff79efdbad625db9873e3049bffe85cf39d81f5207cb"},
-    {file = "wandb-0.17.5-py3-none-win_amd64.whl", hash = "sha256:c90e80df09c47e3e0432b2e4e90a4eff34f15e891467ec2f3c284834a33cd6c4"},
+    {file = "wandb-0.17.7-py3-none-any.whl", hash = "sha256:42f37d7d4f1934fc5a33233be1de0f0c8e3bbff04a4403b3ac6030e577cc84e1"},
+    {file = "wandb-0.17.7-py3-none-macosx_10_14_x86_64.whl", hash = "sha256:ed3fcf51b533249db306a9dd41893d671eb936f64b8837ffc504dba56609ff47"},
+    {file = "wandb-0.17.7-py3-none-macosx_11_0_arm64.whl", hash = "sha256:f21183b74ed05744b274c7d876d473ae14a985becfbabd005104ce7e78200cf8"},
+    {file = "wandb-0.17.7-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:011cca25b2ca57956d1ff2c84e31c903058cc8f552ecc1d0450ffad34c8a59bd"},
+    {file = "wandb-0.17.7-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:df335a67d3fff9299d915c127ad476cdf9e3f2b1d86e025f54ed63c7dab62d72"},
+    {file = "wandb-0.17.7-py3-none-win32.whl", hash = "sha256:de7e040fe553e149926437ea2d24a20c6b563092e5a17709c4b99dff8a38470c"},
+    {file = "wandb-0.17.7-py3-none-win_amd64.whl", hash = "sha256:c81be25cb1a5322aff95f66a89ca4abcb2a8e98ee09b8938f123a536b967a235"},
+    {file = "wandb-0.17.7.tar.gz", hash = "sha256:4623fb7618ff094ebab91101b8b5dcef5b3513d35e867a10f64021ca427bb38d"},
 ]
 
 [package.dependencies]
@@ -3462,9 +3463,9 @@ setuptools = "*"
 aws = ["boto3"]
 azure = ["azure-identity", "azure-storage-blob"]
 gcp = ["google-cloud-storage"]
-importers = ["filelock", "mlflow", "polars", "rich", "tenacity"]
+importers = ["filelock", "mlflow", "polars (<=1.2.1)", "rich", "tenacity"]
 kubeflow = ["google-cloud-storage", "kubernetes", "minio", "sh"]
-launch = ["awscli", "azure-containerregistry", "azure-identity", "azure-storage-blob", "boto3", "botocore", "chardet", "google-auth", "google-cloud-aiplatform", "google-cloud-artifact-registry", "google-cloud-compute", "google-cloud-storage", "iso8601", "kubernetes", "kubernetes-asyncio", "nbconvert", "nbformat", "optuna", "pydantic", "pyyaml (>=6.0.0)", "tomli", "typing-extensions"]
+launch = ["awscli", "azure-containerregistry", "azure-identity", "azure-storage-blob", "boto3", "botocore", "chardet", "google-auth", "google-cloud-aiplatform", "google-cloud-artifact-registry", "google-cloud-compute", "google-cloud-storage", "iso8601", "jsonschema", "kubernetes", "kubernetes-asyncio", "nbconvert", "nbformat", "optuna", "pydantic", "pyyaml (>=6.0.0)", "tomli", "typing-extensions"]
 media = ["bokeh", "moviepy", "numpy", "pillow", "plotly (>=5.18.0)", "rdkit-pypi", "soundfile"]
 models = ["cloudpickle"]
 perf = ["orjson"]
@@ -3577,4 +3578,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "e652ef9941a0aab41c98cbde5b651c8e93770ee703b0ca29198ce48275007a04"
+content-hash = "d39cd61ef052b809ee345f47405f8312b31fc760af651a31f20a5063750475a2"
