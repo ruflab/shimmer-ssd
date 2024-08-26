@@ -238,3 +238,122 @@ class TextDomainModule(DomainModule):
                 "interval": "step",
             },
         }
+
+
+class LSTMEncoder(nn.Module):
+    def __init__(
+        self,
+        in_dim: int,
+        hidden_dim: int,
+        out_dim: int,
+    ):
+        super().__init__()
+
+        self.in_dim = in_dim
+        self.hidden_dim = hidden_dim
+        self.out_dim = out_dim
+
+    def forward(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
+        out = torch.cat(list(x), dim=-1)
+        out = self.encoder(out)
+        return out
+
+
+class LSTMTextDomainModule(DomainModule):
+    in_dim = 768
+
+    def __init__(
+        self,
+        latent_dim: int,
+        hidden_dim: int,
+        vocab_size: int,
+        beta: float = 1,
+        optim_lr: float = 1e-3,
+        optim_weight_decay: float = 0,
+        scheduler_args: SchedulerArgs | None = None,
+    ):
+        super().__init__(latent_dim)
+        self.save_hyperparameters()
+
+        self.hidden_dim = hidden_dim
+        self.latent_dim = latent_dim
+        self.vocab_size = vocab_size
+
+        self.projector = nn.Sequential(
+            nn.Linear(self.in_dim, self.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(self.hidden_dim, self.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(self.hidden_dim, self.latent_dim),
+            nn.ReLU(),
+            nn.Linear(self.latent_dim, self.latent_dim),
+            nn.Tanh(),
+        )
+
+        self.decoder = nn.GRU(
+            self.latent_dim, self.hidden_dim, num_layers=4, batch_first=True
+        )
+        self.text_head = nn.Linear(self.hidden_dim, self.vocab_size)
+
+        self.optim_lr = optim_lr
+        self.optim_weight_decay = optim_weight_decay
+
+        self.scheduler_args = SchedulerArgs(
+            max_lr=optim_lr,
+            total_steps=1,
+        )
+        self.scheduler_args.update(scheduler_args or {})
+
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        return LossOutput(F.mse_loss(pred, target, reduction="mean"))
+
+    def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
+        return self.projector(x["bert"])
+
+    def decode(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        out = self.decoder(z)
+        tokens_dist = self.text_head(out)
+        tokens = torch.argmax(tokens_dist, -1)
+        return tokens_dist, tokens
+
+    def forward(
+        self, x: Mapping[str, torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        return self.decode(self.encode(x))
+
+    def generic_step(
+        self,
+        x: Mapping[str, torch.Tensor],
+        mode: str = "train",
+    ) -> torch.Tensor:
+        token_dist, tokens = self(x["bert"])
+        loss = F.cross_entropy(token_dist, x["tokens"])
+        acc = (tokens == x["tokens"]).sum() / tokens.size(1)
+        self.log(f"{mode}/loss", loss)
+        self.log(f"{mode}/acc", acc)
+        return loss
+
+    def validation_step(  # type: ignore
+        self, batch: Mapping[str, Mapping[str, torch.Tensor]], _
+    ) -> torch.Tensor:
+        x = batch["t"]
+        return self.generic_step(x, "val")
+
+    def training_step(  # type: ignore
+        self,
+        batch: Mapping[frozenset[str], Mapping[str, Mapping[str, torch.Tensor]]],
+        _,
+    ) -> torch.Tensor:
+        x = batch[frozenset(["t"])]["t"]
+        return self.generic_step(x, "train")
+
+    def configure_optimizers(  # type: ignore
+        self,
+    ) -> dict[str, Any]:
+        optimizer = torch.optim.AdamW(
+            self.parameters(),
+            lr=self.optim_lr,
+            weight_decay=self.optim_weight_decay,
+        )
+
+        return {"optimizer": optimizer}
