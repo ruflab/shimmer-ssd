@@ -17,13 +17,13 @@ from shimmer import (
     GlobalWorkspaceBayesian,
 )
 from shimmer.modules.global_workspace import GlobalWorkspaceBase, GWPredictionsBase
+from tokenizers.implementations import ByteLevelBPETokenizer
 from torchvision.utils import make_grid
 
 from simple_shapes_dataset import LOGGER
 from simple_shapes_dataset.cli.utils import generate_image
 from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
-    attr_to_str,
     tensor_to_attribute,
 )
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
@@ -257,49 +257,54 @@ class LogTextCallback(LogSamplesCallback):
         log_key: str,
         mode: Literal["train", "val", "test"],
         image_size: int,
+        vocab: str,
+        merges: str,
         every_n_epochs: int | None = 1,
         ncols: int = 8,
     ) -> None:
         super().__init__(reference_samples, log_key, mode, every_n_epochs)
         self.image_size = image_size
         self.ncols = ncols
+        self.tokenizer = ByteLevelBPETokenizer(vocab, merges)
 
     def to(
         self, samples: Mapping[str, torch.Tensor], device: torch.device
     ) -> dict[str, torch.Tensor]:
         return {x: samples[x].to(device) for x in samples}
 
-    def log_samples(
-        self, logger: Logger, samples: Mapping[str, torch.Tensor], mode: str
+    def on_callback(
+        self,
+        current_epoch: int,
+        loggers: Sequence[Logger],
+        pl_module: pl.LightningModule,
     ) -> None:
+        if not len(loggers):
+            LOGGER.debug("[LOGGER] No logger found.")
+            return
+
+        samples = self.to(self.reference_samples, pl_module.device)
+        if current_epoch == 0:
+            for logger in loggers:
+                self.log_samples(logger, samples["tokens"], "reference")
+
+        with torch.no_grad():
+            pl_module.eval()
+            generated_samples = pl_module(samples)
+            pl_module.train()
+
+        for logger in loggers:
+            self.log_samples(logger, generated_samples[1], "prediction")
+
+    def log_samples(self, logger: Logger, samples: torch.Tensor, mode: str) -> None:
         if not isinstance(logger, WandbLogger):
             LOGGER.warning("Only logging to wandb is supported")
             return
 
-        attr_samples = [samples["cls"], samples["attr"], samples["unpaired"]]
-        grammar_predictions: dict[str, list[int]]
-        if mode == "reference":
-            grammar_predictions = {
-                n: samples[n].long()[:, 0].detach().cpu().tolist()
-                for n in samples
-                if n not in ["bert", "cls", "attr", "unpaired"]
-            }
-        else:
-            grammar_predictions = {
-                n: samples[n].argmax(dim=-1).detach().cpu().tolist()
-                for n in samples
-                if n not in ["bert", "cls", "attr", "unpaired"]
-            }
-        image = attribute_image_grid(
-            attr_samples,
-            image_size=self.image_size,
-            ncols=self.ncols,
+        assert self.tokenizer is not None
+        text = self.tokenizer.decode_batch(
+            samples.detach().cpu().tolist(), skip_special_tokens=True
         )
-        logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
-
-        unnormalizer = UnnormalizeAttributes(image_size=self.image_size)
-        attributes = unnormalizer(tensor_to_attribute(attr_samples))
-        text = [[t] for t in attr_to_str(attributes, grammar_predictions)]
+        text = [[t.replace("<pad>", "")] for t in text]
         logger.log_text(key=f"{self.log_key}_{mode}_str", columns=["text"], data=text)
 
 

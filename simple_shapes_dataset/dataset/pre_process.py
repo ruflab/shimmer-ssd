@@ -2,6 +2,7 @@ from collections.abc import Sequence
 
 import torch
 import torch.nn.functional as F
+from tokenizers.implementations import ByteLevelBPETokenizer
 
 from simple_shapes_dataset.dataset.domain import Attribute, Text
 from simple_shapes_dataset.text import composer
@@ -139,6 +140,20 @@ class TextAndAttrs:
                 name: torch.Tensor([category])
                 for name, category in grammar_categories.items()
             }
+        )
+        return text
+
+
+class TokenizeCaptions:
+    def __init__(self, vocab: str, merges: str, pad_length: int):
+        self._pad_length = pad_length
+        self.tokenizer = ByteLevelBPETokenizer(vocab, merges)
+        self.tokenizer.enable_padding(pad_token="<pad>", length=self._pad_length)
+
+    def __call__(self, x: Text) -> dict[str, torch.Tensor]:
+        text: dict[str, torch.Tensor] = {"bert": x.bert}
+        text["tokens"] = torch.tensor(
+            self.tokenizer.encode(x.caption).ids, dtype=torch.long
         )
         return text
 

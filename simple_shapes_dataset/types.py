@@ -138,6 +138,10 @@ class AttributeModule(BaseModel):
 
 class TextModule(BaseModel):
     latent_filename: str = "latent"
+    vocab_path: str
+    merges_path: str
+    seq_length: int = 64
+    vocab_size: int = 822
 
     latent_dim: int = 24
     hidden_dim: int = 256
