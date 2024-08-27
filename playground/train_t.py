@@ -13,8 +13,11 @@ from simple_shapes_dataset.ckpt_migrations import SaveMigrations
 from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.domain import get_default_domains
+from simple_shapes_dataset.dataset.pre_process import TokenizeCaptions
 from simple_shapes_dataset.logging import LogTextCallback
-from simple_shapes_dataset.modules.domains.text import TextDomainModule
+from simple_shapes_dataset.modules.domains.text import (
+    LSTMTextDomainModule,
+)
 
 
 def main():
@@ -36,12 +39,22 @@ def main():
         domain_args={
             "t": {"latent_filename": config.domain_modules.text.latent_filename}
         },
+        additional_transforms={
+            "t": [
+                TokenizeCaptions(
+                    config.domain_modules.text.vocab_path,
+                    config.domain_modules.text.merges_path,
+                    config.domain_modules.text.seq_length,
+                )
+            ]
+        },
     )
 
-    text_domain_module = TextDomainModule(
+    text_domain_module = LSTMTextDomainModule(
         latent_dim=config.domain_modules.text.latent_dim,
         hidden_dim=config.domain_modules.text.hidden_dim,
-        beta=config.domain_modules.text.beta,
+        vocab_size=config.domain_modules.text.vocab_size,
+        seq_length=config.domain_modules.text.seq_length,
         optim_lr=config.training.optim.lr,
         optim_weight_decay=config.training.optim.weight_decay,
         scheduler_args={
@@ -59,6 +72,8 @@ def main():
             val_samples,
             log_key="images/val_t",
             mode="val",
+            vocab=config.domain_modules.text.vocab_path,
+            merges=config.domain_modules.text.merges_path,
             every_n_epochs=config.logging.log_val_medias_every_n_epochs,
             image_size=32,
             ncols=8,
@@ -67,6 +82,8 @@ def main():
             train_samples,
             log_key="images/train_t",
             mode="train",
+            vocab=config.domain_modules.text.vocab_path,
+            merges=config.domain_modules.text.merges_path,
             every_n_epochs=config.logging.log_train_medias_every_n_epochs,
             image_size=32,
             ncols=8,
