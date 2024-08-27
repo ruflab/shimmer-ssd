@@ -353,7 +353,7 @@ class LSTMTextDomainModule(DomainModule):
 
         token_dist, tokens = self.decode_one(seq)
         loss = F.cross_entropy(token_dist.transpose(1, 2), x["tokens"])
-        acc = (tokens == x["tokens"]).sum() / tokens.size(1)
+        acc = (tokens == x["tokens"]).sum() / (tokens.size(0) * tokens.size(1))
         self.log(f"{mode}/loss", loss)
         self.log(f"{mode}/acc", acc)
         return loss
