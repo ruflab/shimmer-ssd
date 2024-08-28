@@ -30,6 +30,7 @@ from simple_shapes_dataset.config import load_config
 from simple_shapes_dataset.dataset import SimpleShapesDataModule
 from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.dataset.pre_process import (
+    TokenizeCaptions,
     color_blind_visual_domain,
     nullify_attribute_rotation,
 )
@@ -62,6 +63,13 @@ def main():
     if config.domain_modules.visual.color_blind:
         logging.info("v domain will be color blind.")
         additional_transforms["v"] = [color_blind_visual_domain]
+    additional_transforms["t"] = [
+        TokenizeCaptions(
+            config.domain_modules.text.vocab_path,
+            config.domain_modules.text.merges_path,
+            config.domain_modules.text.seq_length,
+        )
+    ]
 
     data_module = SimpleShapesDataModule(
         config.dataset.path,
@@ -192,6 +200,8 @@ def main():
             mode="val",
             every_n_epochs=config.logging.log_val_medias_every_n_epochs,
             filter=config.logging.filter_images,
+            vocab=config.domain_modules.text.vocab_path,
+            merges=config.domain_modules.text.merges_path,
         ),
         LogGWImagesCallback(
             val_samples,
@@ -199,6 +209,8 @@ def main():
             mode="test",
             every_n_epochs=None,
             filter=config.logging.filter_images,
+            vocab=config.domain_modules.text.vocab_path,
+            merges=config.domain_modules.text.merges_path,
         ),
         LogGWImagesCallback(
             train_samples,
@@ -206,6 +218,8 @@ def main():
             mode="train",
             every_n_epochs=config.logging.log_train_medias_every_n_epochs,
             filter=config.logging.filter_images,
+            vocab=config.domain_modules.text.vocab_path,
+            merges=config.domain_modules.text.merges_path,
         ),
     ]
 
