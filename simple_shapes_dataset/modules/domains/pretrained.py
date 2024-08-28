@@ -14,6 +14,7 @@ from simple_shapes_dataset.modules.domains.attribute import (
     AttributeLegacyDomainModule,
     AttributeWithUnpairedDomainModule,
 )
+from simple_shapes_dataset.modules.domains.text import LSTMTextDomainModule
 from simple_shapes_dataset.modules.domains.visual import (
     VisualDomainModule,
     VisualLatentDomainModule,
@@ -63,6 +64,11 @@ def load_pretrained_module(
 
         case DomainModelVariantType.attr_legacy:
             module = AttributeLegacyDomainModule()
+
+        case DomainModelVariantType.t:
+            module = LSTMTextDomainModule.load_from_checkpoint(
+                domain_checkpoint, **domain.args
+            )
 
         case _:
             raise ConfigurationError(f"Unknown domain type {domain.domain_type.name}")

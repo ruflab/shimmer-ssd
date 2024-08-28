@@ -283,17 +283,13 @@ class LSTMTextDomainModule(DomainModule):
         self.projector = nn.Sequential(
             nn.Linear(self.in_dim, self.hidden_dim),
             nn.ReLU(),
-            nn.Linear(self.hidden_dim, self.hidden_dim),
-            nn.ReLU(),
             nn.Linear(self.hidden_dim, self.latent_dim),
-            nn.ReLU(),
-            nn.Linear(self.latent_dim, self.latent_dim),
             nn.Tanh(),
         )
 
         self.embeddings = nn.Embedding(vocab_size, self.latent_dim)
 
-        self.num_layers = 4
+        self.num_layers = 2
         self.decoder = nn.GRU(
             self.latent_dim,
             self.hidden_dim,
@@ -317,7 +313,7 @@ class LSTMTextDomainModule(DomainModule):
     def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
         return self.projector(x["bert"])
 
-    def decode(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def decode(self, z: torch.Tensor) -> dict[str, torch.Tensor]:
         context = z.unsqueeze(1)
         pad_tokens = self.embeddings(
             torch.zeros(
@@ -326,19 +322,17 @@ class LSTMTextDomainModule(DomainModule):
         )
         seq = torch.cat([context, pad_tokens], dim=1)
         for k in range(0, self.seq_length - 1):
-            _, tokens = self.decode_one(seq)
-            seq[:, k + 1] = self.embeddings(tokens[:, k])
+            out = self.decode_one(seq)
+            seq[:, k + 1] = self.embeddings(out["tokens"][:, k])
         return self.decode_one(seq)
 
-    def decode_one(self, z: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def decode_one(self, z: torch.Tensor) -> dict[str, torch.Tensor]:
         out, _ = self.decoder(z)
         tokens_dist = self.text_head(out)
         tokens = torch.argmax(tokens_dist, -1)
-        return tokens_dist, tokens
+        return {"token_dist": tokens_dist, "tokens": tokens}
 
-    def forward(
-        self, x: Mapping[str, torch.Tensor]
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: Mapping[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         return self.decode(self.encode(x))
 
     def generic_step(
@@ -351,9 +345,11 @@ class LSTMTextDomainModule(DomainModule):
         real_tokens = self.embeddings(x["tokens"][:, :-1])
         seq = torch.cat([context, real_tokens], dim=1)
 
-        token_dist, tokens = self.decode_one(seq)
-        loss = F.cross_entropy(token_dist.transpose(1, 2), x["tokens"])
-        acc = (tokens == x["tokens"]).sum() / (tokens.size(0) * tokens.size(1))
+        out = self.decode_one(seq)
+        loss = F.cross_entropy(out["token_dist"].transpose(1, 2), x["tokens"])
+        acc = (out["tokens"] == x["tokens"]).sum() / (
+            out["tokens"].size(0) * out["tokens"].size(1)
+        )
         self.log(f"{mode}/loss", loss)
         self.log(f"{mode}/acc", acc)
         return loss
