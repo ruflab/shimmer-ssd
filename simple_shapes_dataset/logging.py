@@ -26,6 +26,7 @@ from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
     tensor_to_attribute,
 )
+from simple_shapes_dataset.modules.domains.text import LSTMTextDomainModule
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
 
 matplotlib.use("Agg")
@@ -50,9 +51,18 @@ class LogSamplesCallback(ABC, pl.Callback):
             return samples.to(device)
         raise NotImplementedError
 
+    def setup(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str
+    ) -> None:
+        if stage != "fit":
+            return
+        device = trainer.strategy.root_device
+        self.reference_samples = self.to(self.reference_samples, device)
+        for logger in trainer.loggers:
+            self.log_samples(logger, self.reference_samples, "reference")
+
     def on_callback(
         self,
-        current_epoch: int,
         loggers: Sequence[Logger],
         pl_module: pl.LightningModule,
     ) -> None:
@@ -61,9 +71,6 @@ class LogSamplesCallback(ABC, pl.Callback):
             return
 
         samples = self.to(self.reference_samples, pl_module.device)
-        if current_epoch == 0:
-            for logger in loggers:
-                self.log_samples(logger, samples, "reference")
 
         with torch.no_grad():
             pl_module.eval()
@@ -87,13 +94,13 @@ class LogSamplesCallback(ABC, pl.Callback):
             return
 
         LOGGER.debug("[LOGGER] on_train_epoch_end called")
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def on_fit_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         if self.mode == "test":
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def on_validation_epoch_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
@@ -107,7 +114,7 @@ class LogSamplesCallback(ABC, pl.Callback):
         ):
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def on_test_epoch_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
@@ -115,7 +122,7 @@ class LogSamplesCallback(ABC, pl.Callback):
         if self.mode != "test":
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     @abstractmethod
     def log_samples(self, logger: Logger, samples: Any, mode: str) -> None: ...
@@ -272,20 +279,29 @@ class LogTextCallback(LogSamplesCallback):
     ) -> dict[str, torch.Tensor]:
         return {x: samples[x].to(device) for x in samples}
 
+    def setup(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str
+    ) -> None:
+        if stage != "fit":
+            return
+        assert isinstance(pl_module, LSTMTextDomainModule)
+        device = trainer.strategy.root_device
+        self.reference_samples = self.to(self.reference_samples, device)
+        for logger in trainer.loggers:
+            self.log_samples(logger, self.reference_samples, "reference")
+
     def on_callback(
         self,
-        current_epoch: int,
         loggers: Sequence[Logger],
         pl_module: pl.LightningModule,
     ) -> None:
+        assert isinstance(pl_module, LSTMTextDomainModule)
+
+        samples = self.to(self.reference_samples, pl_module.device)
+
         if not len(loggers):
             LOGGER.debug("[LOGGER] No logger found.")
             return
-
-        samples = self.to(self.reference_samples, pl_module.device)
-        if current_epoch == 0:
-            for logger in loggers:
-                self.log_samples(logger, samples["tokens"], "reference")
 
         with torch.no_grad():
             pl_module.eval()
@@ -293,16 +309,18 @@ class LogTextCallback(LogSamplesCallback):
             pl_module.train()
 
         for logger in loggers:
-            self.log_samples(logger, generated_samples[1], "prediction")
+            self.log_samples(logger, generated_samples, "prediction")
 
-    def log_samples(self, logger: Logger, samples: torch.Tensor, mode: str) -> None:
+    def log_samples(
+        self, logger: Logger, samples: Mapping[str, torch.Tensor], mode: str
+    ) -> None:
         if not isinstance(logger, WandbLogger):
             LOGGER.warning("Only logging to wandb is supported")
             return
 
         assert self.tokenizer is not None
         text = self.tokenizer.decode_batch(
-            samples.detach().cpu().tolist(), skip_special_tokens=True
+            samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
         )
         text = [[t.replace("<pad>", "")] for t in text]
         logger.log_text(key=f"{self.log_key}_{mode}_str", columns=["text"], data=text)
@@ -340,6 +358,8 @@ class LogGWImagesCallback(pl.Callback):
         image_size: int = 32,
         ncols: int = 8,
         filter: Sequence[str] | None = None,
+        vocab: str | None = None,
+        merges: str | None = None,
     ) -> None:
         super().__init__()
         self.mode = mode
@@ -349,6 +369,9 @@ class LogGWImagesCallback(pl.Callback):
         self.image_size = image_size
         self.ncols = ncols
         self.filter = filter
+        self.tokenizer = None
+        if vocab is not None and merges is not None:
+            self.tokenizer = ByteLevelBPETokenizer(vocab, merges)
 
     def to(
         self,
@@ -535,6 +558,8 @@ class LogGWImagesCallback(pl.Callback):
                 self.log_visual_samples(logger, module.decode_images(samples), mode)
             case "attr":
                 self.log_attribute_samples(logger, samples, mode)
+            case "t":
+                self.log_text_samples(logger, samples, mode)
 
     def log_visual_samples(
         self,
@@ -557,3 +582,16 @@ class LogGWImagesCallback(pl.Callback):
             ncols=self.ncols,
         )
         logger.log_image(key=f"{self.log_key}/{mode}", images=[image])
+
+    def log_text_samples(
+        self,
+        logger: WandbLogger,
+        samples: Any,
+        mode: str,
+    ) -> None:
+        assert self.tokenizer is not None
+        text = self.tokenizer.decode_batch(
+            samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
+        )
+        text = [[t.replace("<pad>", "")] for t in text]
+        logger.log_text(key=f"{self.log_key}_{mode}_str", columns=["text"], data=text)
