@@ -379,13 +379,23 @@ class LogGWImagesCallback(pl.Callback):
             frozenset[str], Mapping[str, torch.Tensor | Sequence[torch.Tensor]]
         ],
         device: torch.device,
-    ) -> dict[frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]]:
-        out: dict[frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]] = {}
+    ) -> dict[
+        frozenset[str],
+        dict[str, torch.Tensor | Sequence[torch.Tensor] | dict[Any, torch.Tensor]],
+    ]:
+        out: dict[
+            frozenset[str],
+            dict[str, torch.Tensor | Sequence[torch.Tensor] | dict[Any, torch.Tensor]],
+        ] = {}
         for domain_names, domains in samples.items():
-            latents: dict[str, torch.Tensor | Sequence[torch.Tensor]] = {}
+            latents: dict[
+                str, torch.Tensor | Sequence[torch.Tensor] | dict[str, torch.Tensor]
+            ] = {}
             for domain_name, domain in domains.items():
                 if isinstance(domain, torch.Tensor):
                     latents[domain_name] = domain.to(device)
+                elif isinstance(domain, dict):
+                    latents[domain_name] = {k: x.to(device) for k, x in domain.items()}
                 else:
                     latents[domain_name] = [x.to(device) for x in domain]
             out[domain_names] = latents
@@ -594,4 +604,4 @@ class LogGWImagesCallback(pl.Callback):
             samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
         )
         text = [[t.replace("<pad>", "")] for t in text]
-        logger.log_text(key=f"{self.log_key}_{mode}_str", columns=["text"], data=text)
+        logger.log_text(key=f"{self.log_key}/{mode}", columns=["text"], data=text)
