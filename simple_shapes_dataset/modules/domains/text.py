@@ -259,7 +259,7 @@ class LSTMEncoder(nn.Module):
         return out
 
 
-class LSTMTextDomainModule(DomainModule):
+class GRUTextDomainModule(DomainModule):
     in_dim = 768
 
     def __init__(
