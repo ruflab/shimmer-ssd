@@ -18,7 +18,7 @@ from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.dataset.pre_process import TokenizeCaptions
 from simple_shapes_dataset.logging import LogTextCallback
 from simple_shapes_dataset.modules.domains.text import (
-    LSTMTextDomainModule,
+    GRUTextDomainModule,
 )
 
 
@@ -52,7 +52,7 @@ def main():
         },
     )
 
-    text_domain_module = LSTMTextDomainModule(
+    text_domain_module = GRUTextDomainModule(
         latent_dim=config.domain_modules.text.latent_dim,
         hidden_dim=config.domain_modules.text.hidden_dim,
         vocab_size=config.domain_modules.text.vocab_size,

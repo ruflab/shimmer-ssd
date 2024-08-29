@@ -14,7 +14,7 @@ from simple_shapes_dataset.modules.domains.attribute import (
     AttributeLegacyDomainModule,
     AttributeWithUnpairedDomainModule,
 )
-from simple_shapes_dataset.modules.domains.text import LSTMTextDomainModule
+from simple_shapes_dataset.modules.domains.text import GRUTextDomainModule
 from simple_shapes_dataset.modules.domains.visual import (
     VisualDomainModule,
     VisualLatentDomainModule,
@@ -66,7 +66,7 @@ def load_pretrained_module(
             module = AttributeLegacyDomainModule()
 
         case DomainModelVariantType.t:
-            module = LSTMTextDomainModule.load_from_checkpoint(
+            module = GRUTextDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 

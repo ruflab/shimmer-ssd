@@ -26,7 +26,7 @@ from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
     tensor_to_attribute,
 )
-from simple_shapes_dataset.modules.domains.text import LSTMTextDomainModule
+from simple_shapes_dataset.modules.domains.text import GRUTextDomainModule
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
 
 matplotlib.use("Agg")
@@ -284,7 +284,7 @@ class LogTextCallback(LogSamplesCallback):
     ) -> None:
         if stage != "fit":
             return
-        assert isinstance(pl_module, LSTMTextDomainModule)
+        assert isinstance(pl_module, GRUTextDomainModule)
         device = trainer.strategy.root_device
         self.reference_samples = self.to(self.reference_samples, device)
         for logger in trainer.loggers:
@@ -295,7 +295,7 @@ class LogTextCallback(LogSamplesCallback):
         loggers: Sequence[Logger],
         pl_module: pl.LightningModule,
     ) -> None:
-        assert isinstance(pl_module, LSTMTextDomainModule)
+        assert isinstance(pl_module, GRUTextDomainModule)
 
         samples = self.to(self.reference_samples, pl_module.device)
 
