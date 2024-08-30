@@ -6,8 +6,8 @@ from typing import Any, Literal
 
 from cfg_tools import ParsedModel
 from pydantic import BaseModel, field_validator
-from shimmer import DomainDesc
-from shimmer import __version__ as shimmer_version
+from shimmer.data.types import DomainDesc
+from shimmer.version import __version__ as shimmer_version
 
 
 @dataclass
