@@ -2821,8 +2821,8 @@ torch = "^2.0.1"
 [package.source]
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
-reference = "main"
-resolved_reference = "854ea4b3342d09d6b758493a229d3086284ebfce"
+reference = "choose_scheduler"
+resolved_reference = "77c6d9df53b7b591f71600943c733c14172e1695"
 
 [[package]]
 name = "six"
@@ -3633,4 +3633,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "3fde3508812c90f55bfb2a26abc0ffbca3db90f78425eb81d7e955087603bfec"
+content-hash = "d57c62d2dd5445bcfac5700c26d51c0bc9c1403a7cabeaad94b475707d93ea04"
