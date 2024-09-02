@@ -21,7 +21,7 @@ torchdata = ">=0.6.1"
 pillow = "^10.3.0"
 numpy = "^1.26"
 torch = "^2.0.1"
-shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "main"}
+shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "choose_scheduler"}
 wandb = "^0.17.7"
 lightning = "^2.4.0"
 pydantic = "^2.6.0"
