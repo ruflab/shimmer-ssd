@@ -96,7 +96,7 @@ class LogSamplesCallback(ABC, pl.Callback):
         LOGGER.debug("[LOGGER] on_train_epoch_end called")
         return self.on_callback(trainer.loggers, pl_module)
 
-    def on_fit_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+    def on_train_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         if self.mode == "test":
             return
 
@@ -530,7 +530,7 @@ class LogGWImagesCallback(pl.Callback):
 
         return self.on_callback(trainer.loggers, pl_module)
 
-    def on_fit_end(
+    def on_train_end(
         self,
         trainer: pl.Trainer,
         pl_module: pl.LightningModule,
