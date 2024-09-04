@@ -240,7 +240,7 @@ class TextDomainModule(DomainModule):
         }
 
 
-class LSTMEncoder(nn.Module):
+class GRUEncoder(nn.Module):
     def __init__(
         self,
         in_dim: int,
