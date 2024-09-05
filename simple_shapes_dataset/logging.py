@@ -31,6 +31,7 @@ from simple_shapes_dataset.dataset.pre_process import (
     tensor_to_attribute,
 )
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
+from simple_shapes_dataset.modules.domains.text import TextDomainModule
 
 matplotlib.use("Agg")
 
@@ -329,6 +330,8 @@ class LogVisualCallback(LogSamplesCallback):
         logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
 
 
+
+
 class LogGWImagesCallback(pl.Callback):
     def __init__(
         self,
@@ -358,7 +361,9 @@ class LogGWImagesCallback(pl.Callback):
         for domain_names, domains in samples.items():
             latents: dict[str, torch.Tensor | Sequence[torch.Tensor]] = {}
             for domain_name, domain in domains.items():
-                if isinstance(domain, torch.Tensor):
+                if domain_name=="t":
+                    latents[domain_name] = {"bert": domain["bert"].to(device)}
+                elif isinstance(domain, torch.Tensor):
                     latents[domain_name] = domain.to(device)
                 else:
                     latents[domain_name] = [x.to(device) for x in domain]
@@ -375,6 +380,7 @@ class LogGWImagesCallback(pl.Callback):
             return
 
         samples = self.to(self.reference_samples, pl_module.device)
+
         if current_epoch == 0:
             for domain_names, domains in samples.items():
                 for domain_name, domain_tensor in domains.items():

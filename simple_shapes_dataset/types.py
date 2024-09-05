@@ -29,6 +29,7 @@ class DomainModelVariantType(Enum):
     attr_legacy = (DomainType.attr, "legacy")
     attr_unpaired = (DomainType.attr, "unpaired")
     v_latents = (DomainType.v_latents, "default")
+    t = (DomainType.t, "default")
     v_latents_unpaired = (DomainType.v_latents, "unpaired")
 
     def __init__(self, kind: DomainType, model_variant: str) -> None:

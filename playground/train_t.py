@@ -16,6 +16,20 @@ from simple_shapes_dataset.dataset.domain import get_default_domains
 from simple_shapes_dataset.logging import LogTextCallback
 from simple_shapes_dataset.modules.domains.text import TextDomainModule
 
+import psutil
+import time
+
+def log_resource_usage():
+    process = psutil.Process()
+    while True:
+        print(f"Memory: {process.memory_info().rss / 1e6} MB; Open files: {len(process.open_files())}")
+        time.sleep(10)
+
+# Run this function in a separate thread or as a background process
+import threading
+resource_thread = threading.Thread(target=log_resource_usage)
+resource_thread.start()
+
 
 def main():
     config = load_config(
@@ -23,6 +37,7 @@ def main():
         load_files=["train_t.yaml"],
         debug_mode=DEBUG_MODE,
     )
+
 
     pl.seed_everything(config.seed, workers=True)
 
@@ -40,7 +55,7 @@ def main():
 
     text_domain_module = TextDomainModule(
         latent_dim=config.domain_modules.text.latent_dim,
-        hidden_dim=config.domain_modules.text.hidden_dim,
+        hidden_dim=512,#config.domain_modules.text.hidden_dim,
         beta=config.domain_modules.text.beta,
         optim_lr=config.training.optim.lr,
         optim_weight_decay=config.training.optim.weight_decay,
@@ -49,6 +64,8 @@ def main():
             "total_steps": config.training.max_steps,
         },
     )
+
+    print("text_domain_module : ", text_domain_module)
 
     val_samples = data_module.get_samples("val", 32)[frozenset(["t"])]["t"]
     train_samples = data_module.get_samples("train", 32)[frozenset(["t"])]["t"]
@@ -78,7 +95,7 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        run_name = f"t_vae_z={config.domain_modules.text.latent_dim}"
+        run_name = f"t_vae_z={config.domain_modules.text.latent_dim}_bigecdec"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
             project=config.wandb.project,

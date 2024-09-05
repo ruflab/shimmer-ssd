@@ -1,8 +1,11 @@
-from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, Dict, Optional
 
+import numpy as np
 import torch
+from torch import nn
 import torch.nn.functional as F
+from torch.optim.lr_scheduler import OneCycleLR
+
 from shimmer import LossOutput
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.global_workspace import SchedulerArgs
@@ -13,71 +16,80 @@ from shimmer.modules.vae import (
     gaussian_nll,
     kl_divergence_loss,
 )
-from torch import nn
-from torch.optim.lr_scheduler import OneCycleLR
-
 from simple_shapes_dataset.text import composer
 from simple_shapes_dataset.text.utils import inspect_all_choices
+from collections.abc import Mapping
 
 
-class Encoder(VAEEncoder):
+
+def symlog(x, alpha=1):
+    return (
+        torch.sign(x) * torch.log(1 + alpha * torch.abs(x)) / np.log(1 + alpha)
+    )
+
+
+def symexp(x, alpha=1):
+    return torch.sign(x) * (torch.exp(alpha * torch.abs(x)) - 1) / alpha
+
+
+class SymLog(nn.Module):
+    def __init__(self, alpha=1):
+        super(SymLog, self).__init__()
+        self.alpha = alpha
+
+    def forward(self, x):
+        return symlog(x, self.alpha)
+
+    def inverse(self, x):
+        return symexp(x, self.alpha)
+
+
+class Bimgw_vae_text(nn.Module):
     def __init__(
         self,
-        in_dim: int,
-        hidden_dim: int,
-        out_dim: int,
+        z_size: int,
+        hidden_size: int,
+        n_classes: int,
     ):
-        super().__init__()
+        super(Bimgw_vae_text, self).__init__()
 
-        self.in_dim = in_dim
-        self.hidden_dim = hidden_dim
-        self.out_dim = out_dim
+        self.n_classes = n_classes
+        self.bert_size = 768
+        self.z_size = z_size
+        self.hidden_size = hidden_size
+
+        self.transformer = None
+        self.tokenizer = None
 
         self.encoder = nn.Sequential(
-            nn.Linear(self.in_dim, hidden_dim),
+            nn.Linear(self.bert_size, self.bert_size),
             nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(self.bert_size, self.bert_size // 2),
             nn.ReLU(),
-            nn.Linear(hidden_dim, out_dim),
-            nn.ReLU(),
+            nn.Linear(self.bert_size // 2, self.z_size * 2),
+            SymLog(),
         )
-
-        self.q_mean = nn.Linear(self.out_dim, self.out_dim)
-        self.q_logvar = nn.Linear(self.out_dim, self.out_dim)
-
-    def forward(self, x: Sequence[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
-        out = torch.cat(list(x), dim=-1)
-        out = self.encoder(out)
-        return self.q_mean(out), self.q_logvar(out)
-
-
-class Decoder(VAEDecoder):
-    def __init__(
-        self,
-        in_dim: int,
-        hidden_dim: int,
-        out_dim: int,
-    ):
-        super().__init__()
-
-        self.in_dim = in_dim
-        self.hidden_dim = hidden_dim
-        self.out_dim = out_dim
 
         self.decoder = nn.Sequential(
-            nn.Linear(self.in_dim, self.hidden_dim),
+            nn.Linear(self.z_size, self.bert_size // 2),
             nn.ReLU(),
-            nn.Linear(self.hidden_dim, self.hidden_dim),
+            nn.Linear(self.bert_size // 2, self.bert_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_dim, self.out_dim),
-            nn.Tanh(),
+            nn.Linear(self.bert_size, self.bert_size),
         )
 
-    def forward(self, z: torch.Tensor) -> list[torch.Tensor]:
-        return [self.decoder(z)]
+
+    def encode(self, text_item: Dict[str, Any]) -> Dict[str, Any]:
+        z, _ = self.encode_stats(text_item["bert"])
+        return {"z": z[:,:self.z_size]}
 
 
-class TextDomainModule(DomainModule):
+    def encode_stats(self, text_latent):
+        z = self.encoder(text_latent)
+        return z[:, : self.z_size], z[:, self.z_size :]
+
+# Define the TextDomainModule class
+class BimgTextDomainModule(DomainModule):  # Inherit from DomainModule
     in_dim = 768
 
     def __init__(
@@ -87,16 +99,29 @@ class TextDomainModule(DomainModule):
         beta: float = 1,
         optim_lr: float = 1e-3,
         optim_weight_decay: float = 0,
-        scheduler_args: SchedulerArgs | None = None,
+        scheduler_args: Optional[Dict[str, Any]] = None,
+        checkpoint_path: str = '../checkpoints/vae_t.ckpt',
+        z_size: int = 12,
+        n_classes: int = 3
     ):
-        super().__init__(latent_dim)
-        self.save_hyperparameters()
+        super(BimgTextDomainModule, self).__init__(latent_dim)
 
         self.hidden_dim = hidden_dim
 
-        vae_encoder = Encoder(self.in_dim, self.hidden_dim, self.latent_dim)
-        vae_decoder = Decoder(self.latent_dim, self.hidden_dim, self.in_dim)
-        self.vae = VAE(vae_encoder, vae_decoder, beta)
+        # Instantiate the Bimgw_vae_text class
+        vae = Bimgw_vae_text(z_size=z_size, hidden_size=hidden_dim, n_classes=n_classes)
+
+        # Load the checkpoint
+        checkpoint = torch.load(checkpoint_path)
+
+        # Filter the state dictionary to only include keys from the VAE's encoder and decoder
+        vae_state_dict = {k: v for k, v in checkpoint['state_dict'].items() if ('encoder' in k or 'decoder' in k) and not 'attribute' in k}
+
+        # Load the filtered state dictionary into the VAE model
+        vae.load_state_dict(vae_state_dict, strict=True)
+
+        # Use the loaded VAE's encoder and decoder
+        self.vae = vae
 
         self.attribute_cls = nn.Sequential(
             nn.Linear(self.latent_dim, self.hidden_dim),
@@ -133,20 +158,20 @@ class TextDomainModule(DomainModule):
         )
         self.scheduler_args.update(scheduler_args or {})
 
+
     def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
         return LossOutput(F.mse_loss(pred, target, reduction="mean"))
 
+    # Update the encode function
     def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
-        return self.vae.encode((x["bert"],))
+        return self.vae.encode({"bert": x["bert"]})["z"]
 
+    # Update the decode function
     def decode(self, z: torch.Tensor) -> dict[str, torch.Tensor]:
-        text: dict[str, torch.Tensor] = {"bert": self.vae.decode(z)[0]}
-        attr_pred_cat, attr_pred_attr = self.predict_attr(z)
-        text["cls"] = attr_pred_cat
-        text["attr"] = attr_pred_attr
+        text: dict[str, torch.Tensor] = {"bert": self.vae.decoder(z)}
         text["unpaired"] = torch.zeros_like(z[:, -1])
-        text.update(self.predict_grammar(z))
         return text
+
 
     def predict_attr(self, mean: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         attr_pred = self.attribute_cls(mean)

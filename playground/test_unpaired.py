@@ -2,6 +2,8 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
+import wandb
+
 import torch
 from lightning.pytorch import Callback, Trainer, seed_everything
 from lightning.pytorch.callbacks import (
@@ -37,85 +39,17 @@ from simple_shapes_dataset.logging import LogGWImagesCallback
 from simple_shapes_dataset.modules.contrastive_loss import VSEPPContrastiveLoss
 from simple_shapes_dataset.modules.domains import load_pretrained_domains
 
+
 from playground.text_bimgw import BimgTextDomainModule
 from shimmer import DomainModule, GWDecoder, GWEncoder, GWEncoderLinear
 
 
-import psutil
-import time
-import threading
-import subprocess
+import copy
 
-def get_gpu_usage():
-    try:
-        result = subprocess.run(
-            ['nvidia-smi', '--query-gpu=utilization.gpu,memory.used,memory.total', '--format=csv,nounits,noheader'],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
-        if result.returncode == 0:
-            usage = result.stdout.strip().split('\n')
-            gpus = []
-            for gpu in usage:
-                utilization, mem_used, mem_total = map(int, gpu.split(', '))
-                gpus.append({
-                    'utilization': utilization,
-                    'mem_used': mem_used,
-                    'mem_total': mem_total,
-                })
-            return gpus
-        else:
-            return None
-    except Exception as e:
-        print(f"Failed to get GPU usage: {e}")
-        return None
-
-def log_resource_usage():
-    process = psutil.Process()
-    while True:
-        # CPU usage
-        cpu_usage = psutil.cpu_percent(interval=1)
-        memory_info = process.memory_info().rss / 1e6
-        open_files = len(process.open_files())
-        
-        # Virtual memory info
-        virtual_memory = psutil.virtual_memory()
-        total_memory = virtual_memory.total / 1e6  # Convert to MB
-        available_memory = virtual_memory.available / 1e6  # Convert to MB
-        used_memory = virtual_memory.used / 1e6  # Convert to MB
-        
-        # GPU usage
-        gpu_usage = get_gpu_usage()
-
-        # Log the usage
-        log_message = (
-            f"CPU Memory: {memory_info} MB; Open files: {open_files}; CPU Usage: {cpu_usage}%\n"
-            f"Total Memory: {total_memory} MB; Used Memory: {used_memory} MB; Available Memory: {available_memory} MB"
-        )
-        if gpu_usage:
-            for i, gpu in enumerate(gpu_usage):
-                log_message += (
-                    f"; GPU {i} - Utilization: {gpu['utilization']}%, "
-                    f"Memory: {gpu['mem_used']}/{gpu['mem_total']} MB"
-                )
-        
-        print(log_message)
-        time.sleep(5)
-
-# Start the resource monitoring thread
-#resource_thread = threading.Thread(target=log_resource_usage)
-#resource_thread.start()
-
-
-
-def main():
-    print("got in main")
-    config = load_config(
-        PROJECT_DIR / "config",
-        load_files=["train_gw.yaml"],
-        debug_mode=DEBUG_MODE,
-    )
-
+def run_training_with_config(config):
+    
     seed_everything(config.seed, workers=True)
+
 
     domain_proportion = {
         frozenset(item.domains): item.proportion
@@ -124,9 +58,6 @@ def main():
     domain_classes = get_default_domains(
         {domain.domain_type.kind.value for domain in config.global_workspace.domains}
     )
-
-    print("got here", config.global_workspace.domains)
-    exit()
 
     additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
     if config.domain_modules.attribute.nullify_rotation:
@@ -149,10 +80,7 @@ def main():
         additional_transforms=additional_transforms,
     )
 
-
     print("got datamodule")
-
-    print("domains : ", config.global_workspace.domains)# Filter out the text domain and handle it separately
 
     filtered_domains = [
         domain for domain in config.global_workspace.domains
@@ -258,7 +186,7 @@ def main():
             learn_logit_scale=config.global_workspace.learn_logit_scale,
             contrastive_loss=contrastive_fn,
         )
-    elif config.global_workspace.use_fusion_model:
+    else:
         gw_type = "gw_fusion"
         loss_coefs_fusion: BroadcastLossCoefs = {
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
@@ -283,39 +211,10 @@ def main():
             learn_logit_scale=config.global_workspace.learn_logit_scale,
             contrastive_loss=contrastive_fn,
         )
-    else:
-        gw_type = "gw"
-        loss_coefs: LossCoefs = {
-            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-            "cycles": config.global_workspace.loss_coefficients.cycles,
-            "translations": config.global_workspace.loss_coefficients.translations,
-            "contrastives": config.global_workspace.loss_coefficients.contrastives,
-        }
-
-        module = GlobalWorkspace2Domains(
-            domain_modules,
-            gw_encoders,
-            gw_decoders,
-            config.global_workspace.latent_dim,
-            loss_coefs,
-            config.training.optim.lr,
-            config.training.optim.weight_decay,
-            scheduler_args=SchedulerArgs(
-                max_lr=config.training.optim.max_lr,
-                total_steps=config.training.max_steps,
-            ),
-            learn_logit_scale=config.global_workspace.learn_logit_scale,
-            contrastive_loss=contrastive_fn,
-        )
-
-    
-    print("got before samples")
 
     train_samples = data_module.get_samples("train", 32)
     val_samples = data_module.get_samples("val", 32)
     test_samples = data_module.get_samples("test", 32)
-
-    print("got samples")
 
 
     for domains in val_samples:
@@ -346,78 +245,43 @@ def main():
         ),
     ]
 
-    print("got before if")
 
-    if config.ood_seed is not None:
-        train_samples_ood = data_module.get_samples("train", 32, ood=True)
-        val_samples_ood = data_module.get_samples("val", 32, ood=True)
-        test_samples_ood = data_module.get_samples("test", 32, ood=True)
-
-        for domains in val_samples_ood:
-            for domain in domains:
-                val_samples_ood[frozenset([domain])] = {
-                    domain: val_samples_ood[domains][domain]
-                }
-                test_samples_ood[frozenset([domain])] = {
-                    domain: test_samples_ood[domains][domain]
-                }
-            break
-
-        callbacks.extend(
-            [
-                LogGWImagesCallback(
-                    val_samples_ood,
-                    log_key="images/val/ood",
-                    mode="val",
-                    every_n_epochs=config.logging.log_val_medias_every_n_epochs,
-                ),
-                LogGWImagesCallback(
-                    val_samples_ood,
-                    log_key="images/test/ood",
-                    mode="test",
-                    every_n_epochs=None,
-                ),
-                LogGWImagesCallback(
-                    train_samples_ood,
-                    log_key="images/train/ood",
-                    mode="train",
-                    every_n_epochs=config.logging.log_train_medias_every_n_epochs,
-                ),
-            ]
-        )
 
     if config.training.enable_progress_bar:
         callbacks.append(RichProgressBar())
 
     wandb_logger = None
     if config.wandb.enabled:
-        run_name = f"{gw_type}_z={config.global_workspace.latent_dim}"
+        run_name = (
+            f"3wayexpe_fullsuper_prop_{config.global_workspace.domain_proportions[5].proportion}"
+        )
+        print("\n\n\n\nrun name : ",run_name,"\n\n\n")
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
             project=config.wandb.project,
             entity=config.wandb.entity,
             tags=["train_gw"],
             name=run_name,
+            reinit=True
         )
-        wandb_logger.experiment.config.update(config.model_dump())
+        wandb_logger.experiment.config.update(config.model_dump(), allow_val_change=True)
 
         checkpoint_dir = (
-            config.default_root_dir / f"{wandb_logger.name}-{wandb_logger.version}"
+            config.default_root_dir / f"{wandb_logger.name}_{run_name}"
         )
-        callbacks.extend(
+        """callbacks.extend(
             [
                 SaveMigrations(),
                 ModelCheckpoint(
                     dirpath=checkpoint_dir,
                     filename="{epoch}",
-                    monitor="val/loss",
+                    monitor="train/loss",
                     mode="min",
                     save_top_k=1,
                 ),
             ]
-        )
+        )"""
 
-    print("got before trainer")
     set_float32_matmul_precision(config.training.float32_matmul_precision)
 
     trainer = Trainer(
@@ -432,12 +296,57 @@ def main():
         devices=config.training.devices,
     )
 
-    print("got train")
-
     trainer.fit(module, data_module)
     trainer.validate(module, data_module, "best")
     trainer.test(module, data_module, "best")
 
+    wandb.finish()
+    
+def main():
+    base_config = load_config(
+        "../config",
+        load_files=["local.yaml"],
+        debug_mode=DEBUG_MODE,
+    )
+
+    # Define the combinations of loss coefficients
+    loss_coeffs_variations = [
+        {'contrastives': 0.05, 'fused': .0, 'demi_cycles': .0, 'cycles': .0, 'translations': 1.0},
+        {'contrastives': 0.05, 'fused': 1.0, 'demi_cycles': .0, 'cycles': .0, 'translations': 1.0},
+    ]
+
+
+    # Domain proportions to test
+    domain_proportions_variations = [0.00005, 0.0001, 0.0005, 0.002, .005, 0.01, 1.0]
+
+    # Outer loop over loss coefficients
+    for loss_coeffs in loss_coeffs_variations:
+        config = copy.deepcopy(base_config)  # Create a deep copy for each set of coefficients
+
+        # Update loss coefficients directly
+        config.global_workspace.loss_coefficients.demi_cycles = loss_coeffs['demi_cycles']
+        config.global_workspace.loss_coefficients.cycles = loss_coeffs['cycles']
+        config.global_workspace.loss_coefficients.translations = loss_coeffs['translations']
+        config.global_workspace.loss_coefficients.contrastives = loss_coeffs['contrastives']
+        config.global_workspace.loss_coefficients.fused = loss_coeffs['fused']
+        
+        # Inner loop over domain proportions
+        for proportion in domain_proportions_variations:
+            # Update domain proportions in config
+            group_cases = [
+                {"v", "attr"},
+                {"t", "attr"},
+                {"t", "v"},
+                {"t", "v", "attr"}
+            ]
+
+            # Loop through each item and set the proportion for the specified group cases
+            for item in config.global_workspace.domain_proportions:
+                if set(item.domains) in group_cases:
+                    item.proportion = proportion
+
+
+            run_training_with_config(config)
 
 if __name__ == "__main__":
     main()

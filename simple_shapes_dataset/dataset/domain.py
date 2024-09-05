@@ -242,7 +242,7 @@ class SimpleShapesText(DataDomain):
         self.split = split
 
         self.additional_args = additional_args or {}
-        self.latent_filename = self.additional_args.get("latent_filename", "latent")
+        self.latent_filename = self.additional_args.get("latent_filename", "bert-base-uncased")
 
         self.raw_text = SimpleShapesRawText(self.dataset_path, self.split)
         self.attributes = SimpleShapesAttributes(self.dataset_path, self.split)

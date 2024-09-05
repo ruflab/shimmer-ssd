@@ -7,13 +7,13 @@ seed: 0
 
 training:
     batch_size: 2056
-    num_workers: 30
+    num_workers: 5
     optim:
         lr: 5e-3
         max_lr: 5e-3
         weight_decay: 1e-5
 
-    max_steps: 200000
+    max_steps: 50000
 
 logging:
     log_val_medias_every_n_epochs: 10
@@ -31,8 +31,21 @@ global_workspace:
     domain_proportions: 
         -   domains: ["v"]
             proportion: 1.0
+        -   domains: ["t"]
+            proportion: 1.0
         -   domains: ["attr"]
             proportion: 1.0
         -   domains: ["v", "attr"]
             proportion: 1.0
-
+        -   domains: ["t", "attr"]
+            proportion: 1.0
+        -   domains: ["v", "t"]
+            proportion: 1.0
+        -   domains: ["v", "t", "attr"]
+            proportion: 1.0
+        -   domains: ["t"]
+            proportion: 1.0
+        -   domains: ["attr"]
+            proportion: 1.0
+        -   domains: ["t", "attr"]
+            proportion: 1.0

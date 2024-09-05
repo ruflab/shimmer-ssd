@@ -19,6 +19,8 @@ from simple_shapes_dataset.modules.domains.visual import (
     VisualLatentDomainModule,
     VisualLatentDomainWithUnpairedModule,
 )
+from simple_shapes_dataset.modules.domains.text import TextDomainModule
+
 from simple_shapes_dataset.types import DomainModelVariantType, LoadedDomainConfig
 
 
@@ -31,6 +33,12 @@ def load_pretrained_module(
         case DomainModelVariantType.v:
             migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
             module = VisualDomainModule.load_from_checkpoint(
+                domain_checkpoint, **domain.args
+            )
+
+        case DomainModelVariantType.t:
+            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
+            module = TextDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 
