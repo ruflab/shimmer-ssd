@@ -14,6 +14,7 @@ from shimmer.modules.vae import (
     kl_divergence_loss,
 )
 from torch import nn
+from torch.optim.adamw import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
 from simple_shapes_dataset.text import composer
@@ -372,6 +373,124 @@ class GRUTextDomainModule(DomainModule):
         self,
     ) -> dict[str, Any]:
         optimizer = torch.optim.AdamW(
+            self.parameters(),
+            lr=self.optim_lr,
+            weight_decay=self.optim_weight_decay,
+        )
+
+        return {"optimizer": optimizer}
+
+
+class Text2Attr(DomainModule):
+    def __init__(
+        self,
+        latent_dim: int,
+        hidden_dim: int,
+        text_model: GRUTextDomainModule,
+        optim_lr: float = 1e-3,
+        optim_weight_decay: float = 0,
+        scheduler_args: SchedulerArgs | None = None,
+    ) -> None:
+        super().__init__(latent_dim)
+        self.save_hyperparameters(ignore=["text_model"])
+
+        self.text_model = text_model
+
+        self.pred_attr = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 8),
+            nn.Tanh(),
+        )
+        self.pred_cat = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 3),
+            nn.Softmax(dim=1),
+        )
+
+        self.optim_lr = optim_lr
+        self.optim_weight_decay = optim_weight_decay
+
+        self.scheduler_args = SchedulerArgs(
+            max_lr=optim_lr,
+            total_steps=1,
+        )
+        self.scheduler_args.update(scheduler_args or {})
+
+    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+        pred_attr = self.pred_attr(pred)
+        pred_cat = self.pred_cat(pred)
+        target_attr = self.target_attr(target)
+        target_cat = self.target_cat(target)
+        loss_attr = F.mse_loss(pred_attr, target_attr)
+        loss_cat = F.cross_entropy(pred_cat, target_cat.argmax(dim=1))
+        loss = loss_attr + loss_cat
+        return LossOutput(loss, {"attr": loss_attr, "cat": loss_cat})
+
+    def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
+        return self.text_model.encode(x)
+
+    def decode(self, z: torch.Tensor) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        out.update(self.text_model.decode(z))
+        pred_attr = self.pred_attr(z)
+        pred_cat = self.pred_cat(z)
+        out.update({"attr": [pred_cat, pred_attr, pred_attr]})
+        return out
+
+    def forward(self, x: Mapping[str, Any]) -> dict[str, list[torch.Tensor]]:
+        return self.decode(self.encode(x))
+
+    def generic_step(
+        self,
+        x: Mapping[str, Any],
+        mode: str = "train",
+    ) -> torch.Tensor:
+        text: Mapping[str, torch.Tensor] = x["t"]
+        attr: Sequence[torch.Tensor] = x["attr"]
+        text_l = self.text_model.encode(text)
+        pred_attr = self.pred_attr(text_l)
+        pred_cat = self.pred_cat(text_l)
+        cats = torch.argmax(attr[0], dim=1)
+        loss_cat = F.cross_entropy(pred_cat, cats)
+        loss_attr = F.mse_loss(pred_attr, attr[1])
+        total_loss = loss_cat + loss_attr
+        pred_cats = pred_cat.argmax(dim=1)
+        acc = (cats == pred_cats).sum() / cats.size(0)
+
+        self.log(f"{mode}/loss_cat", loss_cat)
+        self.log(f"{mode}/loss_attr", loss_attr)
+        self.log(f"{mode}/acc_cat", acc)
+        self.log(f"{mode}/loss", total_loss)
+
+        return total_loss
+
+    def validation_step(  # type: ignore
+        self, batch: Mapping[str, Mapping[str, torch.Tensor]], _
+    ) -> torch.Tensor:
+        return self.generic_step(batch, "val")
+
+    def training_step(  # type: ignore
+        self,
+        batch: Mapping[frozenset[str], Mapping[str, Mapping[str, torch.Tensor]]],
+        _,
+    ) -> torch.Tensor:
+        data = batch[frozenset(["t", "attr"])]
+        return self.generic_step(data, "train")
+
+    def configure_optimizers(  # type: ignore
+        self,
+    ) -> dict[str, Any]:
+        optimizer = AdamW(
             self.parameters(),
             lr=self.optim_lr,
             weight_decay=self.optim_weight_decay,
