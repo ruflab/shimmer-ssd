@@ -1,7 +1,7 @@
 import io
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
-from typing import Any, Literal, cast
+from typing import Any, Generic, Literal, TypeVar, cast
 
 import lightning.pytorch as pl
 import matplotlib
@@ -26,16 +26,18 @@ from simple_shapes_dataset.dataset.pre_process import (
     UnnormalizeAttributes,
     tensor_to_attribute,
 )
-from simple_shapes_dataset.modules.domains.text import GRUTextDomainModule
+from simple_shapes_dataset.modules.domains.text import GRUTextDomainModule, Text2Attr
 from simple_shapes_dataset.modules.domains.visual import VisualLatentDomainModule
 
 matplotlib.use("Agg")
 
+_T = TypeVar("_T")
 
-class LogSamplesCallback(ABC, pl.Callback):
+
+class LogSamplesCallback(Generic[_T], ABC, pl.Callback):
     def __init__(
         self,
-        reference_samples: Any,
+        reference_samples: _T,
         log_key: str,
         mode: Literal["train", "val", "test"],
         every_n_epochs: int | None = 1,
@@ -46,7 +48,7 @@ class LogSamplesCallback(ABC, pl.Callback):
         self.log_key = log_key
         self.mode = mode
 
-    def to(self, samples: Any, device: torch.device) -> Any:
+    def to(self, samples: _T, device: torch.device) -> _T:
         if isinstance(samples, torch.Tensor):
             return samples.to(device)
         raise NotImplementedError
@@ -125,7 +127,7 @@ class LogSamplesCallback(ABC, pl.Callback):
         return self.on_callback(trainer.loggers, pl_module)
 
     @abstractmethod
-    def log_samples(self, logger: Logger, samples: Any, mode: str) -> None: ...
+    def log_samples(self, logger: Logger, samples: _T, mode: str) -> None: ...
 
 
 def get_pil_image(figure: Figure) -> Image.Image:
@@ -223,7 +225,7 @@ def attribute_image_grid(
     )
 
 
-class LogAttributesCallback(LogSamplesCallback):
+class LogAttributesCallback(LogSamplesCallback[Sequence[torch.Tensor]]):
     def __init__(
         self,
         reference_samples: Sequence[torch.Tensor],
@@ -257,10 +259,10 @@ class LogAttributesCallback(LogSamplesCallback):
         logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
 
-class LogTextCallback(LogSamplesCallback):
+class LogTextCallback(LogSamplesCallback[Mapping[str, torch.Tensor]]):
     def __init__(
         self,
-        reference_samples: torch.Tensor,
+        reference_samples: Mapping[str, torch.Tensor],
         log_key: str,
         mode: Literal["train", "val", "test"],
         image_size: int,
@@ -326,7 +328,7 @@ class LogTextCallback(LogSamplesCallback):
         logger.log_text(key=f"{self.log_key}_{mode}_str", columns=["text"], data=text)
 
 
-class LogVisualCallback(LogSamplesCallback):
+class LogVisualCallback(LogSamplesCallback[torch.Tensor]):
     def __init__(
         self,
         reference_samples: torch.Tensor,
@@ -346,6 +348,106 @@ class LogVisualCallback(LogSamplesCallback):
         LOGGER.debug("[VISUAL LOGGER] logging samples")
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
         logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
+
+
+class LogText2AttrCallback(
+    LogSamplesCallback[
+        Mapping[str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]]
+    ]
+):
+    def __init__(
+        self,
+        reference_samples: Mapping[
+            str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]
+        ],
+        log_key: str,
+        mode: Literal["train", "val", "test"],
+        every_n_epochs: int | None = 1,
+        image_size: int = 32,
+        ncols: int = 8,
+        vocab: str | None = None,
+        merges: str | None = None,
+    ) -> None:
+        super().__init__(reference_samples, log_key, mode, every_n_epochs)
+        self.image_size = image_size
+        self.ncols = ncols
+        self.tokenizer = ByteLevelBPETokenizer(vocab, merges)
+        self.reference_samples = reference_samples
+
+    def to(
+        self,
+        samples: Mapping[str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]],
+        device: torch.device,
+    ) -> dict[str, dict[str, torch.Tensor] | list[torch.Tensor]]:
+        latents: dict[str, dict[str, torch.Tensor] | list[torch.Tensor]] = {}
+        for domain_name, domain in samples.items():
+            if isinstance(domain, dict):
+                latents[domain_name] = {k: x.to(device) for k, x in domain.items()}
+            elif isinstance(domain, list):
+                latents[domain_name] = [x.to(device) for x in domain]
+        return latents
+
+    def setup(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str
+    ) -> None:
+        if stage != "fit":
+            return
+        assert isinstance(pl_module, Text2Attr)
+        device = trainer.strategy.root_device
+        self.reference_samples = self.to(self.reference_samples, device)
+        for logger in trainer.loggers:
+            self.log_samples(logger, self.reference_samples, "reference")
+
+    def on_callback(
+        self,
+        loggers: Sequence[Logger],
+        pl_module: pl.LightningModule,
+    ) -> None:
+        assert isinstance(pl_module, Text2Attr)
+
+        samples = self.to(self.reference_samples, pl_module.device)
+
+        if not len(loggers):
+            LOGGER.debug("[LOGGER] No logger found.")
+            return
+
+        with torch.no_grad():
+            pl_module.eval()
+            generated_samples = pl_module(samples["t"])
+            pl_module.train()
+
+        for logger in loggers:
+            self.log_samples(logger, generated_samples, "prediction")
+
+    def log_samples(
+        self,
+        logger: Logger,
+        samples: Mapping[str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]],
+        mode: str,
+    ) -> None:
+        if not isinstance(logger, WandbLogger):
+            LOGGER.warning("Only logging to wandb is supported")
+            return
+
+        for domain_name, domain in samples.items():
+            if domain_name == "t":
+                assert self.tokenizer is not None
+                assert isinstance(domain, dict)
+                text = self.tokenizer.decode_batch(
+                    domain["tokens"].detach().cpu().tolist(), skip_special_tokens=True
+                )
+                text = [[t.replace("<pad>", "")] for t in text]
+                logger.log_text(
+                    key=f"{self.log_key}_{mode}_str", columns=["text"], data=text
+                )
+            elif domain_name == "attr":
+                assert isinstance(domain, list)
+                image = attribute_image_grid(
+                    domain,
+                    image_size=self.image_size,
+                    ncols=self.ncols,
+                )
+                logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
 
 class LogGWImagesCallback(pl.Callback):
@@ -376,27 +478,30 @@ class LogGWImagesCallback(pl.Callback):
     def to(
         self,
         samples: Mapping[
-            frozenset[str], Mapping[str, torch.Tensor | Sequence[torch.Tensor]]
+            frozenset[str],
+            Mapping[
+                str, torch.Tensor | Sequence[torch.Tensor] | Mapping[str, torch.Tensor]
+            ],
         ],
         device: torch.device,
     ) -> dict[
         frozenset[str],
-        dict[str, torch.Tensor | Sequence[torch.Tensor] | dict[Any, torch.Tensor]],
+        dict[str, torch.Tensor | list[torch.Tensor] | dict[Any, torch.Tensor]],
     ]:
         out: dict[
             frozenset[str],
-            dict[str, torch.Tensor | Sequence[torch.Tensor] | dict[Any, torch.Tensor]],
+            dict[str, torch.Tensor | list[torch.Tensor] | dict[Any, torch.Tensor]],
         ] = {}
         for domain_names, domains in samples.items():
             latents: dict[
-                str, torch.Tensor | Sequence[torch.Tensor] | dict[str, torch.Tensor]
+                str, torch.Tensor | list[torch.Tensor] | dict[str, torch.Tensor]
             ] = {}
             for domain_name, domain in domains.items():
                 if isinstance(domain, torch.Tensor):
                     latents[domain_name] = domain.to(device)
                 elif isinstance(domain, dict):
                     latents[domain_name] = {k: x.to(device) for k, x in domain.items()}
-                else:
+                elif isinstance(domain, list):
                     latents[domain_name] = [x.to(device) for x in domain]
             out[domain_names] = latents
         return out
