@@ -187,6 +187,14 @@ class LossCoeffients(BaseModel):
     fused: float = 1.0
 
 
+class Discriminator(BaseModel):
+    domain_name: str = "t"
+    hidden_dim: int = 128
+    generator_loss_every: int = 1
+    coef_generator: float = 1.0
+    coef_discriminator: float = 1.0
+
+
 class GlobalWorkspace(BaseModel):
     latent_dim: int = 12
     bayesian_gw: bool = False
@@ -207,6 +215,7 @@ class GlobalWorkspace(BaseModel):
     loss_coefficients: LossCoeffients = LossCoeffients()
     domain_args: Mapping[str, Any]
     checkpoint: Path | None = None
+    discriminator: Discriminator = Discriminator()
 
 
 class ShimmerConfigInfo(BaseModel):
