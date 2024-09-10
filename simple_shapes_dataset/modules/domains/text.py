@@ -17,6 +17,7 @@ from torch import nn
 from torch.optim.adamw import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
+from simple_shapes_dataset.modules.losses import mmd_loss
 from simple_shapes_dataset.text import composer
 from simple_shapes_dataset.text.utils import inspect_all_choices
 
@@ -309,7 +310,10 @@ class GRUTextDomainModule(DomainModule):
         self.scheduler_args.update(scheduler_args or {})
 
     def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
-        return LossOutput(F.mse_loss(pred, target, reduction="mean"))
+        recons = F.mse_loss(pred, target, reduction="mean")
+        dist_loss = mmd_loss(pred, target)
+        loss = recons + dist_loss
+        return LossOutput(loss, {"text_recons": recons, "text_mmd": dist_loss})
 
     def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
         return self.projector(x["bert"])
