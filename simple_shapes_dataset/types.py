@@ -190,7 +190,7 @@ class LossCoeffients(BaseModel):
 class Discriminator(BaseModel):
     domain_name: str = "t"
     hidden_dim: int = 128
-    generator_loss_every: int = 2
+    generator_loss_every: int = 5
     coef_generator: float = 1.0
     coef_discriminator: float = 1.0
 
