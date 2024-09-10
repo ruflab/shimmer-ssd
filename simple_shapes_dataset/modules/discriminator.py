@@ -93,8 +93,14 @@ class GWLossesWithDiscriminator(GWLosses):
         loss_real = F.binary_cross_entropy_with_logits(real_pred, real_target)
         loss_fake = F.binary_cross_entropy_with_logits(fake_pred, fake_target)
         loss = loss_real + loss_fake
-        acc_real = (real_pred == real_target).sum() / real_pred.size(0)
-        acc_fake = (fake_pred == fake_target).sum() / fake_pred.size(0)
+        real_pred_bin = torch.sigmoid(real_pred) >= 0.5
+        fake_pred_bin = torch.sigmoid(fake_pred) >= 0.5
+        acc_real = (real_pred_bin == real_target.to(torch.bool)).sum() / real_pred.size(
+            0
+        )
+        acc_fake = (fake_pred_bin == fake_target.to(torch.bool)).sum() / fake_pred.size(
+            0
+        )
 
         return {
             "discriminator_real": loss_real,
@@ -133,7 +139,10 @@ class GWLossesWithDiscriminator(GWLosses):
         fake_target = torch.ones_like(fake_pred)
 
         loss_fake = F.binary_cross_entropy_with_logits(fake_pred, fake_target)
-        acc_fake = (fake_pred == fake_target).sum() / fake_pred.size(0)
+        fake_pred_bin = torch.sigmoid(fake_pred) >= 0.5
+        acc_fake = (fake_pred_bin == fake_target.to(torch.bool)).sum() / fake_pred.size(
+            0
+        )
         return {
             "generator": loss_fake,
             "generator_acc": acc_fake,
