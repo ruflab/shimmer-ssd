@@ -88,7 +88,7 @@ class GWLossesWithDiscriminator(GWLosses):
         real_pred = self.discriminator(torch.cat(real_vecs, dim=0).detach())
         real_target = torch.ones_like(real_pred)
         fake_pred = self.discriminator(torch.cat(fake_vecs, dim=0).detach())
-        fake_target = torch.zeros_like(real_pred)
+        fake_target = torch.zeros_like(fake_pred)
 
         loss_real = F.binary_cross_entropy_with_logits(real_pred, real_target)
         loss_fake = F.binary_cross_entropy_with_logits(fake_pred, fake_target)
