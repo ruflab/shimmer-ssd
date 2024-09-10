@@ -86,23 +86,27 @@ class GWLossesWithDiscriminator(GWLosses):
             fake_vecs.append(x_recons)
 
         real_pred = self.discriminator(torch.cat(real_vecs, dim=0).detach())
+        real_target = torch.ones_like(real_pred)
         fake_pred = self.discriminator(torch.cat(fake_vecs, dim=0).detach())
+        fake_target = torch.zeros_like(real_pred)
 
-        loss_real = F.binary_cross_entropy_with_logits(
-            real_pred, torch.ones_like(real_pred)
-        )
-        loss_fake = F.binary_cross_entropy_with_logits(
-            fake_pred, torch.zeros_like(fake_pred)
-        )
+        loss_real = F.binary_cross_entropy_with_logits(real_pred, real_target)
+        loss_fake = F.binary_cross_entropy_with_logits(fake_pred, fake_target)
         loss = loss_real + loss_fake
+        acc_real = (real_pred == real_target).sum() / real_pred.size(0)
+        acc_fake = (fake_pred == fake_target).sum() / fake_pred.size(0)
 
         return {
             "discriminator_real": loss_real,
             "discriminator_fake": loss_fake,
+            "discriminator_real_acc": acc_real,
+            "discriminator_fake_acc": acc_fake,
             "discriminator": loss,
         }
 
-    def generator_loss(self, latent_domains: LatentsDomainGroupsT) -> torch.Tensor:
+    def generator_loss(
+        self, latent_domains: LatentsDomainGroupsT
+    ) -> Mapping[str, torch.Tensor]:
         """
         Computes the "generator" loss. Generation is successful if the discriminator
         cannot differenciate the generated sample from actual samples.
@@ -126,11 +130,14 @@ class GWLossesWithDiscriminator(GWLosses):
             fake_vecs.append(x_recons)
 
         fake_pred = self.discriminator(torch.cat(fake_vecs, dim=0))
+        fake_target = torch.ones_like(fake_pred)
 
-        loss_fake = F.binary_cross_entropy_with_logits(
-            fake_pred, torch.ones_like(fake_pred)
-        )
-        return loss_fake
+        loss_fake = F.binary_cross_entropy_with_logits(fake_pred, fake_target)
+        acc_fake = (fake_pred == fake_target).sum() / fake_pred.size(0)
+        return {
+            "generator": loss_fake,
+            "generator_acc": acc_fake,
+        }
 
     def step(
         self, domain_latents: LatentsDomainGroupsT, mode: ModelModeT
@@ -164,7 +171,7 @@ class GWLossesWithDiscriminator(GWLosses):
 
         if self.num_step % (self.generator_loss_every + 1) == 0:
             generator_loss = self.generator_loss(domain_latents)
-            metrics["generator"] = generator_loss
+            metrics.update(generator_loss)
         else:
             discriminatol_loss = self.discriminator_loss(domain_latents)
             metrics.update(discriminatol_loss)
