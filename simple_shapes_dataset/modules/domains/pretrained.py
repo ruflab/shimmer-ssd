@@ -14,7 +14,7 @@ from simple_shapes_dataset.modules.domains.attribute import (
     AttributeLegacyDomainModule,
     AttributeWithUnpairedDomainModule,
 )
-from simple_shapes_dataset.modules.domains.text import GRUTextDomainModule
+from simple_shapes_dataset.modules.domains.text import GRUTextDomainModule, Text2Attr
 from simple_shapes_dataset.modules.domains.visual import (
     VisualDomainModule,
     VisualLatentDomainModule,
@@ -68,6 +68,19 @@ def load_pretrained_module(
         case DomainModelVariantType.t:
             module = GRUTextDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
+            )
+        case DomainModelVariantType.t_attr:
+            assert (
+                "text_model_path" in domain.args
+            ), 'add "text_model_path" to the domain\'s args.'
+            text_model = GRUTextDomainModule.load_from_checkpoint(
+                root_path / domain.args["text_model_path"],
+                **domain.args.get("t_args", {}),
+            )
+            module = Text2Attr.load_from_checkpoint(
+                domain_checkpoint,
+                text_model=text_model,
+                **domain.args.get("model_args", {}),
             )
 
         case _:
