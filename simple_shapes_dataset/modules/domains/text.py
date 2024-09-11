@@ -429,12 +429,13 @@ class Text2Attr(DomainModule):
     def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
         pred_attr = self.pred_attr(pred)
         pred_cat = self.pred_cat(pred)
-        target_attr = self.target_attr(target)
-        target_cat = self.target_cat(target)
+        target_attr = self.pred_attr(target)
+        target_cat = self.pred_cat(target)
         loss_attr = F.mse_loss(pred_attr, target_attr)
         loss_cat = F.cross_entropy(pred_cat, target_cat.argmax(dim=1))
-        loss = loss_attr + loss_cat
-        return LossOutput(loss, {"attr": loss_attr, "cat": loss_cat})
+        dist_loss = mmd_loss(pred, target, squared_mmd=True)
+        loss = loss_attr + loss_cat + dist_loss
+        return LossOutput(loss, {"attr": loss_attr, "cat": loss_cat, "mmd": dist_loss})
 
     def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
         return self.text_model.encode(x)
