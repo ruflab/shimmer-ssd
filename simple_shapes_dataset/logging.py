@@ -675,6 +675,8 @@ class LogGWImagesCallback(pl.Callback):
                 self.log_attribute_samples(logger, samples, mode)
             case "t":
                 self.log_text_samples(logger, samples, mode)
+                if "attr" in samples:
+                    self.log_attribute_samples(logger, samples["attr"], mode + "_attr")
 
     def log_visual_samples(
         self,
