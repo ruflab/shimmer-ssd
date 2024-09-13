@@ -7,7 +7,7 @@ seed: 0
 
 training:
     batch_size: 2056
-    num_workers: 30
+    num_workers: 15
     optim:
         lr: 5e-3
         max_lr: 5e-3

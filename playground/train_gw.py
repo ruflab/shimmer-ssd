@@ -154,7 +154,7 @@ def main():
                 max_lr=config.training.optim.max_lr,
                 total_steps=config.training.max_steps,
             ),
-            scheduler=None,
+            # scheduler=None,
             learn_logit_scale=config.global_workspace.learn_logit_scale,
             contrastive_loss=contrastive_fn,
         )

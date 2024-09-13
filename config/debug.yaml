@@ -2,4 +2,4 @@ training:
     num_workers: 0
 
 wandb: 
-    enabled: true
+    enabled: false
