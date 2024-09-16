@@ -221,7 +221,7 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        run_name = f"{gw_type}_z={config.global_workspace.latent_dim}"
+        run_name = f"{gw_type}_discriminator_z={config.global_workspace.latent_dim}"
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
             project=config.wandb.project,
