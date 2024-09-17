@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from cfg_tools import ParsedModel
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 from shimmer.data.types import DomainDesc
 from shimmer.version import __version__ as shimmer_version
 
@@ -220,6 +220,8 @@ class Config(ParsedModel):
     training: Training
     wandb: WanDB
     logging: Logging
+    title: str | None = Field(None, alias="-t")
+    desc: str | None = Field(None, alias="-d")
     domain_modules: DomainModules
     global_workspace: GlobalWorkspace
     visualization: Visualization | None = None
