@@ -78,15 +78,24 @@ class GWLossesWithDiscriminator(GWLosses):
         fake_vecs: list[torch.Tensor] = []
 
         for domains, latents in latent_domains.items():
-            if domains == {self._domain_name}:
-                real_vecs.append(latents[self._domain_name])
+            if len(domains) < 2 or self._domain_name not in domains:
+                continue
 
-            elif len(domains) == 1 and self._domain_name not in domains:
-                x_recons = self.gw_mod.decode(
-                    self.gw_mod.encode_and_fuse(latents, self.selection_mod),
-                    domains={self._domain_name},
-                )[self._domain_name]
-                fake_vecs.append(x_recons)
+            real_vecs.append(latents[self._domain_name])
+
+            other_latents = {
+                name: latent
+                for name, latent in latents.items()
+                if name != self._domain_name
+            }
+
+            x_recons = self.gw_mod.decode(
+                self.gw_mod.encode_and_fuse(other_latents, self.selection_mod),
+                domains={self._domain_name},
+            )[self._domain_name]
+
+            fake_vecs.append(x_recons)
+
         if not len(real_vecs) or not len(fake_vecs):
             raise ValueError(
                 f"Real vectors or fake ones are missing. "
@@ -136,7 +145,10 @@ class GWLossesWithDiscriminator(GWLosses):
 
         fake_vecs: list[torch.Tensor] = []
 
-        for latents in latent_domains.values():
+        for domains, latents in latent_domains.items():
+            if len(domains) > 1 or self._domain_name in domains:
+                continue
+
             x_recons = self.gw_mod.decode(
                 self.gw_mod.encode_and_fuse(latents, self.selection_mod),
                 domains={self._domain_name},
