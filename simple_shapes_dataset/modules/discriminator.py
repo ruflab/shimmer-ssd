@@ -78,14 +78,20 @@ class GWLossesWithDiscriminator(GWLosses):
         fake_vecs: list[torch.Tensor] = []
 
         for domains, latents in latent_domains.items():
-            if self._domain_name in domains:
+            if domains == {self._domain_name}:
                 real_vecs.append(latents[self._domain_name])
 
-            x_recons = self.gw_mod.decode(
-                self.gw_mod.encode_and_fuse(latents, self.selection_mod),
-                domains={self._domain_name},
-            )[self._domain_name]
-            fake_vecs.append(x_recons)
+            elif len(domains) == 1 and self._domain_name not in domains:
+                x_recons = self.gw_mod.decode(
+                    self.gw_mod.encode_and_fuse(latents, self.selection_mod),
+                    domains={self._domain_name},
+                )[self._domain_name]
+                fake_vecs.append(x_recons)
+        if not len(real_vecs) or not len(fake_vecs):
+            raise ValueError(
+                f"Real vectors or fake ones are missing. "
+                f"Real: {len(real_vecs)}; fake: {len(fake_vecs)}."
+            )
 
         real_pred = self.discriminator(torch.cat(real_vecs, dim=0).detach())
         real_target = torch.ones_like(real_pred)
@@ -165,22 +171,22 @@ class GWLossesWithDiscriminator(GWLosses):
         """
         metrics: dict[str, torch.Tensor] = {}
 
-        metrics.update(self.contrastive_loss(domain_latents))
-        metrics.update(self.broadcast_loss(domain_latents))
-
-        metrics["broadcast_loss"] = torch.stack(
-            [
-                metrics[name]
-                for name, coef in self.loss_coefs.items()
-                if isinstance(coef, float)
-                and coef > 0
-                and name != "contrastives"
-                and name in metrics
-            ],
-            dim=0,
-        ).mean()
-
         if self.num_step % (self.generator_loss_every + 1) == 0:
+            metrics.update(self.contrastive_loss(domain_latents))
+            metrics.update(self.broadcast_loss(domain_latents))
+
+            metrics["broadcast_loss"] = torch.stack(
+                [
+                    metrics[name]
+                    for name, coef in self.loss_coefs.items()
+                    if isinstance(coef, float)
+                    and coef > 0
+                    and name != "contrastives"
+                    and name in metrics
+                ],
+                dim=0,
+            ).mean()
+
             generator_loss = self.generator_loss(domain_latents)
             metrics.update(generator_loss)
         else:
