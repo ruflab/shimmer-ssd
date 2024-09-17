@@ -22,6 +22,56 @@ def margin_loss(
     return out
 
 
+class RBF(torch.nn.Module):
+    """
+    from https://github.com/yiftachbeer/mmd_loss_pytorch
+    """
+
+    def __init__(
+        self,
+        n_kernels: int = 5,
+        mul_factor: float = 2.0,
+        bandwidth: torch.Tensor | None = None,
+    ):
+        super().__init__()
+        self.bandwidth_multipliers = mul_factor ** (
+            torch.arange(n_kernels) - n_kernels // 2
+        )
+        self.bandwidth = bandwidth
+
+    def get_bandwidth(self, l2_distances: torch.Tensor) -> torch.Tensor:
+        if self.bandwidth is None:
+            n_samples = l2_distances.size(0)
+            return l2_distances.sum() / (n_samples**2 - n_samples)
+
+        return self.bandwidth
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        l2_distances = torch.cdist(x, x) ** 2
+        return torch.exp(
+            -l2_distances[None, ...]
+            / (
+                self.get_bandwidth(l2_distances)
+                * self.bandwidth_multipliers.to(x.device)
+            )[:, None, None]
+        ).sum(dim=0)
+
+
+class MMDLoss(torch.nn.Module):
+    def __init__(self, kernel: torch.nn.Module | None = None):
+        super().__init__()
+        self.kernel = kernel or RBF()
+
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        K = self.kernel(torch.vstack([x, y]))
+
+        X_size = x.size(0)
+        XX = K[:X_size, :X_size].mean()
+        XY = K[:X_size, X_size:].mean()
+        YY = K[X_size:, X_size:].mean()
+        return XX - 2 * XY + YY
+
+
 def mmd_loss(
     x: torch.Tensor,
     target: torch.Tensor,

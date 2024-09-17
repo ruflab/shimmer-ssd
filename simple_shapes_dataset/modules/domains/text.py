@@ -17,7 +17,7 @@ from torch import nn
 from torch.optim.adamw import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
 
-from simple_shapes_dataset.modules.losses import mmd_loss
+from simple_shapes_dataset.modules.losses import MMDLoss
 from simple_shapes_dataset.text import composer
 from simple_shapes_dataset.text.utils import inspect_all_choices
 
@@ -308,10 +308,11 @@ class GRUTextDomainModule(DomainModule):
             total_steps=1,
         )
         self.scheduler_args.update(scheduler_args or {})
+        self.mmd_loss = MMDLoss()
 
     def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
         recons = F.mse_loss(pred, target, reduction="mean")
-        dist_loss = mmd_loss(pred, target)
+        dist_loss = self.mmd_loss(pred, target)
         loss = recons + dist_loss
         return LossOutput(loss, {"text_recons": recons, "text_mmd": dist_loss})
 
@@ -420,6 +421,7 @@ class Text2Attr(DomainModule):
             nn.Linear(hidden_dim, 3),
             nn.Softmax(dim=1),
         )
+        self.mmd_loss = MMDLoss()
 
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
@@ -437,7 +439,7 @@ class Text2Attr(DomainModule):
         target_cat = self.pred_cat(target)
         loss_attr = F.mse_loss(pred_attr, target_attr)
         loss_cat = F.cross_entropy(pred_cat, target_cat.argmax(dim=1))
-        dist_loss = mmd_loss(pred, target)
+        dist_loss = self.mmd_loss(pred, target)
         loss = loss_attr + loss_cat + dist_loss
         return LossOutput(loss, {"attr": loss_attr, "cat": loss_cat, "mmd": dist_loss})
 
