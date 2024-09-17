@@ -89,13 +89,20 @@ def main():
 
     wandb_logger = None
     if config.wandb.enabled:
-        run_name = f"v_vae_z={config.domain_modules.visual.latent_dim}"
+        if config.title is not None:
+            run_name = config.title
+        else:
+            run_name = f"v_vae_z={config.domain_modules.visual.latent_dim}"
+        wandb_kwargs: dict[str, Any] = {}
+        if config.desc is not None:
+            wandb_kwargs["notes"] = config.desc
         wandb_logger = WandbLogger(
             save_dir=config.wandb.save_dir,
             project=config.wandb.project,
             entity=config.wandb.entity,
-            tags=["train_v"],
+            tags=["train_gw"],
             name=run_name,
+            **wandb_kwargs,
         )
         wandb_logger.experiment.config.update(config.model_dump())
 
