@@ -1,7 +1,9 @@
 from collections.abc import Mapping
 
 import torch
-import torch.nn.functional as F
+from lightning.pytorch.utilities.types import (
+    OptimizerLRScheduler,
+)
 from shimmer import (
     BroadcastLossCoefs,
     ContrastiveLoss,
@@ -13,13 +15,18 @@ from shimmer import (
     LossOutput,
     ModelModeT,
     RandomSelection,
+    RawDomainGroupsT,
     SchedulerArgs,
     SelectionBase,
 )
-from shimmer.modules.global_workspace import freeze_domain_modules
+from shimmer.modules.global_workspace import (
+    freeze_domain_modules,
+)
 from shimmer.modules.losses import GWLosses
+from shimmer.utils import groups_batch_size
 from torch import nn
-from torch.optim.lr_scheduler import LRScheduler
+from torch.optim.adamw import AdamW
+from torch.optim.lr_scheduler import OneCycleLR
 
 
 class CoefWithDiscriminator(BroadcastLossCoefs, total=False):
@@ -71,9 +78,6 @@ class GWLossesWithDiscriminator(GWLosses):
         Returns:
             `Mapping[str, torch.Tensor]`:
         """
-        for param in self.discriminator.parameters():
-            param.requires_grad_(True)
-
         real_vecs: list[torch.Tensor] = []
         fake_vecs: list[torch.Tensor] = []
 
@@ -107,9 +111,11 @@ class GWLossesWithDiscriminator(GWLosses):
         fake_pred = self.discriminator(torch.cat(fake_vecs, dim=0).detach())
         fake_target = torch.zeros_like(fake_pred)
 
-        loss_real = F.binary_cross_entropy_with_logits(real_pred, real_target)
-        loss_fake = F.binary_cross_entropy_with_logits(fake_pred, fake_target)
+        # Wasserstein GAN loss
+        loss_real = real_pred.mean()
+        loss_fake = -fake_target.mean()
         loss = loss_real + loss_fake
+
         real_pred_bin = torch.sigmoid(real_pred) >= 0.5
         fake_pred_bin = torch.sigmoid(fake_pred) >= 0.5
         acc_real = (real_pred_bin == real_target.to(torch.bool)).sum() / real_pred.size(
@@ -140,9 +146,6 @@ class GWLossesWithDiscriminator(GWLosses):
         Returns:
             `Mapping[str, torch.Tensor]`:
         """
-        for param in self.discriminator.parameters():
-            param.requires_grad_(False)
-
         fake_vecs: list[torch.Tensor] = []
 
         for domains, latents in latent_domains.items():
@@ -158,7 +161,7 @@ class GWLossesWithDiscriminator(GWLosses):
         fake_pred = self.discriminator(torch.cat(fake_vecs, dim=0))
         fake_target = torch.ones_like(fake_pred)
 
-        loss_fake = F.binary_cross_entropy_with_logits(fake_pred, fake_target)
+        loss_fake = -fake_pred.mean()
         fake_pred_bin = torch.sigmoid(fake_pred) >= 0.5
         acc_fake = (fake_pred_bin == fake_target.to(torch.bool)).sum() / fake_pred.size(
             0
@@ -201,9 +204,9 @@ class GWLossesWithDiscriminator(GWLosses):
 
             generator_loss = self.generator_loss(domain_latents)
             metrics.update(generator_loss)
-        else:
-            discriminatol_loss = self.discriminator_loss(domain_latents)
-            metrics.update(discriminatol_loss)
+
+        discriminatol_loss = self.discriminator_loss(domain_latents)
+        metrics.update(discriminatol_loss)
 
         loss = torch.stack(
             [
@@ -244,7 +247,6 @@ class GlobalWorkspaceWithDiscriminator(
         scheduler_args: SchedulerArgs | None = None,
         learn_logit_scale: bool = False,
         contrastive_loss: ContrastiveLossType | None = None,
-        scheduler: LRScheduler | None = None,
     ) -> None:
         """
         Initializes a Global Workspace
@@ -294,6 +296,8 @@ class GlobalWorkspaceWithDiscriminator(
             generator_loss_every,
         )
 
+        self.loss_coefs = loss_coefs
+
         super().__init__(
             gw_mod,
             selection_mod,
@@ -301,5 +305,103 @@ class GlobalWorkspaceWithDiscriminator(
             optim_lr,
             optim_weight_decay,
             scheduler_args,
-            scheduler,
         )
+
+        self.automatic_optimization = False
+
+    def generic_step(self, batch: RawDomainGroupsT, mode: ModelModeT):
+        """
+        The generic step used in `training_step`, `validation_step` and
+        `test_step`.
+
+        Args:
+            batch (`RawDomainGroupsT`): the batch of groups of raw unimodal data.
+            mode (`ModelModeT`):
+
+        Returns:
+            `torch.Tensor`: the loss to train on.
+        """
+        domain_latents = self.encode_domains(batch)
+        batch_size = groups_batch_size(domain_latents)
+
+        loss_output = self.loss_mod.step(domain_latents, mode)
+
+        metrics = loss_output.metrics
+
+        for name, metric in loss_output.all.items():
+            self.log(
+                f"{mode}/{name}",
+                metric,
+                batch_size=batch_size,
+                add_dataloader_idx=False,
+            )
+
+        optimizers = self.optimizers()
+        assert isinstance(optimizers, list) and len(optimizers) == 2
+        d_opt, g_opt = optimizers
+
+        losses = []
+        for name, coef in self.loss_coefs.items():
+            if name == "discriminator" and isinstance(coef, float) and coef > 0:
+                d_opt.zero_grad()
+                self.manual_backward(metrics[name] * coef)
+                self.clip_gradients(
+                    d_opt, gradient_clip_val=0.01, gradient_clip_algorithm="norm"
+                )
+                d_opt.step()
+            elif name in metrics and isinstance(coef, float) and coef > 0:
+                losses.append(metrics[name] * coef)
+        gen_loss = torch.stack(losses, dim=0).mean()
+        g_opt.zero_grad()
+        self.manual_backward(gen_loss)
+        self.clip_gradients(
+            g_opt, gradient_clip_val=0.01, gradient_clip_algorithm="norm"
+        )
+        g_opt.step()
+        return None
+
+    def configure_optimizers(self) -> OptimizerLRScheduler:
+        """
+        Configure models optimizers.
+
+        Here we use `AdamW` for the optimizer and `OneCycleLR` for the learning-rate
+        scheduler.
+        """
+
+        discr_params = self.loss_mod.discriminator.parameters()
+        other_params = [
+            param for name, param in self.parameters() if "discriminator" not in name
+        ]
+        optimizer_discr = AdamW(
+            discr_params,
+            lr=self.optim_lr,
+            weight_decay=self.optim_weight_decay,
+        )
+        optimizer_rest = AdamW(
+            other_params,
+            lr=self.optim_lr,
+            weight_decay=self.optim_weight_decay,
+        )
+
+        if self.scheduler is None:
+            return [{"optimizer": optimizer_discr}, {"optimizer": optimizer_rest}]
+
+        lr_scheduler_discr = OneCycleLR(optimizer_discr, **self.scheduler_args)
+        lr_scheduler_rest = OneCycleLR(optimizer_rest, **self.scheduler_args)
+
+        return [
+            {
+                "optimizer": optimizer_discr,
+                "lr_scheduler": {
+                    "scheduler": lr_scheduler_discr,
+                    "interval": "step",
+                },
+            },
+            {
+                "optimizer": optimizer_rest,
+                "lr_scheduler": {
+                    "scheduler": lr_scheduler_rest,
+                    "interval": "step",
+                },
+            },
+        ]

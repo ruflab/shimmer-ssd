@@ -2894,7 +2894,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "choose_scheduler"
-resolved_reference = "77c6d9df53b7b591f71600943c733c14172e1695"
+resolved_reference = "149d9b8e2835d37fb9ad864468d72f3178addbca"
 
 [[package]]
 name = "six"
