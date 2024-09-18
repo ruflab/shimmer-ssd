@@ -2,6 +2,7 @@ from collections.abc import Mapping
 
 import torch
 from lightning.pytorch.utilities.types import (
+    LRScheduler,
     OptimizerLRScheduler,
 )
 from shimmer import (
@@ -20,13 +21,14 @@ from shimmer import (
     SelectionBase,
 )
 from shimmer.modules.global_workspace import (
+    OneCycleSchedulerSentinel,
     freeze_domain_modules,
 )
 from shimmer.modules.losses import GWLosses
 from shimmer.utils import groups_batch_size
 from torch import nn
-from torch.optim.adamw import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
+from torch.optim.rmsprop import RMSprop
 
 
 class CoefWithDiscriminator(BroadcastLossCoefs, total=False):
@@ -186,22 +188,22 @@ class GWLossesWithDiscriminator(GWLosses):
         """
         metrics: dict[str, torch.Tensor] = {}
 
+        metrics.update(self.contrastive_loss(domain_latents))
+        metrics.update(self.broadcast_loss(domain_latents))
+
+        metrics["broadcast_loss"] = torch.stack(
+            [
+                metrics[name]
+                for name, coef in self.loss_coefs.items()
+                if isinstance(coef, float)
+                and coef > 0
+                and name != "contrastives"
+                and name in metrics
+            ],
+            dim=0,
+        ).mean()
+
         if self.num_step % (self.generator_loss_every + 1) == 0:
-            metrics.update(self.contrastive_loss(domain_latents))
-            metrics.update(self.broadcast_loss(domain_latents))
-
-            metrics["broadcast_loss"] = torch.stack(
-                [
-                    metrics[name]
-                    for name, coef in self.loss_coefs.items()
-                    if isinstance(coef, float)
-                    and coef > 0
-                    and name != "contrastives"
-                    and name in metrics
-                ],
-                dim=0,
-            ).mean()
-
             generator_loss = self.generator_loss(domain_latents)
             metrics.update(generator_loss)
 
@@ -247,6 +249,9 @@ class GlobalWorkspaceWithDiscriminator(
         scheduler_args: SchedulerArgs | None = None,
         learn_logit_scale: bool = False,
         contrastive_loss: ContrastiveLossType | None = None,
+        scheduler: LRScheduler
+        | None
+        | OneCycleSchedulerSentinel = OneCycleSchedulerSentinel.DEFAULT,
     ) -> None:
         """
         Initializes a Global Workspace
@@ -305,6 +310,7 @@ class GlobalWorkspaceWithDiscriminator(
             optim_lr,
             optim_weight_decay,
             scheduler_args,
+            scheduler,
         )
 
         self.automatic_optimization = False
@@ -336,28 +342,35 @@ class GlobalWorkspaceWithDiscriminator(
                 add_dataloader_idx=False,
             )
 
+        if mode != "train":
+            return
+
         optimizers = self.optimizers()
         assert isinstance(optimizers, list) and len(optimizers) == 2
         d_opt, g_opt = optimizers
 
         losses = []
         for name, coef in self.loss_coefs.items():
-            if name == "discriminator" and isinstance(coef, float) and coef > 0:
+            if name not in metrics or not isinstance(coef, float) or coef <= 0:
+                continue
+
+            if name == "discriminator":
                 d_opt.zero_grad()
                 self.manual_backward(metrics[name] * coef)
-                self.clip_gradients(
-                    d_opt, gradient_clip_val=0.01, gradient_clip_algorithm="norm"
-                )
+                # self.clip_gradients(
+                #     d_opt, gradient_clip_val=0.01, gradient_clip_algorithm="norm"
+                # )
                 d_opt.step()
-            elif name in metrics and isinstance(coef, float) and coef > 0:
+            else:
                 losses.append(metrics[name] * coef)
-        gen_loss = torch.stack(losses, dim=0).mean()
-        g_opt.zero_grad()
-        self.manual_backward(gen_loss)
-        self.clip_gradients(
-            g_opt, gradient_clip_val=0.01, gradient_clip_algorithm="norm"
-        )
-        g_opt.step()
+        if len(losses):
+            gen_loss = torch.stack(losses, dim=0).mean()
+            g_opt.zero_grad()
+            self.manual_backward(gen_loss)
+            # self.clip_gradients(
+            #     g_opt, gradient_clip_val=0.01, gradient_clip_algorithm="norm"
+            # )
+            g_opt.step()
         return None
 
     def configure_optimizers(self) -> OptimizerLRScheduler:
@@ -370,14 +383,16 @@ class GlobalWorkspaceWithDiscriminator(
 
         discr_params = self.loss_mod.discriminator.parameters()
         other_params = [
-            param for name, param in self.parameters() if "discriminator" not in name
+            param
+            for name, param in self.named_parameters()
+            if "discriminator" not in name
         ]
-        optimizer_discr = AdamW(
+        optimizer_discr = RMSprop(
             discr_params,
             lr=self.optim_lr,
             weight_decay=self.optim_weight_decay,
         )
-        optimizer_rest = AdamW(
+        optimizer_rest = RMSprop(
             other_params,
             lr=self.optim_lr,
             weight_decay=self.optim_weight_decay,
