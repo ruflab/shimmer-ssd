@@ -13,7 +13,7 @@ def main():
         debug_mode=DEBUG_MODE,
     )
 
-    api = wandb.Api()
+    api = wandb.Api()  # type: ignore
 
     runs = api.runs(f"{config.wandb.entity}/{config.wandb.project}")
 
