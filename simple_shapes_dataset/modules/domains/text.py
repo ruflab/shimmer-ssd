@@ -133,7 +133,9 @@ class TextDomainModule(DomainModule):
         )
         self.scheduler_args.update(scheduler_args or {})
 
-    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:
         return LossOutput(F.mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:

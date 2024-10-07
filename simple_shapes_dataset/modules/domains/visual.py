@@ -46,7 +46,9 @@ class VisualDomainModule(DomainModule):
         }
         self.scheduler_args.update(scheduler_args or {})
 
-    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:
         return LossOutput(mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
@@ -126,7 +128,9 @@ class VisualLatentDomainModule(DomainModule):
         extra = torch.zeros_like(z[:, -1]).unsqueeze(1)
         return torch.cat([z, extra], dim=1)
 
-    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:
         return LossOutput(mse_loss(pred, target, reduction="mean"))
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
@@ -156,7 +160,9 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         return z
 
-    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:
         paired_loss = mse_loss(pred[:, : self.paired_dim], target[:, : self.paired_dim])
         unpaired_loss = mse_loss(
             pred[:, self.paired_dim :], target[:, self.paired_dim :]

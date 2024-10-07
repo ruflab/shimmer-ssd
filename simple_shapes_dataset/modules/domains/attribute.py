@@ -112,7 +112,9 @@ class AttributeDomainModule(DomainModule):
         )
         self.scheduler_args.update(scheduler_args or {})
 
-    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:
         return LossOutput(F.mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
@@ -261,7 +263,9 @@ class AttributeWithUnpairedDomainModule(DomainModule):
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:  # type: ignore
         return self.decode(self.encode(x))
 
-    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:
         paired_loss = F.mse_loss(
             pred[:, : self.paired_dim], target[:, : self.paired_dim]
         )
@@ -285,7 +289,9 @@ class AttributeLegacyDomainModule(DomainModule):
         super().__init__(self.latent_dim)
         self.save_hyperparameters()
 
-    def compute_loss(self, pred: torch.Tensor, target: torch.Tensor) -> LossOutput:
+    def compute_loss(
+        self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
+    ) -> LossOutput:
         pred_cat, pred_attr, _ = self.decode(pred)
         target_cat, target_attr, _ = self.decode(target)
 
