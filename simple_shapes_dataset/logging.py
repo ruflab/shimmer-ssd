@@ -13,9 +13,6 @@ from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
 from PIL import Image
-from shimmer import (
-    GlobalWorkspaceBayesian,
-)
 from shimmer.modules.global_workspace import GlobalWorkspaceBase, GWPredictionsBase
 from torchvision.utils import make_grid
 
@@ -422,24 +419,6 @@ class LogGWImagesCallback(pl.Callback):
                             domain,
                             log_name,
                         )
-                if isinstance(pl_module, GlobalWorkspaceBayesian):
-                    if not isinstance(logger, WandbLogger):
-                        continue
-                    columns = ["domain"] + [
-                        f"lambda_{k}" for k in range(pl_module.workspace_dim)
-                    ]
-                    data = []
-                    precision_domains = list(pl_module.gw_mod.precisions)
-                    precisions = torch.stack(
-                        [
-                            pl_module.gw_mod.precisions[domain]
-                            for domain in precision_domains
-                        ]
-                    ).softmax(0)
-                    for k, domain in enumerate(precision_domains):
-                        data.append([domain] + precisions[k].detach().cpu().tolist())
-
-                    logger.log_table("precisions", columns, data)
 
     def on_train_epoch_end(
         self,

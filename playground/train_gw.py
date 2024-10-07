@@ -20,7 +20,6 @@ from shimmer import (
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspace2Domains,
-    GlobalWorkspaceBayesian,
     SchedulerArgs,
 )
 from torch import set_float32_matmul_precision
@@ -99,32 +98,7 @@ def main():
 
     module: GlobalWorkspaceBase
     gw_type: str
-    if config.global_workspace.bayesian_gw:
-        gw_type = "gw_bayesian"
-        loss_coefs_bayesian: BroadcastLossCoefs = {
-            "contrastives": config.global_workspace.loss_coefficients.contrastives,
-            "fused": config.global_workspace.loss_coefficients.fused,
-            "translations": config.global_workspace.loss_coefficients.translations,
-            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-            "cycles": config.global_workspace.loss_coefficients.cycles,
-        }
-        module = GlobalWorkspaceBayesian(
-            domain_modules,
-            gw_encoders,
-            gw_decoders,
-            config.global_workspace.latent_dim,
-            loss_coefs_bayesian,
-            config.global_workspace.selection_temperature,
-            config.training.optim.lr,
-            config.training.optim.weight_decay,
-            scheduler_args=SchedulerArgs(
-                max_lr=config.training.optim.max_lr,
-                total_steps=config.training.max_steps,
-            ),
-            learn_logit_scale=config.global_workspace.learn_logit_scale,
-            contrastive_loss=contrastive_fn,
-        )
-    elif config.global_workspace.use_fusion_model:
+    if config.global_workspace.use_fusion_model:
         gw_type = "gw_fusion"
         loss_coefs_fusion: BroadcastLossCoefs = {
             "contrastives": config.global_workspace.loss_coefficients.contrastives,
