@@ -28,6 +28,7 @@ def get_alignment(
         dataset_path
         / f"domain_splits_v2/{split}_{alignment_split_name}_domain_split.npy"
     )
+
     if not alignment_split_path.exists():
         domain_alignment = [
             f'--domain_alignment {",".join(sorted(list(domain)))} {prop}'

@@ -399,6 +399,6 @@ def get_deterministic_name(
 
     alignment_split_name = (
         "_".join([f"{domain}:{prop}" for domain, prop in sorted_domain_names])
-        + f"_seed:{seed}_ms:{max_size}"
+        + f"_seed:{seed}_ms:{max_size-1}"
     )
     return alignment_split_name
