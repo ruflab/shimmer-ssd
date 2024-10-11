@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 
-from shimmer import DomainModule, GWDecoder, GWEncoder, GWEncoderLinear
+from shimmer import DomainModule, GWDecoder, GWEncoder
 from torch.nn import Linear, Module
 
 from simple_shapes_dataset import PROJECT_DIR
@@ -85,7 +85,7 @@ def load_pretrained_domain(
     gw_encoder: Module
     gw_decoder: Module
     if is_linear:
-        gw_encoder = GWEncoderLinear(module.latent_dim, workspace_dim, bias=bias)
+        gw_encoder = Linear(module.latent_dim, workspace_dim, bias=bias)
         gw_decoder = Linear(workspace_dim, module.latent_dim, bias=bias)
     else:
         gw_encoder = GWEncoder(
