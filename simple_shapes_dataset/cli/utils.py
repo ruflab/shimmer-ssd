@@ -9,7 +9,6 @@ import torch
 from matplotlib import patches as patches
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
-from torchdata.datapipes.iter import IterableWrapper
 from tqdm import tqdm
 from transformers import BertModel, BertTokenizer
 
@@ -299,9 +298,14 @@ def save_bert_latents(
     tokenizer = BertTokenizer.from_pretrained(bert_path)
 
     batch_size = 64
-    dp = IterableWrapper(sentences).batch(batch_size, drop_last=False)
     latents = []
-    for batch in tqdm(dp, total=len(sentences) // batch_size):
+    n_batches = len(sentences) // batch_size
+    if n_batches * batch_size < len(sentences):
+        n_batches += 1
+    for k in tqdm(range(n_batches)):
+        start_k = k * batch_size
+        end_k = min((k + 1) * batch_size, len(sentences))
+        batch = sentences[start_k:end_k]
         tokens = tokenizer(batch, return_tensors="pt", padding=True).to(device)
         z = transformer(**tokens)["last_hidden_state"][:, 0]  # type: ignore
         latents.append(z.cpu().numpy())
