@@ -137,7 +137,7 @@ class AttributeDomainModule(DomainModule):
     ) -> torch.Tensor:
         x_categories, x_attributes = x[0], x[1]
 
-        (mean, logvar), reconstruction = self.vae(x)
+        (mean, logvar), reconstruction = self.vae(x[:-1])
         reconstruction_categories = reconstruction[0]
         reconstruction_attributes = reconstruction[1]
 
