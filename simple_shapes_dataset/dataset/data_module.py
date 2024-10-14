@@ -26,7 +26,7 @@ class SimpleShapesDataModule(LightningDataModule):
         domain_classes: Mapping[DomainDesc, type[DataDomain]],
         domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
-        max_train_size: int = -1,
+        max_train_size: int | None = None,
         num_workers: int = 0,
         seed: int | None = None,
         ood_seed: int | None = None,
@@ -139,7 +139,7 @@ class SimpleShapesDataModule(LightningDataModule):
                     for domain_type, domain_cls in self.domain_classes.items()
                     if domain_type.kind == domain
                 },
-                self.max_train_size,
+                self.max_train_size or -1,
                 self._get_transforms([domain], split),
                 self.domain_args,
             )

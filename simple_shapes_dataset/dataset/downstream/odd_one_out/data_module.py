@@ -64,7 +64,7 @@ class OddOneOutDataModule(LightningDataModule):
         domain_classes: Mapping[DomainDesc, type[DataDomain]],
         domain_proportions: Mapping[frozenset[str], float],
         batch_size: int,
-        max_train_size: int = -1,
+        max_train_size: int | None = None,
         num_workers: int = 0,
         seed: int | None = None,
         domain_args: Mapping[str, Any] | None = None,
@@ -138,7 +138,7 @@ class OddOneOutDataModule(LightningDataModule):
                 self.domain_classes,
                 self.domain_proportions,
                 self.seed,
-                self.max_train_size,
+                self.max_train_size or -1,
                 self._get_transforms(domains),
                 self.domain_args,
             )
@@ -162,7 +162,7 @@ class OddOneOutDataModule(LightningDataModule):
                     for domain_type, domain_cls in self.domain_classes.items()
                     if domain_type.kind == domain
                 },
-                self.max_train_size,
+                self.max_train_size or -1,
                 self._get_transforms([domain]),
                 self.domain_args,
             )

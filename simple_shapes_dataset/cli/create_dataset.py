@@ -105,8 +105,9 @@ def create_unpaired_attributes(
     help="Pretrained BERT model to use",
 )
 @click.option(
-    "--alignment_train_max_idx",
-    default=-1,
+    "--max_train_size",
+    "--ms",
+    default=None,
     type=int,
     help="Max index to use for the train set.",
 )
@@ -132,7 +133,7 @@ def create_dataset(
     min_lightness: int,
     max_lightness: int,
     bert_path: str,
-    alignment_train_max_idx: int,
+    max_train_size: int | None,
     domain_alignment: list[tuple[str, float]],
 ) -> None:
     dataset_location = Path(output_path)
@@ -170,9 +171,7 @@ def create_dataset(
     save_labels(dataset_location / "val_labels.npy", val_labels)
     save_labels(dataset_location / "test_labels.npy", test_labels)
 
-    create_domain_split(
-        seed, dataset_location, domain_alignment, alignment_train_max_idx
-    )
+    create_domain_split(seed, dataset_location, domain_alignment, max_train_size)
 
     print("Saving training set...")
     (dataset_location / "train").mkdir(exist_ok=True)

@@ -47,6 +47,9 @@ shapesd alignment list --dataset_path "/path/to/dataset"
 You can also filter for a particular split with e.g. `--split train` or seed 
 (e.g. `--seed 0`)
 
+If you want to restrict the size of the training set to the N first samples only, you
+can use `--max_train_size N` or `--ms N`. The same option is also available for `shapesd create`.
+
 ## Create an out of distribution split
 ```
 shapesd ood --dataset_path "/path/to/dataset" --seed 0

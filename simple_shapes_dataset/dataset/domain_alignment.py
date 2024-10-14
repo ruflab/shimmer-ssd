@@ -14,13 +14,14 @@ def get_alignment(
     split: str,
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
-    max_size: int,
+    max_size: int | None,
 ) -> Mapping[frozenset[str], np.ndarray]:
     assert split in ["train", "val", "test"]
 
     dataset_path = Path(dataset_path)
-    if max_size == -1:
+    if max_size is None:
         max_size = np.load(dataset_path / f"{split}_labels.npy").shape[0]
+    assert max_size is not None, "Error loading label file."
 
     alignment_split_name = get_deterministic_name(domain_proportions, seed, max_size)
 
@@ -37,7 +38,8 @@ def get_alignment(
             "Domain split not found. "
             "To create it, use `shapesd alignment add "
             f'--dataset_path "{str(dataset_path.resolve())}" '
-            f"--seed {seed} {' '.join(domain_alignment)}`"
+            f"--seed {seed} {' '.join(domain_alignment)} "
+            f"--ms {max_size}`"
         )
     domain_split: Mapping[frozenset[str], np.ndarray] = np.load(
         alignment_split_path, allow_pickle=True
@@ -52,7 +54,7 @@ def get_aligned_datasets(
     domain_classes: Mapping[DomainDesc, type[DataDomain]],
     domain_proportions: Mapping[frozenset[str], float],
     seed: int,
-    max_size: int = -1,
+    max_size: int | None = None,
     transforms: Mapping[str, Callable[[Any], Any]] | None = None,
     domain_args: Mapping[str, Any] | None = None,
 ) -> dict[frozenset[str], Subset]:
@@ -71,7 +73,7 @@ def get_aligned_datasets(
             dataset_path,
             split,
             sub_domain_cls,
-            max_size,
+            max_size or -1,
             transforms,
             domain_args,
         )

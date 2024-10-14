@@ -18,7 +18,7 @@ def create_domain_split(
     seed: int,
     dataset_path: Path,
     domain_alignment: list[tuple[str, float]],
-    train_max_index: int = -1,
+    max_train_size: int | None = None,
 ):
     if not len(domain_alignment):
         return
@@ -40,7 +40,7 @@ def create_domain_split(
         labels = np.load(str(dataset_path / f"{split}_labels.npy"))
         allowed_indices = np.arange(labels.shape[0])
         if split == "train":
-            allowed_indices = allowed_indices[:train_max_index]
+            allowed_indices = allowed_indices[:max_train_size]
         split_name = get_deterministic_name(domain_sets, seed, allowed_indices.shape[0])
         domain_split = get_domain_alignment(
             seed,
@@ -64,8 +64,9 @@ def create_domain_split(
     help="Path to the dataset",
 )
 @click.option(
-    "--alignment_train_max_idx",
-    default=-1,
+    "--max_train_size",
+    "--ms",
+    default=None,
     type=int,
     help="Max index to use for the train set.",
 )
@@ -82,15 +83,13 @@ def create_domain_split(
 def add_alignment_split(
     seed: int,
     dataset_path: str,
-    alignment_train_max_idx: int,
+    max_train_size: int | None,
     domain_alignment: list[tuple[str, float]],
 ) -> None:
     dataset_location = Path(dataset_path)
     assert dataset_location.exists()
 
-    create_domain_split(
-        seed, dataset_location, domain_alignment, alignment_train_max_idx
-    )
+    create_domain_split(seed, dataset_location, domain_alignment, max_train_size)
 
 
 def print_table(data: Mapping[str, Sequence[str]], space: int = 2) -> str:
