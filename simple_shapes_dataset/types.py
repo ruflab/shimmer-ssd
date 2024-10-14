@@ -114,7 +114,7 @@ class Exploration(BaseModel):
 
 class Dataset(BaseModel):
     path: Path
-    max_train_size: int = -1
+    max_train_size: int | None = 500_000
 
 
 class VisualModule(BaseModel):
