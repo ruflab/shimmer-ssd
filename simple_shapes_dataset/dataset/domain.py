@@ -250,7 +250,9 @@ class SimpleShapesText(DataDomain):
         self.latent_filename = self.additional_args.get("latent_filename", "latent")
 
         self.raw_text = SimpleShapesRawText(self.dataset_path, self.split, max_size)
-        self.attributes = SimpleShapesAttributes(self.dataset_path, self.split, max_size)
+        self.attributes = SimpleShapesAttributes(
+            self.dataset_path, self.split, max_size
+        )
 
         self.bert_mean = torch.from_numpy(
             np.load(self.dataset_path / f"{self.latent_filename}_mean.npy")
