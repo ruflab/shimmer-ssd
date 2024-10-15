@@ -73,7 +73,7 @@ def get_aligned_datasets(
             dataset_path,
             split,
             sub_domain_cls,
-            max_size or -1,
+            max_size,
             transforms,
             domain_args,
         )

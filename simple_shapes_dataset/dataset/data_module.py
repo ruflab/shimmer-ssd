@@ -139,7 +139,7 @@ class SimpleShapesDataModule(LightningDataModule):
                     for domain_type, domain_cls in self.domain_classes.items()
                     if domain_type.kind == domain
                 },
-                self.max_train_size or -1,
+                self.max_train_size,
                 self._get_transforms([domain], split),
                 self.domain_args,
             )
