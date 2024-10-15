@@ -2822,7 +2822,7 @@ torch = "^2.0.1"
 type = "git"
 url = "git@github.com:bdvllrs/shimmer.git"
 reference = "main"
-resolved_reference = "d5c8f5e3d680d7561cb98419881e770fcd03533b"
+resolved_reference = "519d5f284d6b37c05e3317f7f8d0abbc4bd651ea"
 
 [[package]]
 name = "six"
