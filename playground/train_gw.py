@@ -11,10 +11,8 @@ from lightning.pytorch.callbacks import (
 )
 from lightning.pytorch.loggers.wandb import WandbLogger
 from shimmer import (
-    BroadcastLossCoefs,
     ContrastiveLossType,
     GlobalWorkspaceBase,
-    LossCoefs,
     SaveMigrations,
 )
 from shimmer.modules.global_workspace import (
@@ -100,19 +98,12 @@ def main():
     gw_type: str
     if config.global_workspace.use_fusion_model:
         gw_type = "gw_fusion"
-        loss_coefs_fusion: BroadcastLossCoefs = {
-            "contrastives": config.global_workspace.loss_coefficients.contrastives,
-            "fused": config.global_workspace.loss_coefficients.fused,
-            "translations": config.global_workspace.loss_coefficients.translations,
-            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-            "cycles": config.global_workspace.loss_coefficients.cycles,
-        }
         module = GlobalWorkspace(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            loss_coefs_fusion,
+            config.global_workspace.loss_coefficients,
             config.global_workspace.selection_temperature,
             config.training.optim.lr,
             config.training.optim.weight_decay,
@@ -125,19 +116,13 @@ def main():
         )
     else:
         gw_type = "gw"
-        loss_coefs: LossCoefs = {
-            "demi_cycles": config.global_workspace.loss_coefficients.demi_cycles,
-            "cycles": config.global_workspace.loss_coefficients.cycles,
-            "translations": config.global_workspace.loss_coefficients.translations,
-            "contrastives": config.global_workspace.loss_coefficients.contrastives,
-        }
 
         module = GlobalWorkspace2Domains(
             domain_modules,
             gw_encoders,
             gw_decoders,
             config.global_workspace.latent_dim,
-            loss_coefs,
+            config.global_workspace.loss_coefficients,
             config.training.optim.lr,
             config.training.optim.weight_decay,
             scheduler_args=SchedulerArgs(

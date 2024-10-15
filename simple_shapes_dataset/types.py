@@ -174,14 +174,6 @@ class DomainProportion(BaseModel):
     proportion: float
 
 
-class LossCoeffients(BaseModel):
-    cycles: float = 1.0
-    demi_cycles: float = 1.0
-    translations: float = 1.0
-    contrastives: float = 0.01
-    fused: float = 1.0
-
-
 class GlobalWorkspace(BaseModel):
     latent_dim: int = 12
     use_fusion_model: bool = False
@@ -198,7 +190,13 @@ class GlobalWorkspace(BaseModel):
     decoders: EncodersConfig = EncodersConfig()
     sync_prop: float = 1.0
     domain_proportions: Sequence[DomainProportion]
-    loss_coefficients: LossCoeffients = LossCoeffients()
+    loss_coefficients: Mapping[str, float] = {
+        "cycles": 1.0,
+        "demi_cycles": 1.0,
+        "translations": 1.0,
+        "contrastives": 0.01,
+        "fused": 1.0,
+    }
     domain_args: Mapping[str, Any]
     checkpoint: Path | None = None
 
