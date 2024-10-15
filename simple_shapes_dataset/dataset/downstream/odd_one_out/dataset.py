@@ -19,7 +19,7 @@ class OddOneOutDataset(Subset, torchdata.Dataset):
         dataset_path: str | Path,
         split: str,
         domain_classes: Mapping[DomainDesc, type[DataDomain]],
-        max_size: int = -1,
+        max_size: int | None = None,
         transforms: Mapping[str, Callable[[Any], Any]] | None = None,
         domain_args: Mapping[str, Any] | None = None,
     ):
@@ -61,8 +61,9 @@ class OddOneOutDataset(Subset, torchdata.Dataset):
 
         lengths = {len(domain) for domain in self.domains.values()}
         assert len(lengths) == 1, "Domains have different lengths"
-        self.dataset_size = next(iter(lengths))
-        if self.max_size != -1:
+        dataset_size = next(iter(lengths))
+        self.dataset_size = min(dataset_size, max_size or dataset_size)
+        if self.max_size is not None:
             assert (
                 self.max_size <= self.dataset_size
             ), "Max sizes can only be lower than actual size."
