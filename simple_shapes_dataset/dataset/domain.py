@@ -19,7 +19,7 @@ class SimpleShapesImages(DataDomain):
         self,
         dataset_path: str | Path,
         split: str,
-        max_size: int,
+        max_size: int | None = None,
         transform: Callable[[Image.Image], Any] | None = None,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
@@ -30,7 +30,10 @@ class SimpleShapesImages(DataDomain):
         self.image_path = (self.dataset_path / self.split).resolve()
         self.transform = transform
         self.additional_args = additional_args
-        self.dataset_size = np.clip(len(list(self.image_path.iterdir())), 0, max_size)
+        self.dataset_size = min(
+            len(list(self.image_path.iterdir())),
+            max_size or len(list(self.image_path.iterdir())),
+        )
 
     def __len__(self) -> int:
         return self.dataset_size
@@ -60,7 +63,7 @@ class SimpleShapesPretrainedVisual(DataDomain):
         self,
         dataset_path: str | Path,
         split: str,
-        max_size: int,
+        max_size: int | None = None,
         transform: Callable[[torch.Tensor], Any] | None = None,
         additional_args: PretrainedVisualAdditionalArgs | None = None,
     ) -> None:
@@ -78,7 +81,7 @@ class SimpleShapesPretrainedVisual(DataDomain):
             / f"saved_latents/{split}/{self.additional_args['presaved_path']}"
         )
         self.latents = torch.from_numpy(np.load(self.presaved_path.resolve()))
-        self.dataset_size = np.clip(self.latents.size(0), 0, max_size)
+        self.dataset_size = min(self.latents.size(0), max_size or self.latents.size(0))
 
         assert (self.dataset_path / f"{split}_unpaired.npy").exists()
         unpaired = np.load(self.dataset_path / f"{split}_unpaired.npy")
@@ -121,7 +124,7 @@ class SimpleShapesAttributes(DataDomain):
         self,
         dataset_path: str | Path,
         split: str,
-        max_size: int,
+        max_size: int | None = None,
         transform: Callable[[Attribute], Any] | None = None,
         additional_args: AttributesAdditionalArgs | None = None,
     ) -> None:
@@ -136,7 +139,7 @@ class SimpleShapesAttributes(DataDomain):
 
         default_args = AttributesAdditionalArgs(n_unpaired=1)
         self.additional_args = additional_args or default_args
-        self.dataset_size = np.clip(self.labels.size(0), 0, max_size)
+        self.dataset_size = min(self.labels.size(0), max_size or self.labels.size(0))
 
         assert (self.dataset_path / f"{split}_unpaired.npy").exists()
         assert self.additional_args["n_unpaired"] >= 1, "n_unpaired should be >= 1"
@@ -196,7 +199,7 @@ class SimpleShapesRawText(DataDomain):
         self,
         dataset_path: str | Path,
         split: str,
-        max_size: int,
+        max_size: int | None = None,
         transform: Callable[[RawText], Any] | None = None,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
@@ -212,7 +215,7 @@ class SimpleShapesRawText(DataDomain):
         )
         self.transform = transform
         self.additional_args = additional_args or {}
-        self.dataset_size = np.clip(len(self.captions), 0, max_size)
+        self.dataset_size = min(len(self.captions), max_size or len(self.captions))
 
     def __len__(self) -> int:
         return self.dataset_size
@@ -232,7 +235,7 @@ class SimpleShapesText(DataDomain):
         self,
         dataset_path: str | Path,
         split: str,
-        max_size: int,
+        max_size: int | None = None,
         transform: Callable[[Text], Any] | None = None,
         additional_args: dict[str, Any] | None = None,
     ) -> None:
@@ -249,10 +252,8 @@ class SimpleShapesText(DataDomain):
         self.additional_args = additional_args or {}
         self.latent_filename = self.additional_args.get("latent_filename", "latent")
 
-        self.raw_text = SimpleShapesRawText(self.dataset_path, self.split, max_size)
-        self.attributes = SimpleShapesAttributes(
-            self.dataset_path, self.split, max_size
-        )
+        self.raw_text = SimpleShapesRawText(self.dataset_path, self.split)
+        self.attributes = SimpleShapesAttributes(self.dataset_path, self.split)
 
         self.bert_mean = torch.from_numpy(
             np.load(self.dataset_path / f"{self.latent_filename}_mean.npy")
@@ -267,7 +268,9 @@ class SimpleShapesText(DataDomain):
         assert bert_data.ndim == 2
         self.bert_data = (bert_data - self.bert_mean) / self.bert_std
         self.transform = transform
-        self.dataset_size = np.clip(self.bert_data.size(0), 0, max_size)
+        self.dataset_size = min(
+            self.bert_data.size(0), max_size or self.bert_data.size(0)
+        )
 
     def __len__(self) -> int:
         return self.dataset_size
