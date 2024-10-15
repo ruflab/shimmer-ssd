@@ -16,7 +16,7 @@ from simple_shapes_dataset import LOGGER
 
 
 def migrate_model(ckpt_path: str | PathLike, migration_path: str | PathLike, **kwargs):
-    default_torch_kwargs: dict[str, Any] = {"weights_only": True}
+    default_torch_kwargs: dict[str, Any] = {"weights_only": False}
     default_torch_kwargs.update(kwargs)
 
     if Path(migration_path).name == "gw":
