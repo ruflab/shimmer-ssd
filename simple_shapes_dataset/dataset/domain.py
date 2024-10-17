@@ -30,9 +30,10 @@ class SimpleShapesImages(DataDomain):
         self.image_path = (self.dataset_path / self.split).resolve()
         self.transform = transform
         self.additional_args = additional_args
+        dataset_size = len(list(self.image_path.iterdir()))
         self.dataset_size = min(
-            len(list(self.image_path.iterdir())),
-            max_size or len(list(self.image_path.iterdir())),
+            dataset_size,
+            max_size or dataset_size,
         )
 
     def __len__(self) -> int:
@@ -81,7 +82,8 @@ class SimpleShapesPretrainedVisual(DataDomain):
             / f"saved_latents/{split}/{self.additional_args['presaved_path']}"
         )
         self.latents = torch.from_numpy(np.load(self.presaved_path.resolve()))
-        self.dataset_size = min(self.latents.size(0), max_size or self.latents.size(0))
+        dataset_size = self.latents.size(0)
+        self.dataset_size = min(dataset_size, max_size or dataset_size)
 
         assert (self.dataset_path / f"{split}_unpaired.npy").exists()
         unpaired = np.load(self.dataset_path / f"{split}_unpaired.npy")
@@ -139,7 +141,8 @@ class SimpleShapesAttributes(DataDomain):
 
         default_args = AttributesAdditionalArgs(n_unpaired=1)
         self.additional_args = additional_args or default_args
-        self.dataset_size = min(self.labels.size(0), max_size or self.labels.size(0))
+        dataset_size = self.labels.size(0)
+        self.dataset_size = min(dataset_size, max_size or dataset_size)
 
         assert (self.dataset_path / f"{split}_unpaired.npy").exists()
         assert self.additional_args["n_unpaired"] >= 1, "n_unpaired should be >= 1"
@@ -215,7 +218,8 @@ class SimpleShapesRawText(DataDomain):
         )
         self.transform = transform
         self.additional_args = additional_args or {}
-        self.dataset_size = min(len(self.captions), max_size or len(self.captions))
+        dataset_size = len(self.captions)
+        self.dataset_size = min(dataset_size, max_size or dataset_size)
 
     def __len__(self) -> int:
         return self.dataset_size
@@ -268,9 +272,8 @@ class SimpleShapesText(DataDomain):
         assert bert_data.ndim == 2
         self.bert_data = (bert_data - self.bert_mean) / self.bert_std
         self.transform = transform
-        self.dataset_size = min(
-            self.bert_data.size(0), max_size or self.bert_data.size(0)
-        )
+        dataset_size = self.bert_data.size(0)
+        self.dataset_size = min(dataset_size, max_size or dataset_size)
 
     def __len__(self) -> int:
         return self.dataset_size
