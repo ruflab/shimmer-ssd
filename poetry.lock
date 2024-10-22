@@ -2857,7 +2857,7 @@ wandb = "^0.18.3"
 type = "git"
 url = "git@github.com:ruflab/simple-shapes-dataset.git"
 reference = "main"
-resolved_reference = "f1a41e899e75ff7fb4fb66527d7622a1dffc73d1"
+resolved_reference = "8412239c45086eac94af1c82447d68d6f111c94a"
 
 [[package]]
 name = "six"
