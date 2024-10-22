@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "simple-shapes-dataset"
+name = "shimmer-ssd"
 version = "0.4.0.dev"
 description = "The Simple Shapes Dataset used in the Global Workspace Paper"
 authors = ["Benjamin Devillers <benjamin.devillers@cnrs.fr>"]
@@ -21,6 +21,7 @@ pillow = "^10.3.0"
 numpy = "^1.26"
 torch = "^2.0.1"
 shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "main"}
+simple-shapes-dataset = {git = "git@github.com:ruflab/simple-shapes-dataset.git", rev = "main"}
 wandb = "^0.18.3"
 lightning = ">=2.1.0"
 pydantic = "^2.6.0"
@@ -52,9 +53,6 @@ pytest = "^7.3.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-shapesd = "simple_shapes_dataset.cli:cli"
 
 
 [tool.ruff]

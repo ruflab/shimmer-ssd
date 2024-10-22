@@ -73,7 +73,7 @@ import torchvision
 
 from shimmer import ShimmerDataset
 
-from simple_shapes_dataset.dataset import (
+from simple_shapes_dataset import (
     NormalizeAttributes, attribute_to_tensor, get_default_domains
 )
 
@@ -102,7 +102,7 @@ attr_domain = item["attr"]
 
 If you need to use the alignment splits, use:
 ```python
-from simple_shapes_dataset.dataset import get_aligned_datasets, get_default_domains
+from simple_shapes_dataset import get_aligned_datasets, get_default_domains
 
 datasets = get_aligned_datasets(
     "/path/to/dataset",

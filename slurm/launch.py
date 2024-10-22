@@ -1,7 +1,7 @@
 from auto_sbatch import ExperimentHandler, GridSearch, SBatch
 
-from simple_shapes_dataset import DEBUG_MODE, LOGGER, PROJECT_DIR
-from simple_shapes_dataset.config import load_config
+from shimmer_ssd import DEBUG_MODE, LOGGER, PROJECT_DIR
+from shimmer_ssd.config import load_config
 
 
 def main():

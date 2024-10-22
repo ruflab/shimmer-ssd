@@ -1,10 +1,9 @@
 import lightning.pytorch as pl
+from simple_shapes_dataset import SimpleShapesDataModule, get_default_domains
 from utils import PROJECT_DIR
 
-from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.domain import get_default_domains
-from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
-from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
+from shimmer_ssd.modules.domains.attribute import AttributeDomainModule
+from shimmer_ssd.modules.domains.visual import VisualDomainModule
 
 
 def test_attr_train():

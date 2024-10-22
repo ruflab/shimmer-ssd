@@ -1,13 +1,12 @@
 from lightning.pytorch.loggers.wandb import WandbLogger
 from shimmer import DomainModule, GWDecoder, GWEncoder
 from shimmer.modules.global_workspace import GlobalWorkspace2Domains
+from simple_shapes_dataset import SimpleShapesDataModule, get_default_domains
 from utils import PROJECT_DIR
 
-from simple_shapes_dataset.dataset.data_module import SimpleShapesDataModule
-from simple_shapes_dataset.dataset.domain import get_default_domains
-from simple_shapes_dataset.logging import LogGWImagesCallback, attribute_image_grid
-from simple_shapes_dataset.modules.domains.attribute import AttributeDomainModule
-from simple_shapes_dataset.modules.domains.visual import VisualDomainModule
+from shimmer_ssd.logging import LogGWImagesCallback, attribute_image_grid
+from shimmer_ssd.modules.domains.attribute import AttributeDomainModule
+from shimmer_ssd.modules.domains.visual import VisualDomainModule
 
 
 def test_attribute_figure_grid():
