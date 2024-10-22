@@ -18,7 +18,6 @@ from shimmer import (
 from shimmer.modules.global_workspace import (
     GlobalWorkspace,
     GlobalWorkspace2Domains,
-    SchedulerArgs,
 )
 from simple_shapes_dataset import (
     SimpleShapesDataModule,
@@ -27,9 +26,12 @@ from simple_shapes_dataset import (
     nullify_attribute_rotation,
 )
 from torch import set_float32_matmul_precision
+from torch.optim.lr_scheduler import OneCycleLR
+from torch.optim.optimizer import Optimizer
 
 from shimmer_ssd import DEBUG_MODE, PROJECT_DIR
 from shimmer_ssd.config import load_config
+from shimmer_ssd.dataset.pre_process import TokenizeCaptions
 from shimmer_ssd.logging import LogGWImagesCallback
 from shimmer_ssd.modules.contrastive_loss import VSEPPContrastiveLoss
 from shimmer_ssd.modules.domains import load_pretrained_domains
@@ -59,6 +61,13 @@ def main():
     if config.domain_modules.visual.color_blind:
         logging.info("v domain will be color blind.")
         additional_transforms["v"] = [color_blind_visual_domain]
+    additional_transforms["t"] = [
+        TokenizeCaptions(
+            config.domain_modules.text.vocab_path,
+            config.domain_modules.text.merges_path,
+            config.domain_modules.text.seq_length,
+        )
+    ]
 
     data_module = SimpleShapesDataModule(
         config.dataset.path,
@@ -94,6 +103,16 @@ def main():
             torch.tensor([1 / 0.07]).log(),
         )
 
+    def get_scheduler(optimizer: Optimizer) -> OneCycleLR:
+        return OneCycleLR(
+            optimizer,
+            config.training.optim.max_lr,
+            config.training.max_steps,
+            pct_start=0.2,
+            div_factor=5,
+            final_div_factor=5,
+        )
+
     module: GlobalWorkspaceBase
     gw_type: str
     if config.global_workspace.use_fusion_model:
@@ -107,12 +126,9 @@ def main():
             config.global_workspace.selection_temperature,
             config.training.optim.lr,
             config.training.optim.weight_decay,
-            scheduler_args=SchedulerArgs(
-                max_lr=config.training.optim.max_lr,
-                total_steps=config.training.max_steps,
-            ),
             learn_logit_scale=config.global_workspace.learn_logit_scale,
             contrastive_loss=contrastive_fn,
+            scheduler=get_scheduler,
         )
     else:
         gw_type = "gw"
@@ -125,10 +141,6 @@ def main():
             config.global_workspace.loss_coefficients,
             config.training.optim.lr,
             config.training.optim.weight_decay,
-            scheduler_args=SchedulerArgs(
-                max_lr=config.training.optim.max_lr,
-                total_steps=config.training.max_steps,
-            ),
             learn_logit_scale=config.global_workspace.learn_logit_scale,
             contrastive_loss=contrastive_fn,
         )
@@ -151,6 +163,8 @@ def main():
             mode="val",
             every_n_epochs=config.logging.log_val_medias_every_n_epochs,
             filter=config.logging.filter_images,
+            vocab=config.domain_modules.text.vocab_path,
+            merges=config.domain_modules.text.merges_path,
         ),
         LogGWImagesCallback(
             val_samples,
@@ -158,6 +172,8 @@ def main():
             mode="test",
             every_n_epochs=None,
             filter=config.logging.filter_images,
+            vocab=config.domain_modules.text.vocab_path,
+            merges=config.domain_modules.text.merges_path,
         ),
         LogGWImagesCallback(
             train_samples,
@@ -165,6 +181,8 @@ def main():
             mode="train",
             every_n_epochs=config.logging.log_train_medias_every_n_epochs,
             filter=config.logging.filter_images,
+            vocab=config.domain_modules.text.vocab_path,
+            merges=config.domain_modules.text.merges_path,
         ),
     ]
 

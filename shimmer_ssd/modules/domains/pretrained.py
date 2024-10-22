@@ -14,6 +14,7 @@ from shimmer_ssd.modules.domains.attribute import (
     AttributeLegacyDomainModule,
     AttributeWithUnpairedDomainModule,
 )
+from shimmer_ssd.modules.domains.text import GRUTextDomainModule, Text2Attr
 from shimmer_ssd.modules.domains.visual import (
     VisualDomainModule,
     VisualLatentDomainModule,
@@ -63,6 +64,28 @@ def load_pretrained_module(
 
         case DomainModelVariantType.attr_legacy:
             module = AttributeLegacyDomainModule()
+
+        case DomainModelVariantType.t:
+            module = GRUTextDomainModule.load_from_checkpoint(
+                domain_checkpoint, **domain.args, strict=False
+            )
+            # Freezes the projector
+            # module.embeddings.requires_grad_(False)
+            # module.projector.requires_grad_(False)
+
+        case DomainModelVariantType.t_attr:
+            assert (
+                "text_model_path" in domain.args
+            ), 'add "text_model_path" to the domain\'s args.'
+            text_model = GRUTextDomainModule.load_from_checkpoint(
+                root_path / domain.args["text_model_path"],
+                **domain.args.get("t_args", {}),
+            )
+            module = Text2Attr.load_from_checkpoint(
+                domain_checkpoint,
+                text_model=text_model,
+                **domain.args.get("model_args", {}),
+            )
 
         case _:
             raise ConfigurationError(f"Unknown domain type {domain.domain_type.name}")

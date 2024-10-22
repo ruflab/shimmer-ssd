@@ -1,14 +1,14 @@
 training:
     optim:
-        lr: 4e-3
-        max_lr: 4e-3
+        lr: 1e-3
+        1ax_lr: 1e-3
         weight_decay: 1e-6
 
-    max_steps: 200000
+    max_steps: 19000
 
 logging:
-    log_val_medias_every_n_epochs: 50
-    log_train_medias_every_n_epochs: 50
+    log_val_medias_every_n_epochs: 10
+    log_train_medias_every_n_epochs: 10
     filter_images:
         - pred_trans_attr_to_attr
         - pred_trans_v_latents_to_v_latents

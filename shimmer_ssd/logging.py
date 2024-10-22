@@ -1,7 +1,7 @@
 import io
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
-from typing import Any, Literal, cast
+from typing import Any, Generic, Literal, TypeVar, cast
 
 import lightning.pytorch as pl
 import matplotlib
@@ -16,22 +16,25 @@ from PIL import Image
 from shimmer.modules.global_workspace import GlobalWorkspaceBase, GWPredictionsBase
 from simple_shapes_dataset import (
     UnnormalizeAttributes,
-    attr_to_str,
     tensor_to_attribute,
 )
 from simple_shapes_dataset.cli import generate_image
+from tokenizers.implementations import ByteLevelBPETokenizer
 from torchvision.utils import make_grid
 
 from shimmer_ssd import LOGGER
+from shimmer_ssd.modules.domains.text import GRUTextDomainModule, Text2Attr
 from shimmer_ssd.modules.domains.visual import VisualLatentDomainModule
 
 matplotlib.use("Agg")
 
+_T = TypeVar("_T")
 
-class LogSamplesCallback(ABC, pl.Callback):
+
+class LogSamplesCallback(Generic[_T], ABC, pl.Callback):
     def __init__(
         self,
-        reference_samples: Any,
+        reference_samples: _T,
         log_key: str,
         mode: Literal["train", "val", "test"],
         every_n_epochs: int | None = 1,
@@ -42,14 +45,21 @@ class LogSamplesCallback(ABC, pl.Callback):
         self.log_key = log_key
         self.mode = mode
 
-    def to(self, samples: Any, device: torch.device) -> Any:
-        if isinstance(samples, torch.Tensor):
-            return samples.to(device)
+    def to(self, samples: _T, device: torch.device) -> _T:
         raise NotImplementedError
+
+    def setup(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str
+    ) -> None:
+        if stage != "fit":
+            return
+        device = trainer.strategy.root_device
+        self.reference_samples = self.to(self.reference_samples, device)
+        for logger in trainer.loggers:
+            self.log_samples(logger, self.reference_samples, "reference")
 
     def on_callback(
         self,
-        current_epoch: int,
         loggers: Sequence[Logger],
         pl_module: pl.LightningModule,
     ) -> None:
@@ -58,9 +68,6 @@ class LogSamplesCallback(ABC, pl.Callback):
             return
 
         samples = self.to(self.reference_samples, pl_module.device)
-        if current_epoch == 0:
-            for logger in loggers:
-                self.log_samples(logger, samples, "reference")
 
         with torch.no_grad():
             pl_module.eval()
@@ -84,13 +91,13 @@ class LogSamplesCallback(ABC, pl.Callback):
             return
 
         LOGGER.debug("[LOGGER] on_train_epoch_end called")
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
-    def on_fit_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+    def on_train_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         if self.mode == "test":
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def on_validation_epoch_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
@@ -104,7 +111,7 @@ class LogSamplesCallback(ABC, pl.Callback):
         ):
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     def on_test_epoch_end(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
@@ -112,10 +119,10 @@ class LogSamplesCallback(ABC, pl.Callback):
         if self.mode != "test":
             return
 
-        return self.on_callback(trainer.current_epoch, trainer.loggers, pl_module)
+        return self.on_callback(trainer.loggers, pl_module)
 
     @abstractmethod
-    def log_samples(self, logger: Logger, samples: Any, mode: str) -> None: ...
+    def log_samples(self, logger: Logger, samples: _T, mode: str) -> None: ...
 
 
 def get_pil_image(figure: Figure) -> Image.Image:
@@ -213,7 +220,7 @@ def attribute_image_grid(
     )
 
 
-class LogAttributesCallback(LogSamplesCallback):
+class LogAttributesCallback(LogSamplesCallback[Sequence[torch.Tensor]]):
     def __init__(
         self,
         reference_samples: Sequence[torch.Tensor],
@@ -247,24 +254,59 @@ class LogAttributesCallback(LogSamplesCallback):
         logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
 
-class LogTextCallback(LogSamplesCallback):
+class LogTextCallback(LogSamplesCallback[Mapping[str, torch.Tensor]]):
     def __init__(
         self,
-        reference_samples: torch.Tensor,
+        reference_samples: Mapping[str, torch.Tensor],
         log_key: str,
         mode: Literal["train", "val", "test"],
         image_size: int,
+        vocab: str,
+        merges: str,
         every_n_epochs: int | None = 1,
         ncols: int = 8,
     ) -> None:
         super().__init__(reference_samples, log_key, mode, every_n_epochs)
         self.image_size = image_size
         self.ncols = ncols
+        self.tokenizer = ByteLevelBPETokenizer(vocab, merges)
 
     def to(
         self, samples: Mapping[str, torch.Tensor], device: torch.device
     ) -> dict[str, torch.Tensor]:
         return {x: samples[x].to(device) for x in samples}
+
+    def setup(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str
+    ) -> None:
+        if stage != "fit":
+            return
+        assert isinstance(pl_module, GRUTextDomainModule)
+        device = trainer.strategy.root_device
+        self.reference_samples = self.to(self.reference_samples, device)
+        for logger in trainer.loggers:
+            self.log_samples(logger, self.reference_samples, "reference")
+
+    def on_callback(
+        self,
+        loggers: Sequence[Logger],
+        pl_module: pl.LightningModule,
+    ) -> None:
+        assert isinstance(pl_module, GRUTextDomainModule)
+
+        samples = self.to(self.reference_samples, pl_module.device)
+
+        if not len(loggers):
+            LOGGER.debug("[LOGGER] No logger found.")
+            return
+
+        with torch.no_grad():
+            pl_module.eval()
+            generated_samples = pl_module(samples)
+            pl_module.train()
+
+        for logger in loggers:
+            self.log_samples(logger, generated_samples, "prediction")
 
     def log_samples(
         self, logger: Logger, samples: Mapping[str, torch.Tensor], mode: str
@@ -273,34 +315,15 @@ class LogTextCallback(LogSamplesCallback):
             LOGGER.warning("Only logging to wandb is supported")
             return
 
-        attr_samples = [samples["cls"], samples["attr"], samples["unpaired"]]
-        grammar_predictions: dict[str, list[int]]
-        if mode == "reference":
-            grammar_predictions = {
-                n: samples[n].long()[:, 0].detach().cpu().tolist()
-                for n in samples
-                if n not in ["bert", "cls", "attr", "unpaired"]
-            }
-        else:
-            grammar_predictions = {
-                n: samples[n].argmax(dim=-1).detach().cpu().tolist()
-                for n in samples
-                if n not in ["bert", "cls", "attr", "unpaired"]
-            }
-        image = attribute_image_grid(
-            attr_samples,
-            image_size=self.image_size,
-            ncols=self.ncols,
+        assert self.tokenizer is not None
+        text = self.tokenizer.decode_batch(
+            samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
         )
-        logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
-
-        unnormalizer = UnnormalizeAttributes(image_size=self.image_size)
-        attributes = unnormalizer(tensor_to_attribute(attr_samples))
-        text = [[t] for t in attr_to_str(attributes, grammar_predictions)]
+        text = [[t.replace("<pad>", "")] for t in text]
         logger.log_text(key=f"{self.log_key}_{mode}_str", columns=["text"], data=text)
 
 
-class LogVisualCallback(LogSamplesCallback):
+class LogVisualCallback(LogSamplesCallback[torch.Tensor]):
     def __init__(
         self,
         reference_samples: torch.Tensor,
@@ -311,6 +334,9 @@ class LogVisualCallback(LogSamplesCallback):
     ) -> None:
         super().__init__(reference_samples, log_key, mode, every_n_epochs)
         self.ncols = ncols
+
+    def to(self, samples: torch.Tensor, device: torch.device) -> torch.Tensor:
+        return samples.to(device)
 
     def log_samples(self, logger: Logger, samples: torch.Tensor, mode: str) -> None:
         if not isinstance(logger, WandbLogger):
@@ -320,6 +346,106 @@ class LogVisualCallback(LogSamplesCallback):
         LOGGER.debug("[VISUAL LOGGER] logging samples")
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
         logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
+
+
+class LogText2AttrCallback(
+    LogSamplesCallback[
+        Mapping[str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]]
+    ]
+):
+    def __init__(
+        self,
+        reference_samples: Mapping[
+            str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]
+        ],
+        log_key: str,
+        mode: Literal["train", "val", "test"],
+        every_n_epochs: int | None = 1,
+        image_size: int = 32,
+        ncols: int = 8,
+        vocab: str | None = None,
+        merges: str | None = None,
+    ) -> None:
+        super().__init__(reference_samples, log_key, mode, every_n_epochs)
+        self.image_size = image_size
+        self.ncols = ncols
+        self.tokenizer = ByteLevelBPETokenizer(vocab, merges)
+        self.reference_samples = reference_samples
+
+    def to(
+        self,
+        samples: Mapping[str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]],
+        device: torch.device,
+    ) -> dict[str, dict[str, torch.Tensor] | list[torch.Tensor]]:
+        latents: dict[str, dict[str, torch.Tensor] | list[torch.Tensor]] = {}
+        for domain_name, domain in samples.items():
+            if isinstance(domain, dict):
+                latents[domain_name] = {k: x.to(device) for k, x in domain.items()}
+            elif isinstance(domain, list):
+                latents[domain_name] = [x.to(device) for x in domain]
+        return latents
+
+    def setup(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str
+    ) -> None:
+        if stage != "fit":
+            return
+        assert isinstance(pl_module, Text2Attr)
+        device = trainer.strategy.root_device
+        self.reference_samples = self.to(self.reference_samples, device)
+        for logger in trainer.loggers:
+            self.log_samples(logger, self.reference_samples, "reference")
+
+    def on_callback(
+        self,
+        loggers: Sequence[Logger],
+        pl_module: pl.LightningModule,
+    ) -> None:
+        assert isinstance(pl_module, Text2Attr)
+
+        samples = self.to(self.reference_samples, pl_module.device)
+
+        if not len(loggers):
+            LOGGER.debug("[LOGGER] No logger found.")
+            return
+
+        with torch.no_grad():
+            pl_module.eval()
+            generated_samples = pl_module(samples["t"])
+            pl_module.train()
+
+        for logger in loggers:
+            self.log_samples(logger, generated_samples, "prediction")
+
+    def log_samples(
+        self,
+        logger: Logger,
+        samples: Mapping[str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]],
+        mode: str,
+    ) -> None:
+        if not isinstance(logger, WandbLogger):
+            LOGGER.warning("Only logging to wandb is supported")
+            return
+
+        for domain_name, domain in samples.items():
+            if domain_name == "t":
+                assert self.tokenizer is not None
+                assert isinstance(domain, dict)
+                text = self.tokenizer.decode_batch(
+                    domain["tokens"].detach().cpu().tolist(), skip_special_tokens=True
+                )
+                text = [[t.replace("<pad>", "")] for t in text]
+                logger.log_text(
+                    key=f"{self.log_key}_{mode}_str", columns=["text"], data=text
+                )
+            elif domain_name == "attr":
+                assert isinstance(domain, list)
+                image = attribute_image_grid(
+                    domain,
+                    image_size=self.image_size,
+                    ncols=self.ncols,
+                )
+                logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
 
 class LogGWImagesCallback(pl.Callback):
@@ -332,6 +458,8 @@ class LogGWImagesCallback(pl.Callback):
         image_size: int = 32,
         ncols: int = 8,
         filter: Sequence[str] | None = None,
+        vocab: str | None = None,
+        merges: str | None = None,
     ) -> None:
         super().__init__()
         self.mode = mode
@@ -341,21 +469,37 @@ class LogGWImagesCallback(pl.Callback):
         self.image_size = image_size
         self.ncols = ncols
         self.filter = filter
+        self.tokenizer = None
+        if vocab is not None and merges is not None:
+            self.tokenizer = ByteLevelBPETokenizer(vocab, merges)
 
     def to(
         self,
         samples: Mapping[
-            frozenset[str], Mapping[str, torch.Tensor | Sequence[torch.Tensor]]
+            frozenset[str],
+            Mapping[
+                str, torch.Tensor | Sequence[torch.Tensor] | Mapping[str, torch.Tensor]
+            ],
         ],
         device: torch.device,
-    ) -> dict[frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]]:
-        out: dict[frozenset[str], dict[str, torch.Tensor | Sequence[torch.Tensor]]] = {}
+    ) -> dict[
+        frozenset[str],
+        dict[str, torch.Tensor | list[torch.Tensor] | dict[Any, torch.Tensor]],
+    ]:
+        out: dict[
+            frozenset[str],
+            dict[str, torch.Tensor | list[torch.Tensor] | dict[Any, torch.Tensor]],
+        ] = {}
         for domain_names, domains in samples.items():
-            latents: dict[str, torch.Tensor | Sequence[torch.Tensor]] = {}
+            latents: dict[
+                str, torch.Tensor | list[torch.Tensor] | dict[str, torch.Tensor]
+            ] = {}
             for domain_name, domain in domains.items():
                 if isinstance(domain, torch.Tensor):
                     latents[domain_name] = domain.to(device)
-                else:
+                elif isinstance(domain, dict):
+                    latents[domain_name] = {k: x.to(device) for k, x in domain.items()}
+                elif isinstance(domain, list):
                     latents[domain_name] = [x.to(device) for x in domain]
             out[domain_names] = latents
         return out
@@ -471,7 +615,7 @@ class LogGWImagesCallback(pl.Callback):
 
         return self.on_callback(trainer.loggers, pl_module)
 
-    def on_fit_end(
+    def on_train_end(
         self,
         trainer: pl.Trainer,
         pl_module: pl.LightningModule,
@@ -509,6 +653,10 @@ class LogGWImagesCallback(pl.Callback):
                 self.log_visual_samples(logger, module.decode_images(samples), mode)
             case "attr":
                 self.log_attribute_samples(logger, samples, mode)
+            case "t":
+                self.log_text_samples(logger, samples, mode)
+                if "attr" in samples:
+                    self.log_attribute_samples(logger, samples["attr"], mode + "_attr")
 
     def log_visual_samples(
         self,
@@ -531,3 +679,16 @@ class LogGWImagesCallback(pl.Callback):
             ncols=self.ncols,
         )
         logger.log_image(key=f"{self.log_key}/{mode}", images=[image])
+
+    def log_text_samples(
+        self,
+        logger: WandbLogger,
+        samples: Any,
+        mode: str,
+    ) -> None:
+        assert self.tokenizer is not None
+        text = self.tokenizer.decode_batch(
+            samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
+        )
+        text = [[t.replace("<pad>", "")] for t in text]
+        logger.log_text(key=f"{self.log_key}/{mode}", columns=["text"], data=text)

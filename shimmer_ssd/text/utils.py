@@ -1,6 +1,5 @@
 import math
 from itertools import permutations
-from typing import Any
 
 from attributes_to_language.composer import Composer
 from simple_shapes_dataset import Choice
@@ -69,10 +68,10 @@ def structure_category_from_choice(
 
 def choices_from_structure_categories(
     composer: Composer, grammar_predictions: dict[str, list[int]]
-) -> list[dict[str, Any]]:
-    all_choices: list[dict[str, Any]] = []
+) -> list[Choices]:
+    all_choices: list[Choices] = []
     for i in range(len(grammar_predictions["structure"])):
-        choices: dict[str, Any] = {
+        choices: Choices = {
             "variants": {
                 name.replace("variant_", ""): variant[i]
                 for name, variant in grammar_predictions.items()
