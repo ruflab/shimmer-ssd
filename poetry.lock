@@ -2820,9 +2820,9 @@ torch = "^2.0.1"
 
 [package.source]
 type = "git"
-url = "git@github.com:bdvllrs/shimmer.git"
+url = "git@github.com:ruflab/shimmer.git"
 reference = "main"
-resolved_reference = "666ded53ec628e22b056d4eac382335f9267d385"
+resolved_reference = "4f3d2be43b26ed0f81891e4c93d396e4ef35ea11"
 
 [[package]]
 name = "simple-shapes-dataset"
@@ -3640,4 +3640,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11"
-content-hash = "4092c19c65161ba0e7cb548b58655d08d44697eb2df7c802a97fa6e60c4b2564"
+content-hash = "d3343dceeda2ee658665cfedd8631418884223c6067b59d1af124cdc05bf1323"
