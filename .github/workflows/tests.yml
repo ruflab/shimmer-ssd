@@ -31,7 +31,7 @@ jobs:
             torch_version=$(poetry show torch --no-ansi | grep 'version' | awk '{print $3}')
             poetry add --lock --no-interaction --source torch-cpu "torch@$torch_version"
             torchvision_version=$(poetry show torchvision --no-ansi | grep 'version' | awk '{print $3}')
-            poetry add --lock --no-interaction --source torchvision-cpu "torchvision@$torchvision_version"
+            poetry add --lock --no-interaction --source torch-cpu "torchvision@$torchvision_version"
 
             # change source to use different deploy keys per repo
             eval `ssh-agent -s`
