@@ -33,16 +33,16 @@ jobs:
 
             # change source to use different deploy keys per repo
             eval `ssh-agent -s`
-            echo '${{ secrets.SHIMMER_DEPLOY }}' > ~/.ssh/shimmer_deploy_key
-            echo '${{ secrets.SHAPES_DEPLOY }}' > ~/.ssh/shapes_deploy_key
+            echo '${{ secrets.SHIMMER_DEPLOY }}' >> ~/.ssh/shimmer_deploy_key
+            echo '${{ secrets.SHAPES_DEPLOY }}' >> ~/.ssh/shapes_deploy_key
             cat << EOF > ~/.ssh/config
             Host github.com-shimmer
                 Hostname github.com
-                IdentityFile=/home/user/.ssh/shimmer_deploy_key
+                IdentityFile=$HOME/.ssh/shimmer_deploy_key
 
             Host github.com-shapes
                 Hostname github.com
-                IdentityFile=/home/user/.ssh/shapes_deploy_key
+                IdentityFile=$HOME/.ssh/shapes_deploy_key
             EOF
 
             sed -i "s|git@github.com:bdvllrs/shimmer.git|git@github.com-shimmer:bdvllrs/shimmer.git|" pyproject.toml
