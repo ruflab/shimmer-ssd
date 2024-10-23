@@ -24,6 +24,11 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.SHIMMER_DEPLOY }}
+            ${{ secrets.SHAPES_DEPLOY }}
       - name: Update torch's source to use CPU
         run: |
             # use cpu source for torch
@@ -32,26 +37,6 @@ jobs:
             poetry add --lock --no-interaction --source torch-cpu "torch@$torch_version"
             torchvision_version=$(poetry show torchvision --no-ansi | grep 'version' | awk '{print $3}')
             poetry add --lock --no-interaction --source torch-cpu "torchvision@$torchvision_version"
-
-            # change source to use different deploy keys per repo
-            eval `ssh-agent -s`
-            mkdir -p ~/.ssh
-            install -m 600 <(echo '${{ secrets.SHIMMER_DEPLOY }}') ~/.ssh/shimmer_deploy_key
-            install -m 600 <(echo '${{ secrets.SHAPES_DEPLOY }}') ~/.ssh/shapes_deploy_key
-            cat << EOF > ~/.ssh/config
-            Host github.com-shimmer
-                Hostname github.com
-                IdentityFile=$HOME/.ssh/shimmer_deploy_key
-
-            Host github.com-shapes
-                Hostname github.com
-                IdentityFile=$HOME/.ssh/shapes_deploy_key
-            EOF
-
-            sed -i "s|git@github.com:bdvllrs/shimmer.git|git@github.com-shimmer:bdvllrs/shimmer.git|" pyproject.toml
-            sed -i "s|git@github.com:ruflab/simple-shapes-dataset.git|git@github.com-shapes:ruflab/simple-shapes-dataset.git|" pyproject.toml
-
-            poetry lock --no-update
       - name: Load cached venv
         id: cached-poetry-dependencies
         uses: actions/cache@v4
