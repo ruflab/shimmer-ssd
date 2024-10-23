@@ -34,8 +34,8 @@ jobs:
             # change source to use different deploy keys per repo
             eval `ssh-agent -s`
             mkdir -p ~/.ssh
-            touch ~/.ssh/shimmer_deploy_key && echo '${{ secrets.SHIMMER_DEPLOY }}' > ~/.ssh/shimmer_deploy_key
-            touch ~/.ssh/shapes_deploy_key && echo '${{ secrets.SHAPES_DEPLOY }}' >> ~/.ssh/shapes_deploy_key
+            install -m 600 <(echo '${{ secrets.SHIMMER_DEPLOY }}') ~/.ssh/shimmer_deploy_key
+            install -m 600 <(echo '${{ secrets.SHAPES_DEPLOY }}') ~/.ssh/shapes_deploy_key
             cat << EOF > ~/.ssh/config
             Host github.com-shimmer
                 Hostname github.com
