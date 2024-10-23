@@ -2846,7 +2846,6 @@ opencv-python = "^4.7.0.72"
 pillow = "^10.3.0"
 pydantic = "^2.6.0"
 rich = "^13.4.2"
-shimmer = {git = "git@github.com:bdvllrs/shimmer.git", rev = "main"}
 torch = "^2.0.1"
 torchvision = ">=0.15.2"
 tqdm = ">=4.66.3,<4.67.0"
@@ -2857,7 +2856,7 @@ wandb = "^0.18.3"
 type = "git"
 url = "git@github.com:ruflab/simple-shapes-dataset.git"
 reference = "main"
-resolved_reference = "8412239c45086eac94af1c82447d68d6f111c94a"
+resolved_reference = "946ad9db54afaeaa54aa1af762a9f2694096f5ad"
 
 [[package]]
 name = "six"
