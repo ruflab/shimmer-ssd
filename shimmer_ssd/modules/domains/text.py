@@ -13,12 +13,11 @@ from shimmer.modules.vae import (
     gaussian_nll,
     kl_divergence_loss,
 )
+from simple_shapes_dataset.text import composer
+from simple_shapes_dataset.text.utils import inspect_all_choices
 from torch import nn
 from torch.optim.adamw import AdamW
 from torch.optim.lr_scheduler import OneCycleLR
-
-from shimmer_ssd.text import composer
-from shimmer_ssd.text.utils import inspect_all_choices
 
 
 class Encoder(VAEEncoder):
