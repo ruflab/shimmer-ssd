@@ -26,23 +26,12 @@ jobs:
           installer-parallel: true
       - name: Update torch's source to use CPU
         run: |
-          # use cpu source for torch
-          poetry source add torch-cpu --priority=explicit --no-interaction https://download.pytorch.org/whl/cpu
-          torch_version=$(poetry show torch --no-ansi | grep 'version' | awk '{print $3}')
-          poetry add --lock --no-interaction --source torch-cpu "torch@$torch_version"
-          # change source to use different deploy keys per repo
-          sed -i "s|git@github.com:bdvllrs/shimmer.git|git@github.com-shimmer:bdvllrs/shimmer.git|" pyproject.toml
-          sed -i "s|git@github.com:ruflab/simple-shapes-dataset.git|git@github.com-shapes:ruflab/simple-shapes-dataset.git|" pyproject.toml
-          poetry lock --no-update
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
+            # use cpu source for torch
+            poetry source add torch-cpu --priority=explicit --no-interaction https://download.pytorch.org/whl/cpu
+            torch_version=$(poetry show torch --no-ansi | grep 'version' | awk '{print $3}')
+            poetry add --lock --no-interaction --source torch-cpu "torch@$torch_version"
+
+            # change source to use different deploy keys per repo
             eval `ssh-agent -s`
             echo '${{ secrets.SHIMMER_DEPLOY }}' > ~/.ssh/shimmer_deploy_key
             echo '${{ secrets.SHAPES_DEPLOY }}' > ~/.ssh/shapes_deploy_key
@@ -55,6 +44,20 @@ jobs:
                 Hostname github.com
                 IdentityFile=/home/user/.ssh/shapes_deploy_key
             EOF
+
+            sed -i "s|git@github.com:bdvllrs/shimmer.git|git@github.com-shimmer:bdvllrs/shimmer.git|" pyproject.toml
+            sed -i "s|git@github.com:ruflab/simple-shapes-dataset.git|git@github.com-shapes:ruflab/simple-shapes-dataset.git|" pyproject.toml
+
+            poetry lock --no-update
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
             poetry install --no-interaction --with test,dev
       - name: Ruff Formatting
         run: poetry run ruff format --check
@@ -65,4 +68,4 @@ jobs:
           poetry run mypy --install-types --non-interactive .
       - name: Pytest
         run: |
-          poetry run pytest tests/
+            poetry run pytest tests/
