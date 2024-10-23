@@ -16,7 +16,7 @@ jobs:
         id: cached-poetry
         with: 
           path: ~/.local
-          key: poetry-0
+          key: poetry-1
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
