@@ -61,6 +61,9 @@ class Slurm(BaseModel):
 class Optim(BaseModel):
     lr: float = 1e-4
     max_lr: float = 5e-3
+    start_lr: float = 5e-4
+    end_lr: float = 5e-4
+    pct_start: float = 0.2
     weight_decay: float = 0.0
 
 

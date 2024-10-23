@@ -108,9 +108,10 @@ def main():
             optimizer,
             config.training.optim.max_lr,
             config.training.max_steps,
-            pct_start=0.2,
-            div_factor=5,
-            final_div_factor=5,
+            pct_start=config.training.optim.pct_start,
+            div_factor=config.training.optim.max_lr / config.training.optim.start_lr,
+            final_div_factor=config.training.optim.max_lr
+            / config.training.optim.end_lr,
         )
 
     module: GlobalWorkspaceBase
