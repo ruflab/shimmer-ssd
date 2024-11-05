@@ -160,8 +160,8 @@ class DomainModules(BaseModel):
 
 
 class EncodersConfig(BaseModel):
-    hidden_dim: int = 32
-    n_layers: int = 3
+    hidden_dim: int | Mapping[DomainModelVariantType, int] = 32
+    n_layers: int | Mapping[DomainModelVariantType, int] = 3
 
 
 class LoadedDomainConfig(BaseModel):

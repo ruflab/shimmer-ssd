@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from shimmer import DomainModule, GWDecoder, GWEncoder
@@ -96,14 +96,34 @@ def load_pretrained_domain(
     default_root_dir: Path,
     domain: LoadedDomainConfig,
     workspace_dim: int,
-    encoder_hidden_dim: int,
-    encoder_n_layers: int,
-    decoder_hidden_dim: int,
-    decoder_n_layers: int,
+    encoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
+    encoders_n_layers: int | Mapping[DomainModelVariantType, int],
+    decoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
+    decoders_n_layers: int | Mapping[DomainModelVariantType, int],
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[DomainModule, Module, Module]:
     module = load_pretrained_module(default_root_dir, domain)
+    encoder_hidden_dim = (
+        encoders_hidden_dim
+        if isinstance(encoders_hidden_dim, int)
+        else encoders_hidden_dim[domain.domain_type]
+    )
+    decoder_hidden_dim = (
+        decoders_hidden_dim
+        if isinstance(decoders_hidden_dim, int)
+        else decoders_hidden_dim[domain.domain_type]
+    )
+    encoder_n_layers = (
+        encoders_n_layers
+        if isinstance(encoders_n_layers, int)
+        else encoders_n_layers[domain.domain_type]
+    )
+    decoder_n_layers = (
+        decoders_n_layers
+        if isinstance(decoders_n_layers, int)
+        else decoders_n_layers[domain.domain_type]
+    )
 
     gw_encoder: Module
     gw_decoder: Module
@@ -125,10 +145,10 @@ def load_pretrained_domains(
     default_root_dir: Path,
     domains: Sequence[LoadedDomainConfig],
     workspace_dim: int,
-    encoders_hidden_dim: int,
-    encoders_n_layers: int,
-    decoders_hidden_dim: int,
-    decoders_n_layers: int,
+    encoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
+    encoders_n_layers: int | Mapping[DomainModelVariantType, int],
+    decoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
+    decoders_n_layers: int | Mapping[DomainModelVariantType, int],
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[dict[str, DomainModule], dict[str, Module], dict[str, Module]]:
