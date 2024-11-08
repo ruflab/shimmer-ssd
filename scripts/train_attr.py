@@ -103,7 +103,9 @@ def main():
         callbacks.extend(
             [
                 SaveMigrations(
-                    get_folder_migrations(PROJECT_DIR / "migrations" / "attr_mod")
+                    get_folder_migrations(
+                        PROJECT_DIR / "shimmer_ssd" / "migrations" / "attr_mod"
+                    )
                 ),
                 ModelCheckpoint(
                     dirpath=checkpoint_dir,

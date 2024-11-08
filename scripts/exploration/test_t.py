@@ -40,7 +40,7 @@ def main():
         break
 
     ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
-    migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "text_mod")
+    migrate_model(ckpt_path, PROJECT_DIR / "shimmer_ssd" / "migrations" / "text_mod")
     module = TextDomainModule.load_from_checkpoint(ckpt_path)
     module.freeze()
     print(val_samples[frozenset({"t"})]["t"]["caption"][8].item())

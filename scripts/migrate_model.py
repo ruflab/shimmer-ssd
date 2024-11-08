@@ -14,7 +14,8 @@ def main():
     if config.global_workspace.checkpoint is not None:
         migrate_shimmer_model(config.global_workspace.checkpoint)
         migrate_model(
-            config.global_workspace.checkpoint, PROJECT_DIR / "migrations" / "gw"
+            config.global_workspace.checkpoint,
+            PROJECT_DIR / "shimmer_ssd" / "migrations" / "gw",
         )
         print("Model was migrated!")
 

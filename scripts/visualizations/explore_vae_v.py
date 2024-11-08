@@ -41,7 +41,7 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     ckpt_path = config.default_root_dir / config.visualization.explore_vae.checkpoint
-    migrate_model(ckpt_path, PROJECT_DIR / "migrations" / "visual_mod")
+    migrate_model(ckpt_path, PROJECT_DIR / "shimmer_ssd" / "migrations" / "visual_mod")
     domain_module = VisualDomainModule.load_from_checkpoint(ckpt_path)
     domain_module.eval().freeze()
 

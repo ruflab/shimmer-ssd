@@ -31,33 +31,48 @@ def load_pretrained_module(
     module: DomainModule
     match domain.domain_type:
         case DomainModelVariantType.v:
-            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
+            migrate_model(
+                domain_checkpoint,
+                PROJECT_DIR / "shimmer_ssd" / "migrations" / "visual_mod",
+            )
             module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 
         case DomainModelVariantType.v_latents:
-            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
+            migrate_model(
+                domain_checkpoint,
+                PROJECT_DIR / "shimmer_ssd" / "migrations" / "visual_mod",
+            )
             v_module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
             module = VisualLatentDomainModule(v_module)
 
         case DomainModelVariantType.v_latents_unpaired:
-            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "visual_mod")
+            migrate_model(
+                domain_checkpoint,
+                PROJECT_DIR / "shimmer_ssd" / "migrations" / "visual_mod",
+            )
             v_module = VisualDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
 
         case DomainModelVariantType.attr:
-            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "attr_mod")
+            migrate_model(
+                domain_checkpoint,
+                PROJECT_DIR / "shimmer_ssd" / "migrations" / "attr_mod",
+            )
             module = AttributeDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
 
         case DomainModelVariantType.attr_unpaired:
-            migrate_model(domain_checkpoint, PROJECT_DIR / "migrations" / "attr_mod")
+            migrate_model(
+                domain_checkpoint,
+                PROJECT_DIR / "shimmer_ssd" / "migrations" / "attr_mod",
+            )
             module = AttributeWithUnpairedDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args
             )
