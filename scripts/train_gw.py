@@ -47,11 +47,10 @@ def main():
     seed_everything(config.seed, workers=True)
 
     domain_proportion = {
-        frozenset(item.domains): item.proportion
-        for item in config.global_workspace.domain_proportions
+        frozenset(item.domains): item.proportion for item in config.domain_proportions
     }
     domain_classes = get_default_domains(
-        {domain.domain_type.kind.value for domain in config.global_workspace.domains}
+        {domain.domain_type.kind.value for domain in config.domains}
     )
 
     additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
@@ -78,13 +77,13 @@ def main():
         num_workers=config.training.num_workers,
         seed=config.seed,
         ood_seed=config.ood_seed,
-        domain_args=config.global_workspace.domain_args,
+        domain_args=config.domain_data_args,
         additional_transforms=additional_transforms,
     )
 
     domain_modules, gw_encoders, gw_decoders = load_pretrained_domains(
         config.default_root_dir,
-        config.global_workspace.domains,
+        config.domains,
         config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
         config.global_workspace.encoders.n_layers,

@@ -40,7 +40,7 @@ def main():
         num_workers=config.training.num_workers,
         seed=config.seed,
         ood_seed=config.ood_seed,
-        domain_args=config.global_workspace.domain_args,
+        domain_args=config.domain_data_args,
         additional_transforms={
             "t": [
                 TokenizeCaptions(
@@ -53,7 +53,7 @@ def main():
     )
 
     text_model: DomainModule | None = None
-    for domain in config.global_workspace.domains:
+    for domain in config.domains:
         if domain.domain_type != DomainModelVariantType.t:
             continue
         text_model, _, _ = load_pretrained_domain(

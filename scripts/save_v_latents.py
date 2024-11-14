@@ -40,15 +40,23 @@ def main():
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    domain_checkpoint = None
+    for domain in config.domains:
+        if domain.domain_type == DomainModelVariantType.v:
+            domain_checkpoint = domain
 
     assert (
-        config.domain_checkpoint is not None
+        domain_checkpoint is not None
     ), "Please add domain_checkpoint entry in the configuration"
-    assert config.domain_checkpoint.domain_type == DomainModelVariantType.v
+    assert domain_checkpoint.domain_type == DomainModelVariantType.v
 
     visual_domain = cast(
         VisualDomainModule,
-        load_pretrained_module(config.default_root_dir, config.domain_checkpoint),
+        load_pretrained_module(
+            config.default_root_dir,
+            domain_checkpoint,
+            **domain_checkpoint.args,
+        ),
     )
     visual_domain.to(device)
     visual_domain.freeze()
@@ -76,10 +84,8 @@ def main():
 
         latent_vectors = np.concatenate(latents, axis=0)
 
-        path = (
-            config.dataset.path
-            / f"saved_latents/{split}/{config.presaved_latents_path['v']}"
-        )
+        presaved_path = config.domain_data_args["v_latents"]["presaved_path"]
+        path = config.dataset.path / f"saved_latents/{split}/{presaved_path}"
         print(f"Saving in {path}.")
         np.save(path, latent_vectors)
 

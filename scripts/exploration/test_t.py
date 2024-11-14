@@ -14,8 +14,10 @@ def main():
         debug_mode=DEBUG_MODE,
     )
 
-    if config.exploration is None:
-        raise ValueError("Exploration config should be set for this script")
+    if config.global_workspace.checkpoint is None:
+        raise ValueError(
+            "`global_workspace.checkpoint` config should be set for this script"
+        )
 
     seed_everything(config.seed, workers=True)
 
@@ -39,7 +41,7 @@ def main():
             test_samples[frozenset([domain])] = {domain: test_samples[domains][domain]}
         break
 
-    ckpt_path = config.default_root_dir / config.exploration.gw_checkpoint
+    ckpt_path = config.global_workspace.checkpoint
     migrate_model(ckpt_path, PROJECT_DIR / "shimmer_ssd" / "migrations" / "text_mod")
     module = TextDomainModule.load_from_checkpoint(ckpt_path)
     module.freeze()
