@@ -12,6 +12,35 @@ from shimmer import __version__
 from shimmer_ssd.types import Config
 
 
+def use_deprecated_vals(config: Config) -> Config:
+    # use deprecated values
+    if config.global_workspace.domain_args is not None:
+        config.domain_data_args = config.global_workspace.domain_args
+        warnings.warn(
+            "Deprecated `config.global_workspace.domain_args`, "
+            "use `config.domain_data_args` instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    if config.global_workspace.domains is not None:
+        config.domains = config.global_workspace.domains
+        warnings.warn(
+            "Deprecated `config.global_workspace.domains`, "
+            "use `config.domains` instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    if config.global_workspace.domain_proportions is not None:
+        config.domain_proportions = config.global_workspace.domain_proportions
+        warnings.warn(
+            "Deprecated `config.global_workspace.domain_proportions`, "
+            "use `config.domain_proportions` instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    return config
+
+
 def load_config(
     path: str | Path,
     load_files: list[str] | None = None,
@@ -54,34 +83,7 @@ def load_config(
     yaml = YAML()
     for _ in range(2):
         try:
-            config = Config.model_validate(config_dict)
-
-            # use deprecated values
-            if config.global_workspace.domain_args is not None:
-                config.domain_data_args = config.global_workspace.domain_args
-                warnings.warn(
-                    "Depracated `config.global_workspace.domain_args`, "
-                    "use `config.domain_data_args` instead",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-            if config.global_workspace.domains is not None:
-                config.domains = config.global_workspace.domains
-                warnings.warn(
-                    "Depracated `config.global_workspace.domains`, "
-                    "use `config.domains` instead",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-            if config.global_workspace.domain_proportions is not None:
-                config.domain_proportions = config.global_workspace.domain_proportions
-                warnings.warn(
-                    "Depracated `config.global_workspace.domain_proportions`, "
-                    "use `config.domain_proportions` instead",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-            return config
+            return use_deprecated_vals(Config.model_validate(config_dict))
         except ValidationError as e:
             printed_header = False
             other_errors: list[InitErrorDetails] = []
