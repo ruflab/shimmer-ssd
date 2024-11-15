@@ -164,7 +164,8 @@ cython_debug/
 .rgignore
 
 # Project specific
-checkpoints/
+checkpoints/*
+!checkpoints/pretrained
 data/
 wandb/
 config/local/
