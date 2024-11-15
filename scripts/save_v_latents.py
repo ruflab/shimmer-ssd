@@ -51,7 +51,7 @@ def main():
 
     visual_domain = cast(
         VisualDomainModule,
-        load_pretrained_module(config.default_root_dir),
+        load_pretrained_module(domain_checkpoint),
     )
     visual_domain.to(device)
     visual_domain.freeze()
