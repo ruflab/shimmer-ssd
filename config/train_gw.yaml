@@ -33,14 +33,16 @@ domains:
     - checkpoint_path: "#{default_root_dir}/checkpoints/pretrained/domain_attr.ckpt"
       domain_type: attr
       args:
-          n_unpaired: "#{global_workspace.domain_args.attr.n_unpaired}"
+          n_unpaired: "#{domain_data_args.attr.n_unpaired}"
     - checkpoint_path: "#{default_root_dir}/pretrained/domain_v.ckpt"
       domain_type: v_latents
+
 domain_data_args:
     v_latents:
         presaved_path: vae_v_shimmer.npy
     attr:
         n_unpaired: 0
+
 domain_proportions: 
     -   domains: ["attr"]
         proportion: 1.0
