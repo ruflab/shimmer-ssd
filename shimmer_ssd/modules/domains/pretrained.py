@@ -8,6 +8,7 @@ from shimmer_ssd import PROJECT_DIR
 from shimmer_ssd.ckpt_migrations import (
     migrate_model,
 )
+from shimmer_ssd.config import DomainModelVariantType, LoadedDomainConfig
 from shimmer_ssd.errors import ConfigurationError
 from shimmer_ssd.modules.domains.attribute import (
     AttributeDomainModule,
@@ -20,14 +21,10 @@ from shimmer_ssd.modules.domains.visual import (
     VisualLatentDomainModule,
     VisualLatentDomainWithUnpairedModule,
 )
-from shimmer_ssd.types import DomainModelVariantType, LoadedDomainConfig
 
 
-def load_pretrained_module(
-    root_path: Path,
-    domain: LoadedDomainConfig,
-) -> DomainModule:
-    domain_checkpoint = root_path / domain.checkpoint_path
+def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
+    domain_checkpoint = Path(domain.checkpoint_path)
     module: DomainModule
     match domain.domain_type:
         case DomainModelVariantType.v:
@@ -93,7 +90,7 @@ def load_pretrained_module(
                 "text_model_path" in domain.args
             ), 'add "text_model_path" to the domain\'s args.'
             text_model = GRUTextDomainModule.load_from_checkpoint(
-                root_path / domain.args["text_model_path"],
+                domain.args["text_model_path"],
                 **domain.args.get("t_args", {}),
             )
             module = Text2Attr.load_from_checkpoint(
@@ -108,7 +105,6 @@ def load_pretrained_module(
 
 
 def load_pretrained_domain(
-    default_root_dir: Path,
     domain: LoadedDomainConfig,
     workspace_dim: int,
     encoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
@@ -118,7 +114,7 @@ def load_pretrained_domain(
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[DomainModule, Module, Module]:
-    module = load_pretrained_module(default_root_dir, domain)
+    module = load_pretrained_module(domain)
     encoder_hidden_dim = (
         encoders_hidden_dim
         if isinstance(encoders_hidden_dim, int)
@@ -157,7 +153,6 @@ def load_pretrained_domain(
 
 
 def load_pretrained_domains(
-    default_root_dir: Path,
     domains: Sequence[LoadedDomainConfig],
     workspace_dim: int,
     encoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
@@ -174,7 +169,6 @@ def load_pretrained_domains(
         if domain.domain_type.kind.value.kind in modules:
             raise ConfigurationError("Cannot load multiple domains of the same kind.")
         model, encoder, decoder = load_pretrained_domain(
-            default_root_dir,
             domain,
             workspace_dim,
             encoders_hidden_dim,

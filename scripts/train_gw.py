@@ -82,7 +82,6 @@ def main():
     )
 
     domain_modules, gw_encoders, gw_decoders = load_pretrained_domains(
-        config.default_root_dir,
         config.domains,
         config.global_workspace.latent_dim,
         config.global_workspace.encoders.hidden_dim,
