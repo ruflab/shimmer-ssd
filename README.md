@@ -58,3 +58,7 @@ Scripts are located in the `scripts` folder.
 * `train_attr.py`: train the attribute domain module
 * `train_t.py`: train the text domain module
 * `train_gw.py`: train a Global Workspace.
+
+## Pretrained checkpoints
+They are stored using [git lfs](https://git-lfs.com/). You need to install it if you
+want to access the files.
