@@ -5,6 +5,7 @@ description = "The Simple Shapes Dataset used in the Global Workspace Paper"
 authors = ["Benjamin Devillers <benjamin.devillers@cnrs.fr>"]
 license = "MIT"
 readme = "README.md"
+include = ["tokenizers"]
 
 [tool.poetry.dependencies]
 python = "~3.11"
