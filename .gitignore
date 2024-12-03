@@ -165,7 +165,7 @@ cython_debug/
 
 # Project specific
 checkpoints/*
-!checkpoints/pretrained
+#!checkpoints/pretrained
 data/
 wandb/
 config/local/
