@@ -60,5 +60,5 @@ Scripts are located in the `scripts` folder.
 * `train_gw.py`: train a Global Workspace.
 
 ## Pretrained checkpoints
-They are stored using [git lfs](https://git-lfs.com/). You need to install it if you
-want to access the files.
+Pretrained model weights can be downloaded here:
+[https://zenodo.org/records/14289631](https://zenodo.org/records/14289631).
