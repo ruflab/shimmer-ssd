@@ -5,7 +5,7 @@
             "type": "python",
             "request": "launch",
             "name": "Train Attr",
-            "program": "${workspaceFolder}/playground/train_attr.py",
+            "program": "${workspaceFolder}/scripts/train_attr.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",
@@ -17,7 +17,7 @@
             "type": "python",
             "request": "launch",
             "name": "Train Visual",
-            "program": "${workspaceFolder}/playground/train_v.py",
+            "program": "${workspaceFolder}/scripts/train_v.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",
@@ -29,7 +29,7 @@
             "type": "python",
             "request": "launch",
             "name": "Train Text",
-            "program": "${workspaceFolder}/playground/train_t.py",
+            "program": "${workspaceFolder}/scripts/train_t.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",
@@ -41,7 +41,19 @@
             "type": "python",
             "request": "launch",
             "name": "Train GW",
-            "program": "${workspaceFolder}/playground/train_gw.py",
+            "program": "${workspaceFolder}/scripts/train_gw.py",
+            "justMyCode": false,
+            "env": {
+                "DEBUG": "1",
+                "CUDA_VISIBLE_DEVICES": "1",
+                "CUDA_DEVICE_ORDER": "PCI_BUS_ID"
+            }
+        },
+        {
+            "type": "python",
+            "request": "launch",
+            "name": "Use GW",
+            "program": "${workspaceFolder}/scripts/use-gw.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",
@@ -53,7 +65,7 @@
             "type": "python",
             "request": "launch",
             "name": "Exp cont var",
-            "program": "${workspaceFolder}/playground/exploration/contrastive_var.py",
+            "program": "${workspaceFolder}/scripts/exploration/contrastive_var.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",
@@ -65,7 +77,7 @@
             "type": "python",
             "request": "launch",
             "name": "Exp test t",
-            "program": "${workspaceFolder}/playground/exploration/test_t.py",
+            "program": "${workspaceFolder}/scripts/exploration/test_t.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",
@@ -77,7 +89,7 @@
             "type": "python",
             "request": "launch",
             "name": "Exp test common space fusion",
-            "program": "${workspaceFolder}/playground/exploration/test_common_space_fusion.py",
+            "program": "${workspaceFolder}/scripts/exploration/test_common_space_fusion.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",
@@ -89,7 +101,7 @@
             "type": "python",
             "request": "launch",
             "name": "Train text2attr",
-            "program": "${workspaceFolder}/playground/train_text2attr.py",
+            "program": "${workspaceFolder}/scripts/train_text2attr.py",
             "justMyCode": false,
             "env": {
                 "DEBUG": "1",
