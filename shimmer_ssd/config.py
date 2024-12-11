@@ -268,10 +268,15 @@ class LoadedDomainConfig(BaseModel):
 
     @field_validator("domain_type", mode="before")
     @classmethod
-    def validate_domain_type(cls, v: str) -> DomainModelVariantType:
+    def validate_domain_type(
+        cls, v: str | DomainModelVariantType
+    ) -> DomainModelVariantType:
         """
         Use names instead of values to select enums
         """
+        if isinstance(v, DomainModelVariantType):
+            return v
+
         assert v in DomainModelVariantType.__members__, (
             f"Domain type `{v}` is not a member "
             f"of {DomainModelVariantType.__members__.keys()}"
