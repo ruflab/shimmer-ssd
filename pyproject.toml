@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "shimmer-ssd"
 version = "0.4.0.dev"
-description = "The Simple Shapes Dataset used in the Global Workspace Paper"
+description = "The Simple Shapes Dataset used in the Global workspace Paper"
 authors = ["Benjamin Devillers <benjamin.devillers@cnrs.fr>"]
 license = "MIT"
 readme = "README.md"
@@ -49,6 +49,9 @@ types-protobuf = "^4.24.0.20240311"
 types-requests = "^2.31.0.20240403"
 types-six = "^1.16.21.20240311"
 types-redis = "^4.6.0.20240819"
+jupyterlab = "^4.3.2"
+pyqt5 = "^5.15.11"
+ipympl = "^0.9.4"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.3.2"
