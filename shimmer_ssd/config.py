@@ -239,7 +239,7 @@ class TextModule(BaseModel):
 class DomainModules(BaseModel):
     visual: VisualModule = VisualModule()
     attribute: AttributeModule = AttributeModule()
-    text: TextModule = Field(default=TextModule)
+    text: TextModule = TextModule()
 
 
 class EncodersConfig(BaseModel):
@@ -359,7 +359,7 @@ class Config(ParsedModel):
     ood_seed: int | None = None  # Out of distribution seed
     default_root_dir: Path  # Path where to save and load logs and checkpoints
     # Dataset information
-    dataset: Dataset = Field(default=Dataset)
+    dataset: Dataset
     # Training config
     training: Training = Training()
     # Wandb configuration

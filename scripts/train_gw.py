@@ -16,8 +16,8 @@ from shimmer import (
     SaveMigrations,
 )
 from shimmer.modules.global_workspace import (
-    GlobalWorkspace,
     GlobalWorkspace2Domains,
+    GlobalWorkspaceFusion,
 )
 from simple_shapes_dataset import (
     SimpleShapesDataModule,
@@ -116,7 +116,7 @@ def main():
     gw_type: str
     if config.global_workspace.use_fusion_model:
         gw_type = "gw_fusion"
-        module = GlobalWorkspace(
+        module = GlobalWorkspaceFusion(
             domain_modules,
             gw_encoders,
             gw_decoders,
