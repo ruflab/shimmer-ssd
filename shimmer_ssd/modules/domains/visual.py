@@ -133,9 +133,13 @@ class VisualLatentDomainModule(DomainModule):
     ) -> LossOutput:
         return LossOutput(mse_loss(pred, target, reduction="mean"))
 
-    def decode_images(self, z: torch.Tensor) -> torch.Tensor:
+    def decode_images(
+        self, z: torch.Tensor, remove_last_dim: bool = True
+    ) -> torch.Tensor:
         LOGGER.debug(f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}")
-        return self.visual_module.decode(z[:, :-1])
+        if remove_last_dim:
+            return self.visual_module.decode(z[:, :-1])
+        return self.visual_module.decode(z)
 
 
 class VisualLatentDomainWithUnpairedModule(DomainModule):

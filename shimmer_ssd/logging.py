@@ -448,6 +448,37 @@ class LogText2AttrCallback(
                 logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
 
 
+def batch_to_device(
+    samples: Mapping[
+        frozenset[str],
+        Mapping[str, Any],
+    ],
+    device: torch.device,
+) -> dict[frozenset[str], dict[str, Any]]:
+    out: dict[frozenset[str], dict[str, Any]] = {}
+    for domain_names, domains in samples.items():
+        latents: dict[str, Any] = {}
+        for domain_name, domain in domains.items():
+            if isinstance(domain, torch.Tensor):
+                latents[domain_name] = domain.to(device)
+            elif (
+                isinstance(domain, Mapping)
+                and len(domain)
+                and isinstance(next(iter(domain.values())), torch.Tensor)
+            ):
+                latents[domain_name] = {k: x.to(device) for k, x in domain.items()}
+            elif (
+                isinstance(domain, Sequence)
+                and len(domain)
+                and isinstance(domain[0], torch.Tensor)
+            ):
+                latents[domain_name] = [x.to(device) for x in domain]
+            else:
+                latents[domain_name] = domain
+        out[domain_names] = latents
+    return out
+
+
 class LogGWImagesCallback(pl.Callback):
     def __init__(
         self,
@@ -486,23 +517,7 @@ class LogGWImagesCallback(pl.Callback):
         frozenset[str],
         dict[str, torch.Tensor | list[torch.Tensor] | dict[Any, torch.Tensor]],
     ]:
-        out: dict[
-            frozenset[str],
-            dict[str, torch.Tensor | list[torch.Tensor] | dict[Any, torch.Tensor]],
-        ] = {}
-        for domain_names, domains in samples.items():
-            latents: dict[
-                str, torch.Tensor | list[torch.Tensor] | dict[str, torch.Tensor]
-            ] = {}
-            for domain_name, domain in domains.items():
-                if isinstance(domain, torch.Tensor):
-                    latents[domain_name] = domain.to(device)
-                elif isinstance(domain, dict):
-                    latents[domain_name] = {k: x.to(device) for k, x in domain.items()}
-                elif isinstance(domain, list):
-                    latents[domain_name] = [x.to(device) for x in domain]
-            out[domain_names] = latents
-        return out
+        return batch_to_device(samples, device)
 
     def setup(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str
