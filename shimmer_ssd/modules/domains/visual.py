@@ -122,23 +122,18 @@ class VisualLatentDomainModule(DomainModule):
         self.visual_module = visual_module
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
-        return x[:, :-1]
+        return x
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
-        extra = torch.zeros_like(z[:, -1]).unsqueeze(1)
-        return torch.cat([z, extra], dim=1)
+        return z
 
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
         return LossOutput(mse_loss(pred, target, reduction="mean"))
 
-    def decode_images(
-        self, z: torch.Tensor, remove_last_dim: bool = True
-    ) -> torch.Tensor:
+    def decode_images(self, z: torch.Tensor) -> torch.Tensor:
         LOGGER.debug(f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}")
-        if remove_last_dim:
-            return self.visual_module.decode(z[:, :-1])
         return self.visual_module.decode(z)
 
 
@@ -152,11 +147,6 @@ class VisualLatentDomainWithUnpairedModule(DomainModule):
         self.visual_module = visual_module
         self.paired_dim = self.visual_module.latent_dim
         self.coef_unpaired = coef_unpaired
-
-    # def on_before_gw_encode_cont(self, x: torch.Tensor) -> torch.Tensor:
-    #     out = x.clone()
-    #     out[:, -1] = 0
-    #     return out
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return x
