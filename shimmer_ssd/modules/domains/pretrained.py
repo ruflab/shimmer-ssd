@@ -8,7 +8,7 @@ from shimmer_ssd import PROJECT_DIR
 from shimmer_ssd.ckpt_migrations import (
     migrate_model,
 )
-from shimmer_ssd.config import DomainModelVariantType, LoadedDomainConfig
+from shimmer_ssd.config import DomainModuleVariant, LoadedDomainConfig
 from shimmer_ssd.errors import ConfigurationError
 from shimmer_ssd.modules.domains.attribute import (
     AttributeDomainModule,
@@ -27,7 +27,7 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
     domain_checkpoint = Path(domain.checkpoint_path)
     module: DomainModule
     match domain.domain_type:
-        case DomainModelVariantType.v:
+        case DomainModuleVariant.v:
             migrate_model(
                 domain_checkpoint,
                 PROJECT_DIR / "shimmer_ssd" / "migrations" / "visual_mod",
@@ -36,7 +36,7 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
                 domain_checkpoint, **domain.args
             )
 
-        case DomainModelVariantType.v_latents:
+        case DomainModuleVariant.v_latents:
             migrate_model(
                 domain_checkpoint,
                 PROJECT_DIR / "shimmer_ssd" / "migrations" / "visual_mod",
@@ -46,7 +46,7 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
             )
             module = VisualLatentDomainModule(v_module)
 
-        case DomainModelVariantType.v_latents_unpaired:
+        case DomainModuleVariant.v_latents_unpaired:
             migrate_model(
                 domain_checkpoint,
                 PROJECT_DIR / "shimmer_ssd" / "migrations" / "visual_mod",
@@ -56,7 +56,7 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
             )
             module = VisualLatentDomainWithUnpairedModule(v_module)
 
-        case DomainModelVariantType.attr:
+        case DomainModuleVariant.attr:
             migrate_model(
                 domain_checkpoint,
                 PROJECT_DIR / "shimmer_ssd" / "migrations" / "attr_mod",
@@ -65,7 +65,7 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
                 domain_checkpoint, **domain.args
             )
 
-        case DomainModelVariantType.attr_unpaired:
+        case DomainModuleVariant.attr_unpaired:
             migrate_model(
                 domain_checkpoint,
                 PROJECT_DIR / "shimmer_ssd" / "migrations" / "attr_mod",
@@ -74,10 +74,10 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
                 domain_checkpoint, **domain.args
             )
 
-        case DomainModelVariantType.attr_legacy:
+        case DomainModuleVariant.attr_legacy:
             module = AttributeLegacyDomainModule()
 
-        case DomainModelVariantType.t:
+        case DomainModuleVariant.t:
             module = GRUTextDomainModule.load_from_checkpoint(
                 domain_checkpoint, **domain.args, strict=False
             )
@@ -85,7 +85,7 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
             # module.embeddings.requires_grad_(False)
             # module.projector.requires_grad_(False)
 
-        case DomainModelVariantType.t_attr:
+        case DomainModuleVariant.t_attr:
             assert (
                 "text_model_path" in domain.args
             ), 'add "text_model_path" to the domain\'s args.'
@@ -107,10 +107,10 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
 def load_pretrained_domain(
     domain: LoadedDomainConfig,
     workspace_dim: int,
-    encoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
-    encoders_n_layers: int | Mapping[DomainModelVariantType, int],
-    decoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
-    decoders_n_layers: int | Mapping[DomainModelVariantType, int],
+    encoders_hidden_dim: int | Mapping[DomainModuleVariant, int],
+    encoders_n_layers: int | Mapping[DomainModuleVariant, int],
+    decoders_hidden_dim: int | Mapping[DomainModuleVariant, int],
+    decoders_n_layers: int | Mapping[DomainModuleVariant, int],
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[DomainModule, Module, Module]:
@@ -155,10 +155,10 @@ def load_pretrained_domain(
 def load_pretrained_domains(
     domains: Sequence[LoadedDomainConfig],
     workspace_dim: int,
-    encoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
-    encoders_n_layers: int | Mapping[DomainModelVariantType, int],
-    decoders_hidden_dim: int | Mapping[DomainModelVariantType, int],
-    decoders_n_layers: int | Mapping[DomainModelVariantType, int],
+    encoders_hidden_dim: int | Mapping[DomainModuleVariant, int],
+    encoders_n_layers: int | Mapping[DomainModuleVariant, int],
+    decoders_hidden_dim: int | Mapping[DomainModuleVariant, int],
+    decoders_n_layers: int | Mapping[DomainModuleVariant, int],
     is_linear: bool = False,
     bias: bool = False,
 ) -> tuple[dict[str, DomainModule], dict[str, Module], dict[str, Module]]:

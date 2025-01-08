@@ -118,13 +118,20 @@ class AttributeDomainModule(DomainModule):
         return LossOutput(F.mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
-        return self.vae.encode(x[:-1])
+        """
+        x must contain 2 items:
+        - the class
+        - the attibutes
+        """
+        assert (
+            len(x) == 2
+        ), "x must only contain 2 items (use attr_unpaired to add an unpaired value)"
+        return self.vae.encode(x)
 
     def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
         out = list(self.vae.decode(z))
         if not isinstance(out, Sequence):
             raise ValueError("The output of vae.decode should be a sequence.")
-        out.append(torch.zeros_like(z[:, -1]))
         return out
 
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:  # type: ignore
@@ -137,7 +144,7 @@ class AttributeDomainModule(DomainModule):
     ) -> torch.Tensor:
         x_categories, x_attributes = x[0], x[1]
 
-        (mean, logvar), reconstruction = self.vae(x[:-1])
+        (mean, logvar), reconstruction = self.vae(x)
         reconstruction_categories = reconstruction[0]
         reconstruction_attributes = reconstruction[1]
 
@@ -250,6 +257,16 @@ class AttributeWithUnpairedDomainModule(DomainModule):
         self.scheduler_args.update(scheduler_args or {})
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
+        """
+        x must contains 3 items:
+        - the class
+        - the attributes
+        - the unpaired value
+        """
+        assert len(x) == 3, (
+            "x must have the unpaired value "
+            "(use `attr` instead of `attr_unpaired` otherwise)."
+        )
         z = self.vae.encode(x[:-1])
         return torch.cat([z, x[-1]], dim=-1)
 
@@ -302,13 +319,13 @@ class AttributeLegacyDomainModule(DomainModule):
         return LossOutput(loss, metrics={"loss_attr": loss_attr, "loss_cat": loss_cat})
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
-        return torch.cat(list(x)[:-1], dim=-1)
+        assert len(x) == 2, "This must have only 2 items."
+        return torch.cat(list(x), dim=-1)
 
-    def decode(self, z: torch.Tensor) -> list[torch.Tensor]:
+    def decode(self, z: torch.Tensor) -> list:
         categories = z[:, :3]
         attr = z[:, 3:11]
-        unpaired = torch.zeros_like(z[:, 0])
-        return [categories, attr, unpaired]
+        return [categories, attr]
 
     def forward(self, x: Sequence[torch.Tensor]) -> list[torch.Tensor]:  # type: ignore
         return self.decode(self.encode(x))

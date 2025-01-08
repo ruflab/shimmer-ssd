@@ -10,7 +10,7 @@ from simple_shapes_dataset import SimpleShapesDataModule, get_default_domains
 from torch import set_float32_matmul_precision
 
 from shimmer_ssd import DEBUG_MODE, PROJECT_DIR
-from shimmer_ssd.config import DomainModelVariantType, load_config
+from shimmer_ssd.config import DomainModuleVariant, load_config
 from shimmer_ssd.dataset.pre_process import TokenizeCaptions
 from shimmer_ssd.errors import ConfigurationError
 from shimmer_ssd.logging import LogText2AttrCallback
@@ -53,7 +53,7 @@ def main():
 
     text_model: DomainModule | None = None
     for domain in config.domains:
-        if domain.domain_type != DomainModelVariantType.t:
+        if domain.domain_type != DomainModuleVariant.t:
             continue
         text_model, _, _ = load_pretrained_domain(
             domain,

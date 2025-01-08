@@ -11,7 +11,7 @@ from simple_shapes_dataset import (
 from tqdm import tqdm
 
 from shimmer_ssd import DEBUG_MODE, PROJECT_DIR
-from shimmer_ssd.config import DomainModelVariantType, load_config
+from shimmer_ssd.config import DomainModuleVariant, load_config
 from shimmer_ssd.modules.domains.pretrained import load_pretrained_module
 from shimmer_ssd.modules.domains.visual import VisualDomainModule
 
@@ -41,13 +41,13 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     domain_checkpoint = None
     for domain in config.domains:
-        if domain.domain_type == DomainModelVariantType.v:
+        if domain.domain_type == DomainModuleVariant.v:
             domain_checkpoint = domain
 
     assert (
         domain_checkpoint is not None
     ), "Please add domain_checkpoint entry in the configuration"
-    assert domain_checkpoint.domain_type == DomainModelVariantType.v
+    assert domain_checkpoint.domain_type == DomainModuleVariant.v
 
     visual_domain = cast(
         VisualDomainModule,

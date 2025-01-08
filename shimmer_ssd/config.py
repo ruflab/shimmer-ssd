@@ -9,50 +9,56 @@ from cfg_tools.utils import validate_and_fill_missing
 from pydantic import BaseModel, Field, field_validator
 from shimmer import __version__
 from shimmer.version import __version__ as shimmer_version
-from simple_shapes_dataset import DomainDesc
+from simple_shapes_dataset import DomainType
 
 from shimmer_ssd import PROJECT_DIR
 
 
-class DomainType(Enum):
-    """
-    Different domain types available. Each model type is
-    described as with a `DomainDesc` which represents a base type and a kind.
-
-    For example "v_latents" has a base of "v" as it a special representation of
-    the visual domain.
-    """
-
-    v = DomainDesc("v", "v")  # Uses images and visual VAE to encode images
-    # Uses pre-saved latent representations extracted from the visual VAE
-    v_latents = DomainDesc("v", "v_latents")
-    attr = DomainDesc("attr", "attr")
-    raw_text = DomainDesc("t", "raw_text")  # raw text representations (str)
-    t = DomainDesc("t", "t")  # loads BERT representations of the raw text
-
-
-class DomainModelVariantType(Enum):
+class DomainModuleVariant(Enum):
     """
     This is used to select a particular DomainModule.
-    Each type can have different "flavors" of domain modules.
+    Each domain can have different variants of domain modules.
 
     For example "attr" will load the default attribute module that uses a VAE,
     whereas "attr_legacy" will load a domain module that directly passes attributes
     to the GW.
     """
 
-    v = (DomainType.v, "default")
-    attr = (DomainType.attr, "default")  # Uses a VAE to encode the attribute vector
-    # No VAE, attributes are the unimodal latent representations
+    # Attribute modules
+    # -----------------
+    # Attribute module using a VAE to encode the attribute vector
+    attr = (DomainType.attr, "default")
+    # This is the module used in Devillers et al. paper. There is no VAE and the
+    # attributes are used directly as the unimodal latent representations
     attr_legacy = (DomainType.attr, "legacy")
-    # Uses unpaired attributes. The other ones remove unpaired values
+    # Same as "attr" but adds an unpaired attributes (information not available in the
+    # other domains).
     attr_unpaired = (DomainType.attr, "unpaired")
+
+    # Visual modules
+    # --------------
+    # Visual VAE
+    v = (DomainType.v, "default")
+    # Same as "v", but uses pre-saved latent VAE representation for faster training.
+    # This skips the image loading and encoding and only loads latent representation.
+    # The downside is that you cannot access the default image, but you can reconstruct
+    # it with "decode_images".
     v_latents = (DomainType.v_latents, "default")
+    # Same as "v_latents" but adds an unpaired value (radom information not available
+    # in the other domains).
     v_latents_unpaired = (DomainType.v_latents, "unpaired")
+
+    # Text modules
+    # ------------
+    # Text domain.
     t = (DomainType.t, "default")
     t_attr = (DomainType.t, "t2attr")
 
     def __init__(self, kind: DomainType, model_variant: str) -> None:
+        """
+        The two elements of the tuple are put in the the `kind` and the `model_variant`
+        properties.
+        """
         self.kind = kind
         self.model_variant = model_variant
 
@@ -247,11 +253,11 @@ class EncodersConfig(BaseModel):
     Encoder architecture config
     """
 
-    hidden_dim: int | Mapping[DomainModelVariantType, int] = 32
+    hidden_dim: int | Mapping[DomainModuleVariant, int] = 32
 
     # The model will have an extra linear before and after the n_layers
     # Hence the total will be `2 + n_layers`
-    n_layers: int | Mapping[DomainModelVariantType, int] = 3
+    n_layers: int | Mapping[DomainModuleVariant, int] = 3
 
 
 class LoadedDomainConfig(BaseModel):
@@ -262,26 +268,24 @@ class LoadedDomainConfig(BaseModel):
     # path to the pretrained module
     checkpoint_path: Path
     # domain to select
-    domain_type: DomainModelVariantType
+    domain_type: DomainModuleVariant
     # domain module specific arguments
     args: Mapping[str, Any] = {}
 
     @field_validator("domain_type", mode="before")
     @classmethod
-    def validate_domain_type(
-        cls, v: str | DomainModelVariantType
-    ) -> DomainModelVariantType:
+    def validate_domain_type(cls, v: str | DomainModuleVariant) -> DomainModuleVariant:
         """
         Use names instead of values to select enums
         """
-        if isinstance(v, DomainModelVariantType):
+        if isinstance(v, DomainModuleVariant):
             return v
 
-        assert v in DomainModelVariantType.__members__, (
+        assert v in DomainModuleVariant.__members__, (
             f"Domain type `{v}` is not a member "
-            f"of {DomainModelVariantType.__members__.keys()}"
+            f"of {DomainModuleVariant.__members__.keys()}"
         )
-        return DomainModelVariantType[v]
+        return DomainModuleVariant[v]
 
 
 class DomainProportion(BaseModel):
