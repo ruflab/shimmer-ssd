@@ -142,6 +142,7 @@ def main():
             config.training.optim.weight_decay,
             learn_logit_scale=config.global_workspace.learn_logit_scale,
             contrastive_loss=contrastive_fn,
+            scheduler=get_scheduler,
         )
 
     train_samples = data_module.get_samples("train", 32)
