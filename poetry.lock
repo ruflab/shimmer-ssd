@@ -4343,7 +4343,7 @@ transformers = "^4.30.2"
 type = "git"
 url = "git@github.com:ruflab/simple-shapes-dataset.git"
 reference = "main"
-resolved_reference = "d6ba09c0766c58cc67d4cc4062eb543692bceff7"
+resolved_reference = "79c6d716e0ec0eb5ba45b6d464ba913d498b1b82"
 
 [[package]]
 name = "six"
