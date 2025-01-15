@@ -4319,7 +4319,7 @@ resolved_reference = "b43954ae927da956c7d67b9c63cf25cd28732795"
 
 [[package]]
 name = "simple-shapes-dataset"
-version = "0.1.0"
+version = "1.0.0"
 description = "The Simple Shapes Dataset used in the Global Workspace Paper"
 optional = false
 python-versions = "~3.11"
@@ -4343,7 +4343,7 @@ transformers = "^4.30.2"
 type = "git"
 url = "git@github.com:ruflab/simple-shapes-dataset.git"
 reference = "main"
-resolved_reference = "79c6d716e0ec0eb5ba45b6d464ba913d498b1b82"
+resolved_reference = "bb9fcd31a3f6731c93cd1d0025ce80f8bd712d1b"
 
 [[package]]
 name = "six"
