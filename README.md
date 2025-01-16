@@ -96,7 +96,7 @@ ssd migrate CHECKPOINT_PATH
 Pretrained model weights can be downloaded here:
 [https://zenodo.org/records/14289631](https://zenodo.org/records/14289631).
 
-You can download the using:
+You can download them using:
 ```
 ssd download checkpoints
 ```
