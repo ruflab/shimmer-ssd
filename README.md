@@ -37,28 +37,66 @@ scripts in debug mode. `local.yaml` is not tracked in github and is used for
 user-related config options, like paths to dataset and checkpoints.
 
 When running each script, you can adapt the config with the cli by addind as an option.
-For example, if you want to run with a differend seed: `python train_gw.py seed=5`.
-For nested values, use `.` as a separator: `python train_gw.py "training.max_steps=20"`.
+For example, if you want to run with a differend seed: `ssd train gw seed=5`.
+For nested values, use `.` as a separator: `ssd train gw "training.max_steps=20"`.
 
 Some particularly useful ones:
 ```bash
-python train_gw.py t="my-wandb-run-title" d="And an associated description"
+ssd train gw t="my-wandb-run-title" d="And an associated description"
 ```
 
 > [!NOTE]
 > There is no "-" or "--" in front of the arguments. They exactly correspond to the
 > config values.
 > Also, you have to put "=" between the key and the value. This won't work:
-> `python train_gw.py seed 5`
+> `ssd train gw seed 5`
+
+You can change the location of the config folder (particularly useful if you installed
+this repository using pip) with `--config_path`.
 
 ## Training scripts
-Scripts are located in the `scripts` folder.
 
-* `train_v.py`: train the image domain module
-* `train_attr.py`: train the attribute domain module
-* `train_t.py`: train the text domain module
-* `train_gw.py`: train a Global Workspace.
+* `ssd train v`: train the image domain module
+* `ssd train attr`: train the attribute domain module
+* `ssd train t`: train the text domain module
+* `ssd train gw`: train a Global Workspace.
+
+All this scripts accept some options:
+* `--config_path`, `-c`, path to the folder containing the config files.
+* `--debug`, `-d`, whether to start on debug mode.
+* `--log_config`, will log the exact config object used for the run.
+* `--extra_config_files`, `-e`, list of additional config files to load in addition to
+`local.yaml` relative to the `--config_path` 
+(use several `-e CONFIG_FILE -e CONFIG_FILE` to add several files).
+
+You can also edit any config files from the config folder as argument without the "-"
+or "--" as explained in the previous section.
+
+## Extract visual latent representations
+You can extract the visual latent representations of a given checkpoint with:
+```
+ssd extract v CHECKPOINT_PATH
+```
+Available options:
+* `--latent_name`, `-n`, name of the latent file to create (default: CHECKPOINT_PATH
+file with extension ".npy").
+* `--config_path`, `-c`, path to the folder containing the config files.
+* `--debug`, `-d`, whether to start on debug mode.
+* `--log_config`, will log the exact config object used for the run.
+* `--extra_config_files`, `-e`, list of additional config files to load in addition to
+`local.yaml` relative to the `--config_path` 
+(use several `-e CONFIG_FILE -e CONFIG_FILE` to add several files).
+
+## Migrate old checkpoint
+```
+ssd migrate CHECKPOINT_PATH
+```
 
 ## Pretrained checkpoints
 Pretrained model weights can be downloaded here:
 [https://zenodo.org/records/14289631](https://zenodo.org/records/14289631).
+
+You can download the using:
+```
+ssd download checkpoints
+```

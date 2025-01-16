@@ -1,5 +1,4 @@
 import pprint
-import sys
 import warnings
 from collections.abc import Mapping, Sequence
 from enum import Enum
@@ -361,7 +360,6 @@ class ShimmerConfigInfo(BaseModel):
 
 
 class Config(ParsedModel):
-    log_config: bool = False
     seed: int = 0  # training seed
     ood_seed: int | None = None  # Out of distribution seed
     default_root_dir: Path  # Path where to save and load logs and checkpoints
@@ -429,6 +427,7 @@ def load_config(
     use_cli: bool = True,
     debug_mode: bool = False,
     argv: list[str] | None = None,
+    log_config: bool = False,
 ) -> Config:
     path = Path(path)
     conf_files = []
@@ -455,8 +454,7 @@ def load_config(
     conf = use_deprecated_vals(
         validate_and_fill_missing(config_dict, Config, path, "local.yaml")
     )
-    if conf.log_config:
-        print("Logging config and stopping.")
+    if log_config:
+        print("Loaded config:")
         pprint.pp(dict(conf))
-        sys.exit(0)
     return conf

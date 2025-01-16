@@ -1,9 +1,0 @@
-domains:
-    - checkpoint_path: pretrained/vae_v_shimmer.ckpt
-      # checkpoint_path: shimmer-simple-shapes-z5ec9tmq/epoch=501.ckpt
-      domain_type: v
-
-domain_data_args:
-    v_latents:
-        presaved_path: vae_v_shimmer.npy
-
