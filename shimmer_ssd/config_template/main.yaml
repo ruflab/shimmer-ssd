@@ -1,0 +1,4 @@
+default_root_dir: "./checkpoints"  # Update where you want you checkpoints to be saved
+
+dataset:
+    path: "./simple_shapes_dataset"  # Update to the location of your dataset
