@@ -16,7 +16,7 @@ def config_group():
     "--path",
     "-p",
     default="./config",
-    type=click.Path(exists=False, path_type=Path),  # type: ignore
+    type=click.Path(path_type=Path),  # type: ignore
     help="Where to save the config folder. Defaults to `./config`.",
 )
 @click.option(
@@ -31,5 +31,9 @@ def config_group():
     ),
 )
 def create_config_command(path: Path, force: bool):
+    if path.exists() and not force:
+        click.echo("Config folder already exists. Skipping.")
+        return
+
     config_template_path = PROJECT_DIR / "shimmer_ssd" / "config_template"
     copytree(config_template_path, path, dirs_exist_ok=force)
