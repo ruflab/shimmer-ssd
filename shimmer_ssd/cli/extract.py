@@ -20,6 +20,7 @@ from shimmer_ssd.modules.domains.visual import VisualDomainModule
 
 def save_v_latents(
     checkpoin_path: Path,
+    dataset_path: Path | None = None,
     latent_name: str | None = None,
     config_path: Path | None = None,
     debug_mode: bool | None = None,
@@ -44,12 +45,15 @@ def save_v_latents(
         argv=argv,
     )
 
+    if dataset_path is None:
+        dataset_path = config.dataset.path
+
     additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
     if config.domain_modules.visual.color_blind:
         additional_transforms["v"] = [color_blind_visual_domain]
 
     data_module = SimpleShapesDataModule(
-        config.dataset.path,
+        dataset_path,
         get_default_domains(["v"]),
         {frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
@@ -96,7 +100,7 @@ def save_v_latents(
         latent_vectors = np.concatenate(latents, axis=0)
 
         latent_name = latent_name or (checkpoin_path.stem + ".npy")
-        path = config.dataset.path / f"saved_latents/{split}/{latent_name}"
+        path = dataset_path / f"saved_latents/{split}/{latent_name}"
         print(f"Saving in {path}.")
         np.save(path, latent_vectors)
 
@@ -112,6 +116,12 @@ def save_v_latents(
 @click.argument(
     "model_checkpoint",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),  # type: ignore
+)
+@click.option(
+    "--dataset_path",
+    "-p",
+    default=None,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),  # type: ignore
 )
 @click.option(
     "--latent_name",
@@ -142,6 +152,7 @@ def save_v_latents(
 def save_v_latents_command(
     ctx: click.Context,
     model_checkpoint: Path,
+    dataset_path: Path | None,
     latent_name: str | None,
     config_path: Path | None,
     debug: bool | None,
@@ -150,6 +161,7 @@ def save_v_latents_command(
 ):
     return save_v_latents(
         model_checkpoint,
+        dataset_path,
         latent_name,
         config_path,
         debug,

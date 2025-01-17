@@ -78,6 +78,8 @@ You can extract the visual latent representations of a given checkpoint with:
 ssd extract v CHECKPOINT_PATH
 ```
 Available options:
+* `--dataset_path`, `-p`, path to the simple-shapes-dataset (defaults to the config
+value `dataset.pah`).
 * `--latent_name`, `-n`, name of the latent file to create (default: CHECKPOINT_PATH
 file with extension ".npy").
 * `--config_path`, `-c`, path to the folder containing the config files.
