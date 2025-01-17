@@ -31,7 +31,7 @@ from torch import set_float32_matmul_precision
 from torch.optim.lr_scheduler import OneCycleLR
 from torch.optim.optimizer import Optimizer
 
-from shimmer_ssd import DEBUG_MODE, LOGGER, PROJECT_DIR
+from shimmer_ssd import DEBUG_MODE, LOGGER
 from shimmer_ssd.config import load_config
 from shimmer_ssd.dataset.pre_process import TokenizeCaptions
 from shimmer_ssd.logging import LogGWImagesCallback
@@ -40,14 +40,12 @@ from shimmer_ssd.modules.domains import load_pretrained_domains
 
 
 def train_gw(
-    config_path: Path | None = None,
+    config_path: Path,
     debug_mode: bool | None = None,
     log_config: bool = False,
     extra_config_files: list[str] | None = None,
     argv: list[str] | None = None,
 ):
-    if config_path is None:
-        config_path = PROJECT_DIR / "config"
     if debug_mode is None:
         debug_mode = DEBUG_MODE
     if extra_config_files is None:
@@ -316,7 +314,7 @@ def train_gw(
 @click.option(
     "--config_path",
     "-c",
-    default=None,
+    default="./config",
     type=click.Path(exists=True, dir_okay=True, file_okay=False, path_type=Path),  # type: ignore
 )
 @click.option("--debug", "-d", is_flag=True, default=None)
@@ -334,7 +332,7 @@ def train_gw(
 @click.pass_context
 def train_gw_command(
     ctx: click.Context,
-    config_path: Path | None,
+    config_path: Path,
     debug: bool | None,
     log_config: bool,
     extra_config_files: list[str],

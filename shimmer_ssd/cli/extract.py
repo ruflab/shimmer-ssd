@@ -12,7 +12,7 @@ from simple_shapes_dataset import (
 )
 from tqdm import tqdm
 
-from shimmer_ssd import DEBUG_MODE, LOGGER, PROJECT_DIR
+from shimmer_ssd import DEBUG_MODE, LOGGER
 from shimmer_ssd.config import DomainModuleVariant, LoadedDomainConfig, load_config
 from shimmer_ssd.modules.domains.pretrained import load_pretrained_module
 from shimmer_ssd.modules.domains.visual import VisualDomainModule
@@ -20,16 +20,14 @@ from shimmer_ssd.modules.domains.visual import VisualDomainModule
 
 def save_v_latents(
     checkpoin_path: Path,
+    config_path: Path,
     dataset_path: Path | None = None,
     latent_name: str | None = None,
-    config_path: Path | None = None,
     debug_mode: bool | None = None,
     log_config: bool = False,
     extra_config_files: list[str] | None = None,
     argv: list[str] | None = None,
 ):
-    if config_path is None:
-        config_path = PROJECT_DIR / "config"
     if debug_mode is None:
         debug_mode = DEBUG_MODE
     if argv is None:
@@ -118,6 +116,12 @@ def save_v_latents(
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),  # type: ignore
 )
 @click.option(
+    "--config_path",
+    "-c",
+    default="./config",
+    type=click.Path(exists=True, dir_okay=True, file_okay=False, path_type=Path),  # type: ignore
+)
+@click.option(
     "--dataset_path",
     "-p",
     default=None,
@@ -129,12 +133,6 @@ def save_v_latents(
     default=None,
     type=str,
     help="Name of the latent file to use in `presaved_path`.",
-)
-@click.option(
-    "--config_path",
-    "-c",
-    default=None,
-    type=click.Path(exists=True, dir_okay=True, file_okay=False, path_type=Path),  # type: ignore
 )
 @click.option("--debug", "-d", is_flag=True, default=None)
 @click.option("--log_config", is_flag=True, default=False)
@@ -152,18 +150,18 @@ def save_v_latents(
 def save_v_latents_command(
     ctx: click.Context,
     model_checkpoint: Path,
+    config_path: Path,
     dataset_path: Path | None,
     latent_name: str | None,
-    config_path: Path | None,
     debug: bool | None,
     log_config: bool,
     extra_config_files: list[str],
 ):
     return save_v_latents(
         model_checkpoint,
+        config_path,
         dataset_path,
         latent_name,
-        config_path,
         debug,
         log_config,
         extra_config_files if len(extra_config_files) else None,

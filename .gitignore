@@ -168,5 +168,4 @@ checkpoints/*
 #!checkpoints/pretrained
 data/
 wandb/
-config/local/
-config/local.yaml
+config/

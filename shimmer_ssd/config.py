@@ -433,6 +433,8 @@ def load_config(
     conf_files = []
     if load_files is not None:
         conf_files.extend(load_files)
+    if (path / "main.yaml").exists():
+        conf_files.append("main.yaml")
     if (path / "local.yaml").exists():
         conf_files.append("local.yaml")
 

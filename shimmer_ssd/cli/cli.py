@@ -1,5 +1,6 @@
 import click
 
+from shimmer_ssd.cli.config import config_group
 from shimmer_ssd.cli.download import download_group
 from shimmer_ssd.cli.extract import save_v_latents_command
 from shimmer_ssd.cli.migrate import migrate_domains_command
@@ -15,6 +16,7 @@ def cli():
 
 cli.add_command(migrate_domains_command)
 cli.add_command(download_group)
+cli.add_command(config_group)
 
 
 @cli.group("train")
