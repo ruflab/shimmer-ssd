@@ -22,7 +22,15 @@ poetry sync [--with dev]
 ```
 
 ## Config
-The config files are located in the `config` folder. 
+You first need to generate your local `config` folder with:
+```
+ssd config create
+```
+This will locally create a `config` folder for the project.
+Additional arguments:
+* `--path`, `-p`, where to save the config files (defaults to `./config`)
+* `--force`, `-f`, whether to override files if the destination of `--path` already
+exists.
 
 You can see all possible config values in the `shimmer_ssd/config.py` file.
 The root is the `Config` file, and all values from the yaml files are mapped to the
@@ -31,10 +39,9 @@ corresponding values using [pydantic](https://docs.pydantic.dev/latest/).
 We also use some custom code to allow some interpolations, described here:
 [https://github.com/bdvllrs/cfg-tools](https://github.com/bdvllrs/cfg-tools).
 
-To load the config, we first try to load script related config (the files given to
-`load_files` in `load_config`), the add `local.yaml`, then `debug.yaml` if you start
-scripts in debug mode. `local.yaml` is not tracked in github and is used for
-user-related config options, like paths to dataset and checkpoints.
+To load the config, we first try to load script related configs (the files given to
+`load_files` in `load_config`), then add `main.yaml`, `local.yaml`, 
+and finally `debug.yaml` if you start scripts in debug mode.
 
 When running each script, you can adapt the config with the cli by addind as an option.
 For example, if you want to run with a differend seed: `ssd train gw seed=5`.
