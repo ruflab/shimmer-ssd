@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
-            poetry install --no-interaction --with test,dev
+            poetry install --no-interaction --with dev
       - name: Ruff Formatting
         run: poetry run ruff format --check
       - name: Ruff Linter

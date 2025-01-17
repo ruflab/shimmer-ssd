@@ -52,8 +52,7 @@ types-redis = "^4.6.0.20240819"
 jupyterlab = "^4.3.2"
 pyqt5 = "^5.15.11"
 ipympl = "^0.9.4"
-
-[tool.poetry.group.test.dependencies]
+pdoc = "^15.0.1"
 pytest = "^7.3.2"
 
 [build-system]

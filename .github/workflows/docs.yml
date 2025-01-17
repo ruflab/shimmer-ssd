@@ -1,0 +1,65 @@
+name: website
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.4'
+      - name: Load cached Poetry install
+        uses: actions/cache@v4
+        id: cached-poetry
+        with: 
+          path: ~/.local
+          key: poetry-0
+      - name: Install Poetry
+        if: steps.cached-poetry.outputs.cache-hit != 'true'
+        uses: snok/install-poetry@v1
+      - name: Poetry config
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry config installer.parallel true
+      - name: Update torch's source to use CPU
+        run: |
+          poetry source add torch-cpu --priority=explicit --no-interaction https://download.pytorch.org/whl/cpu
+          torch_version=$(poetry show torch --no-ansi | grep 'version' | awk '{print $3}')
+          poetry add --lock --no-interaction --source torch-cpu "torch@$torch_version"
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --with dev
+      - run: poetry run python ./docs/make.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/api/
+
+  # Deploy the artifact to GitHub pages.
+  # This is a separate job so that only actions/deploy-pages has the necessary permissions.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
