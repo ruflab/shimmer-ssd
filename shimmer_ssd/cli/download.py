@@ -1,4 +1,3 @@
-import shutil
 import tarfile
 from pathlib import Path
 
@@ -15,17 +14,17 @@ def download_group():
     pass
 
 
-@click.command("checkpoints", help="Download pretrained checkpoints")
+@download_group.command("checkpoints", help="Download pretrained checkpoints")
 @click.option(
     "--path",
     "-p",
     type=click.Path(path_type=Path),  # type: ignore
-    default=".",
+    default="./checkpoints",
     help="Where to download the dataset",
 )
 def download_dataset(path: Path):
-    archive_path = path.parent / "simple_shapes_checkpoints.tar.gz"
-    shutil.rmtree(path)
+    path.mkdir(exist_ok=True)
+    archive_path = path / "simple_shapes_checkpoints.tar.gz"
     downlad_file(DATASET_URL, archive_path)
     click.echo("Extracting archive...")
     with tarfile.open(archive_path, "r:gz") as archive:
