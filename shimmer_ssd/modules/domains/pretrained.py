@@ -104,6 +104,19 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
     return module
 
 
+def get_from_dict_or_val(
+    val: int | Mapping[DomainModuleVariant, int], key: DomainModuleVariant, log: str
+) -> int:
+    """
+    If val is int, return val, otherwise return val[key]
+    """
+    if isinstance(val, int):
+        return val
+
+    assert key in val, f"{key} should be defined in {log}."
+    return val[key]
+
+
 def load_pretrained_domain(
     domain: LoadedDomainConfig,
     workspace_dim: int,
@@ -115,25 +128,19 @@ def load_pretrained_domain(
     bias: bool = False,
 ) -> tuple[DomainModule, Module, Module]:
     module = load_pretrained_module(domain)
-    encoder_hidden_dim = (
-        encoders_hidden_dim
-        if isinstance(encoders_hidden_dim, int)
-        else encoders_hidden_dim[domain.domain_type]
+    encoder_hidden_dim = get_from_dict_or_val(
+        encoders_hidden_dim, domain.domain_type, "global_workspace.encoders.hidden_dim"
     )
-    decoder_hidden_dim = (
-        decoders_hidden_dim
-        if isinstance(decoders_hidden_dim, int)
-        else decoders_hidden_dim[domain.domain_type]
+    decoder_hidden_dim = get_from_dict_or_val(
+        decoders_hidden_dim, domain.domain_type, "global_workspace.decoders.hidden_dim"
     )
-    encoder_n_layers = (
-        encoders_n_layers
-        if isinstance(encoders_n_layers, int)
-        else encoders_n_layers[domain.domain_type]
+
+    encoder_n_layers = get_from_dict_or_val(
+        encoders_n_layers, domain.domain_type, "global_workspace.encoder.n_layers"
     )
-    decoder_n_layers = (
-        decoders_n_layers
-        if isinstance(decoders_n_layers, int)
-        else decoders_n_layers[domain.domain_type]
+
+    decoder_n_layers = get_from_dict_or_val(
+        decoders_n_layers, domain.domain_type, "global_workspace.decoders.n_layers"
     )
 
     gw_encoder: Module
