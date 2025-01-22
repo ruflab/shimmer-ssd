@@ -7,7 +7,8 @@ from typing import Any, Literal
 
 from cfg_tools import ParsedModel, load_config_files
 from cfg_tools.utils import validate_and_fill_missing
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, GetCoreSchemaHandler
+from pydantic_core import core_schema
 from shimmer import __version__
 from shimmer.version import __version__ as shimmer_version
 from simple_shapes_dataset import DomainType
@@ -62,6 +63,46 @@ class DomainModuleVariant(Enum):
         """
         self.kind = kind
         self.model_variant = model_variant
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, _source_type: Any, _handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        """
+        Define how this type is validated and serialized by pydantic.
+        It can take a str related to the enum keys.
+        It should be serialized as the the enum key name.
+        """
+
+        def validate_from_str(v: str) -> DomainModuleVariant:
+            """
+            Use names instead of values to select enums
+            """
+            assert v in DomainModuleVariant.__members__, (
+                f"Domain type `{v}` is not a member "
+                f"of {list(DomainModuleVariant.__members__.keys())}"
+            )
+            return DomainModuleVariant[v]
+
+        from_str_schema = core_schema.no_info_plain_validator_function(
+            validate_from_str
+        )
+
+        def serialize_domain_variant(v: DomainModuleVariant) -> str:
+            return v.name
+
+        return core_schema.json_or_python_schema(
+            json_schema=from_str_schema,
+            python_schema=core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(DomainModuleVariant),
+                    from_str_schema,
+                ]
+            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                serialize_domain_variant
+            ),
+        )
 
 
 class Logging(BaseModel):
@@ -272,21 +313,6 @@ class LoadedDomainConfig(BaseModel):
     domain_type: DomainModuleVariant
     # domain module specific arguments
     args: Mapping[str, Any] = {}
-
-    @field_validator("domain_type", mode="before")
-    @classmethod
-    def validate_domain_type(cls, v: str | DomainModuleVariant) -> DomainModuleVariant:
-        """
-        Use names instead of values to select enums
-        """
-        if isinstance(v, DomainModuleVariant):
-            return v
-
-        assert v in DomainModuleVariant.__members__, (
-            f"Domain type `{v}` is not a member "
-            f"of {DomainModuleVariant.__members__.keys()}"
-        )
-        return DomainModuleVariant[v]
 
 
 class DomainProportion(BaseModel):
