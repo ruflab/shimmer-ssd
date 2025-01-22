@@ -102,3 +102,16 @@ You can download them using:
 ```
 ssd download checkpoints
 ```
+Optional argument:
+* `--path`, `-p`, location to the checkpoints folder. Defaults to `./checkpoints`.
+
+## Tokenizer data
+You can download the tokenizer data with:
+```
+ssd download tokenizer
+```
+Optional argument:
+* `--path`, `-p`, location to the tokenizer folder. Defaults to `./tokenizer`.
+
+It can also be access from this repository:
+[https://github.com/ruflab/shimmer-ssd/tree/main/tokenizer](https://github.com/ruflab/shimmer-ssd/tree/main/tokenizer).
