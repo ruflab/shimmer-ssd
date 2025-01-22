@@ -169,3 +169,4 @@ checkpoints/*
 data/
 wandb/
 config/
+simple_shapes_dataset/
