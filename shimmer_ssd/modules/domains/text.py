@@ -274,7 +274,6 @@ class GRUTextDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
         padding_token: int = 0,
-        coef_token_loss: float = 0.5,
     ):
         super().__init__(latent_dim)
         self.is_frozen = False
@@ -309,10 +308,6 @@ class GRUTextDomainModule(DomainModule):
         self.optim_weight_decay = optim_weight_decay
         self.logit_scale = nn.Parameter(torch.tensor([1 / 0.07]).log())
 
-        if coef_token_loss > 1 or coef_token_loss < 0:
-            raise ValueError("coef_token_loss should be between 0 and 1")
-        self.coef_token_loss = coef_token_loss
-
         self.scheduler_args = SchedulerArgs(
             max_lr=optim_lr,
             total_steps=1,
@@ -328,15 +323,6 @@ class GRUTextDomainModule(DomainModule):
             2 * text_token_loss,
             {"loss_tokens": text_token_loss, "pred_t_acc": acc},
         )
-        # latent_loss = F.mse_loss(pred, target, reduction="mean")
-        # total_loss = (
-        #     self.coef_token_loss * unimodal_loss
-        #     + (1 - self.coef_token_loss) * latent_loss
-        # )
-        # return LossOutput(
-        #     total_loss,
-        #     {"loss_tokens": unimodal_loss, "latent": latent_loss, "pred_t_acc": acc},
-        # )
 
     def compute_domain_loss(self, domain: Any) -> LossOutput:
         z = self.encode(domain)

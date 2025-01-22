@@ -1,4 +1,86 @@
-default_root_dir: "./checkpoints"  # Update where you want you checkpoints to be saved
+# Path where we save checkpoints
+default_root_dir: "./checkpoints"
+
 
 dataset:
-    path: "./simple_shapes_dataset"  # Update to the location of your dataset
+    # Path to the simple-shapes-dataset
+    path: "./simple_shapes_dataset"
+
+
+wandb:
+    enabled: false  # Set to true to log your training to wandb
+    save_dir: "./wandb"
+    project: "shimmer-ssd"
+    entity: "my-account"
+
+
+# Uncomment the following to use mixed-precision for training:
+# training:
+#     precision: "16-mixed"
+#     float32_matmul_precision: "medium"
+
+
+# Config for the dataloader
+domain_data_args:
+    v_latents:
+        presaved_path: domain_v.npy
+
+
+# Config for the domain modules
+domain_modules:
+    text:
+        vocab_path: ./tokenizer/vocab.json
+        merges_path: ./tokenizer/merges.txt
+
+
+# Proportion used for each group of domain
+# Possible options are "v", "attr", "t"
+domain_proportions: 
+    -   domains: ["v"]  # unimodal visual passes use 100% of the available data 
+        proportion: 1.0
+    -   domains: ["t"]  # unimodal text passes use 100% of the available data
+        proportion: 1.0
+    -   domains: ["v", "t"]  # paired passes uses 100% of the available data
+        proportion: 1.0
+
+
+# Selected domains for this run
+domains:
+    - checkpoint_path: "#{default_root_dir}/domain_v.ckpt"
+      domain_type: v_latents
+    - checkpoint_path: "#{default_root_dir}/domain_t.ckpt"
+      domain_type: t
+
+
+global_workspace:
+    # Dimension of the global workspace
+    latent_dim: 12  
+
+    # Coefficients of the various losses
+    loss_coefficients:
+        cycles: 1.0
+        contrastives: 0.1
+        demi_cycles: 1.0
+        translations: 1.0
+
+    # Global Workspace encoder settings
+    encoders:
+        # You can either set the hidden_dim or n_layers for each domain,
+        # or directly (like in `decoders` below) if it is the same for every domain.
+        hidden_dim:
+            v_latents: 32
+            t: 32
+        # Number of layers - 2 additional linear layer that will always be added 
+        # (the total will be n_layers + 2).
+        n_layers:
+            v_latents: 3
+            t: 3
+
+    # Global Workspace decoder settings
+    # The comments are the same as for the encoders
+    decoders:
+        hidden_dim: 32
+        n_layers: 3
+      
+
+
