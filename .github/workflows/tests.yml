@@ -16,11 +16,12 @@ jobs:
         id: cached-poetry
         with: 
           path: ~/.local
-          key: poetry-1
+          key: poetry-2
       - name: Install Poetry
         if: steps.cached-poetry.outputs.cache-hit != 'true'
         uses: snok/install-poetry@v1
         with:
+          version: 2.0.1
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
@@ -49,7 +50,7 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
-            poetry install --no-interaction --with dev
+            poetry sync --no-interaction --with dev
       - name: Ruff Formatting
         run: poetry run ruff format --check
       - name: Ruff Linter
