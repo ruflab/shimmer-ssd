@@ -27,6 +27,7 @@ def download_group():
     help="Where to download the checkpoints. Defaults to `./checkpoints`",
 )
 def download_dataset(path: Path):
+    click.echo(f"Downloading in {str(path)}.")
     path.mkdir(exist_ok=True)
     archive_path = path / "simple_shapes_checkpoints.tar.gz"
     downlad_file(CHECKPOINTS_URL, archive_path)
@@ -45,6 +46,7 @@ def download_dataset(path: Path):
     help="Where to download the tokenizer files",
 )
 def download_tokenizer(path: Path):
+    click.echo(f"Downloading in {str(path)}.")
     path.mkdir(exist_ok=True)
     downlad_file(TOKENIZER_URL + "/merges.txt", path / "merges.txt")
     downlad_file(TOKENIZER_URL + "/vocab.json", path / "vocab.json")
