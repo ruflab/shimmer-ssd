@@ -11,14 +11,14 @@ dataset](https://github.com/ruflab/simple-shapes-dataset).
 
 First clone and cd to the downloaded directory.
 
-We use [poetry](https://python-poetry.org/) to manage the dependency. Please follow
+We use [poetry](https://python-poetry.org/) (version >= 2.0) to manage the dependency. Please follow
 [these instructions](https://github.com/ruflab/shimmer/blob/main/CONTRIBUTING.md) first 
 to setup your environment.
 
 To install the project and dependencies:
 
 ```bash
-poetry install --sync
+poetry sync [--with dev]
 ```
 
 ## Config
