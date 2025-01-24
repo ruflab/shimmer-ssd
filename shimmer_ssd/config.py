@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Mapping, Sequence
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from cfg_tools import ParsedModel, load_config_files
 from cfg_tools.utils import validate_and_fill_missing
@@ -13,6 +13,7 @@ from pydantic import (
     GetCoreSchemaHandler,
     field_serializer,
     field_validator,
+    model_validator,
 )
 from pydantic_core import core_schema
 from shimmer import __version__
@@ -467,6 +468,19 @@ class Config(ParsedModel):
             {"domains": list(domains), "proportion": proportion}
             for domains, proportion in domain_proportions.items()
         ]
+
+    @model_validator(mode="after")
+    def check_selected_domains_have_non_null_proportion(self) -> Self:
+        for domain in self.domains:
+            domain_base_name = domain.domain_type.kind.value.base
+            group = frozenset([domain_base_name])
+            if self.domain_proportions.get(group, 0) <= 0:
+                raise ValueError(
+                    "Selected domains in `domains` should have a non-zero "
+                    "proportion in `domain_proportions` "
+                    f"but '{domain_base_name}' is not part of `domain_proportions`."
+                )
+        return self
 
 
 def use_deprecated_vals(config: Config) -> Config:
