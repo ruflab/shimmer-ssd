@@ -100,6 +100,11 @@ file with extension ".npy").
 ```
 ssd migrate CHECKPOINT_PATH
 ```
+Optional arguments:
+* `--migration_path` where the path with migrations is located. Defaults to the
+migrations provided by this repo.
+* `--type`, `-t`, type of migration. One of "gw", "attr_mod", "text_mod", "visual_mod".
+Defaults to "gw".
 
 ## Pretrained checkpoints
 Pretrained model weights can be downloaded here:
