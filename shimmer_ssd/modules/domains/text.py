@@ -306,7 +306,6 @@ class GRUTextDomainModule(DomainModule):
 
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
-        self.logit_scale = nn.Parameter(torch.tensor([1 / 0.07]).log())
 
         self.scheduler_args = SchedulerArgs(
             max_lr=optim_lr,
