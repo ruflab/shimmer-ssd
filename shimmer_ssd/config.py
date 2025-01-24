@@ -7,11 +7,18 @@ from typing import Any, Literal
 
 from cfg_tools import ParsedModel, load_config_files
 from cfg_tools.utils import validate_and_fill_missing
-from pydantic import BaseModel, Field, GetCoreSchemaHandler
+from pydantic import (
+    BaseModel,
+    Field,
+    GetCoreSchemaHandler,
+    field_serializer,
+    field_validator,
+)
 from pydantic_core import core_schema
 from shimmer import __version__
 from shimmer.version import __version__ as shimmer_version
 from simple_shapes_dataset import DomainType
+from typing_extensions import TypedDict
 
 from shimmer_ssd import PROJECT_DIR
 
@@ -316,6 +323,21 @@ class LoadedDomainConfig(BaseModel):
 
 
 class DomainProportion(BaseModel):
+    """
+    Deprecated, DomainProportionT will be used instead.
+    """
+
+    # proportion for some domains
+    # should be in [0, 1]
+    proportion: float
+    # list of domains the proportion is associated to
+    # e.g. if domains: ["v", "t"], then it gives the prop of paired v, t data
+    domains: Sequence[str]
+
+
+class DomainProportionT(TypedDict):
+    """This replaces `DomainProportion` in future config."""
+
     # proportion for some domains
     # should be in [0, 1]
     proportion: float
@@ -404,7 +426,7 @@ class Config(ParsedModel):
     # Add a description to your run
     desc: str | None = Field(None, alias="d")
     # proportion of each domain in the dataset relative to `dataset.max_train_size`
-    domain_proportions: Sequence[DomainProportion] = []
+    domain_proportions: Mapping[frozenset[str], float] = {}
     # Config of the different domain modules
     domain_modules: DomainModules = DomainModules()
     # Domain params for the active domains of the run
@@ -418,6 +440,33 @@ class Config(ParsedModel):
     # Slurm config when startig on a cluster
     slurm: Slurm | None = None
     __shimmer__: ShimmerConfigInfo = ShimmerConfigInfo()
+
+    @field_validator("domain_proportions", mode="before")
+    @classmethod
+    def domain_proportion_validator(
+        cls, value: Sequence[DomainProportionT] | Mapping[frozenset[str], float]
+    ) -> Mapping[frozenset[str], float]:
+        """
+        Replace the format:
+        ```
+        - domains: ["v"]
+          proportion: 1.0
+        ```
+        in the yaml file into a Mapping[frozenset[str], float]
+        """
+        if isinstance(value, Mapping):
+            return value
+        else:
+            return {frozenset(item["domains"]): item["proportion"] for item in value}
+
+    @field_serializer("domain_proportions")
+    def serialize_domain_proportions(
+        self, domain_proportions: Mapping[frozenset[str], float], _info
+    ) -> list[DomainProportionT]:
+        return [
+            {"domains": list(domains), "proportion": proportion}
+            for domains, proportion in domain_proportions.items()
+        ]
 
 
 def use_deprecated_vals(config: Config) -> Config:
@@ -439,7 +488,11 @@ def use_deprecated_vals(config: Config) -> Config:
             stacklevel=2,
         )
     if config.global_workspace.domain_proportions is not None:
-        config.domain_proportions = config.global_workspace.domain_proportions
+        config.domain_proportions = {
+            frozenset(item.domains): item.proportion
+            for item in config.global_workspace.domain_proportions
+        }
+
         warnings.warn(
             "Deprecated `config.global_workspace.domain_proportions`, "
             "use `config.domain_proportions` instead",

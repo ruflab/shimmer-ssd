@@ -65,9 +65,6 @@ def train_gw(
 
     seed_everything(config.seed, workers=True)
 
-    domain_proportion = {
-        frozenset(item.domains): item.proportion for item in config.domain_proportions
-    }
     domain_classes = get_default_domains(
         {domain.domain_type.kind.value for domain in config.domains}
     )
@@ -90,7 +87,7 @@ def train_gw(
     data_module = SimpleShapesDataModule(
         config.dataset.path,
         domain_classes,
-        domain_proportion,
+        config.domain_proportions,
         batch_size=config.training.batch_size,
         max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
