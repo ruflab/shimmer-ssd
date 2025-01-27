@@ -108,7 +108,7 @@ Defaults to "gw".
 
 ## Pretrained checkpoints
 Pretrained model weights can be downloaded here:
-[https://zenodo.org/records/14289631](https://zenodo.org/records/14289631).
+[https://zenodo.org/records/14747474](https://zenodo.org/records/14747474).
 
 You can download them using:
 ```

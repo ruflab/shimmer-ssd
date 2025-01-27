@@ -5,7 +5,7 @@ import click
 from simple_shapes_dataset.cli.download import downlad_file
 
 CHECKPOINTS_URL = (
-    "https://zenodo.org/records/14289631/files/simple_shapes_checkpoints.tar.gz"
+    "https://zenodo.org/records/14747474/files/simple_shapes_checkpoints.tar.gz"
 )
 
 TOKENIZER_URL = (
