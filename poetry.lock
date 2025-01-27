@@ -4506,9 +4506,9 @@ torch = ">=2.0.1,<3.0.0"
 
 [package.source]
 type = "git"
-url = "ssh://git@github.com/ruflab/shimmer.git"
+url = "https://github.com/ruflab/shimmer.git"
 reference = "main"
-resolved_reference = "67232dbe0c9fc9c1865c25c6c121c145772702f5"
+resolved_reference = "cebc0d827f3e71322e03e0b4328b63bb412962ff"
 
 [[package]]
 name = "simple-shapes-dataset"
@@ -4522,22 +4522,22 @@ develop = false
 
 [package.dependencies]
 attributes-to-language = {git = "https://github.com/bdvllrs/attributes-to-language.git", rev = "v0.4.0"}
-click = "^8.1.3"
-lightning = ">=2.1.0"
-matplotlib = "^3.7.0"
-numpy = "^1.26"
-opencv-python = "^4.7.0.72"
-pillow = "^10.3.0"
+click = ">=8.1.3,<9.0.0"
+lightning = ">=2.1.0,<3.0.0"
+matplotlib = ">=3.7.0,<4.0.0"
+numpy = ">=1.26,<2.0"
+opencv-python = ">=4.7.0.72,<5.0.0.0"
+pillow = ">=10.3.0,<11.0.0"
 torch = ">=2.0.1,<2.6.0"
 torchvision = ">=0.15.2,<0.21"
 tqdm = ">=4.66.3,<4.67.0"
-transformers = "^4.30.2"
+transformers = ">=4.30.2,<5.0.0"
 
 [package.source]
 type = "git"
-url = "ssh://git@github.com/ruflab/simple-shapes-dataset.git"
+url = "https://github.com/ruflab/simple-shapes-dataset.git"
 reference = "main"
-resolved_reference = "209def4d88ba147157b51c616ddd427dec7bc29d"
+resolved_reference = "d652d932b0f0b54e034da7937eceb1317d5237b6"
 
 [[package]]
 name = "six"
@@ -5550,4 +5550,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "0300814dce3fd447be6d8b8d8e918d533f921f961ab1f7053a8950bc4bc7103a"
+content-hash = "e8ceb36e4314afcfc478d02c58ff4de95b1d5aa40fc94050b8be812086b6e703"
