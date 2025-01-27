@@ -40,17 +40,8 @@ class VisualDomainModule(DomainModule):
         super().__init__(latent_dim)
         self.save_hyperparameters()
 
-        vae_encoder = RAEEncoder(
-            num_channels,
-            ae_dim,
-            latent_dim,
-            use_batchnorm=True,
-        )
-        vae_decoder = RAEDecoder(
-            num_channels,
-            latent_dim,
-            ae_dim,
-        )
+        vae_encoder = RAEEncoder(num_channels, ae_dim, latent_dim, use_batchnorm=True)
+        vae_decoder = RAEDecoder(num_channels, latent_dim, ae_dim)
         self.vae = VAE(vae_encoder, vae_decoder, beta)
         self.optim_lr = optim_lr
         self.optim_weight_decay = optim_weight_decay
@@ -66,10 +57,10 @@ class VisualDomainModule(DomainModule):
         return LossOutput(mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
-        return self.vae.encode((x,))
+        return self.vae.encode(x)
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
-        out = self.vae.decode(z)[0]
+        out = self.vae.decode(z)
         return out
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:  # type: ignore
@@ -80,7 +71,7 @@ class VisualDomainModule(DomainModule):
         x: torch.Tensor,
         mode: str = "train",
     ) -> torch.Tensor:
-        (mean, logvar), reconstruction = self.vae((x,))
+        (mean, logvar), reconstruction = self.vae(x)
 
         reconstruction_loss = gaussian_nll(reconstruction[0], torch.tensor(0), x).sum()
 
@@ -117,9 +108,6 @@ class VisualDomainModule(DomainModule):
             weight_decay=self.optim_weight_decay,
         )
         lr_scheduler = OneCycleLR(optimizer, **self.scheduler_args)
-
-        # FIXME: This might trigger a warning if mixed-precision, as per
-        # https://github.com/Lightning-AI/lightning/issues/5558
 
         return {
             "optimizer": optimizer,

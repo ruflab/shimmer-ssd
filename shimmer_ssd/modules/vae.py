@@ -81,8 +81,8 @@ class RAEEncoder(VAEEncoder):
         self.q_mean = nn.Linear(self.out_dim, self.z_dim)
         self.q_logvar = nn.Linear(self.out_dim, self.z_dim)
 
-    def forward(self, x: Sequence[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
-        out = self.layers(x[0]).view(x[0].size(0), -1)
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        out = self.layers(x).view(x.size(0), -1)
         out = out.view(out.size(0), -1)
 
         return self.q_mean(out), self.q_logvar(out)
@@ -152,8 +152,8 @@ class RAEDecoder(VAEDecoder):
             nn.Sigmoid(),
         )
 
-    def forward(self, z: torch.Tensor) -> list[torch.Tensor]:
-        return [self.out_layer(self.layers(z[:, :, None, None]))]
+    def forward(self, z: torch.Tensor) -> torch.Tensor:  # type: ignore
+        return self.out_layer(self.layers(z[:, :, None, None]))
 
 
 def dim_exploration_figure(
