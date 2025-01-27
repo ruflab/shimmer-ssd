@@ -23,6 +23,20 @@ class VisualDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: Mapping[str, Any] | None = None,
     ):
+        """
+        Visual domain module. This defines shimmer's `DomainModule` for the vision
+        side with a VAE.
+
+        Args:
+            num_channels (`int`): number of input channels (for RGB image, use 3)
+            latent_dim (`int`): latent dimension of the vision domain
+            ae_dim (`int`): internal auto-encoder dimension of the VAE
+            beta (`float`): beta value if beta-VAE. (Defaults to 1.0)
+            optim_lr (`float`): training learning rate
+            optim_weight_decay (`float`): training weight decay
+            scheduler_args (`Mapping[str, Any] | None`): Args for the scheduler.
+        """
+
         super().__init__(latent_dim)
         self.save_hyperparameters()
 
