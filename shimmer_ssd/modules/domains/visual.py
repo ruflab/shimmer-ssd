@@ -73,7 +73,7 @@ class VisualDomainModule(DomainModule):
     ) -> torch.Tensor:
         (mean, logvar), reconstruction = self.vae(x)
 
-        reconstruction_loss = gaussian_nll(reconstruction[0], torch.tensor(0), x).sum()
+        reconstruction_loss = gaussian_nll(reconstruction, torch.tensor(0), x).sum()
 
         kl_loss = kl_divergence_loss(mean, logvar)
         total_loss = reconstruction_loss + self.vae.beta * kl_loss
