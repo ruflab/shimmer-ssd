@@ -8,7 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from lightning.pytorch.loggers import Logger
+from lightning.pytorch.loggers import Logger, TensorBoardLogger
 from lightning.pytorch.loggers.wandb import WandbLogger
 from matplotlib import gridspec
 from matplotlib.figure import Figure
@@ -29,6 +29,40 @@ from shimmer_ssd.modules.domains.visual import VisualLatentDomainModule
 matplotlib.use("Agg")
 
 _T = TypeVar("_T")
+
+
+def log_image(
+    logger: Logger, key: str, image: torch.Tensor | Image.Image, step: int | None = None
+):
+    if isinstance(logger, WandbLogger):
+        logger.log_image(key, [image], step)
+    elif isinstance(logger, TensorBoardLogger):
+        logger.experiment.add_image(key, image, step)
+    else:
+        LOGGER.warning(
+            "[Sample Logger] Only logging to tensorboard or wandb is supported"
+        )
+        return
+
+
+def log_text(
+    logger: Logger,
+    key: str,
+    columns: list[str],
+    data: list[list[str]],
+    step: int | None = None,
+):
+    if isinstance(logger, WandbLogger):
+        logger.log_text(key, columns, data, step=step)
+    elif isinstance(logger, TensorBoardLogger):
+        text = ", ".join(columns) + "\n"
+        text += "\n".join([", ".join(d) for d in data])
+        logger.experiment.add_image(key, text, step)
+    else:
+        LOGGER.warning(
+            "[Sample Logger] Only logging to tensorboard or wandb is supported"
+        )
+        return
 
 
 class LogSamplesCallback(Generic[_T], ABC, pl.Callback):
@@ -242,16 +276,10 @@ class LogAttributesCallback(LogSamplesCallback[Sequence[torch.Tensor]]):
     def log_samples(
         self, logger: Logger, samples: Sequence[torch.Tensor], mode: str
     ) -> None:
-        if not isinstance(logger, WandbLogger):
-            LOGGER.warning("Only logging to wandb is supported")
-            return
-
         image = attribute_image_grid(
-            samples,
-            image_size=self.image_size,
-            ncols=self.ncols,
+            samples, image_size=self.image_size, ncols=self.ncols
         )
-        logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
+        log_image(logger, f"{self.log_key}_{mode}", image)
 
 
 class LogTextCallback(LogSamplesCallback[Mapping[str, torch.Tensor]]):
@@ -320,7 +348,7 @@ class LogTextCallback(LogSamplesCallback[Mapping[str, torch.Tensor]]):
             samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
         )
         text = [[t.replace("<pad>", "")] for t in text]
-        logger.log_text(key=f"{self.log_key}_{mode}_str", columns=["text"], data=text)
+        log_text(logger, f"{self.log_key}_{mode}_str", ["text"], text)
 
 
 class LogVisualCallback(LogSamplesCallback[torch.Tensor]):
@@ -345,7 +373,7 @@ class LogVisualCallback(LogSamplesCallback[torch.Tensor]):
 
         LOGGER.debug("[VISUAL LOGGER] logging samples")
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
-        logger.log_image(key=f"{self.log_key}_{mode}", images=[images])
+        log_image(logger, f"{self.log_key}_{mode}", images)
 
 
 class LogText2AttrCallback(
@@ -435,9 +463,7 @@ class LogText2AttrCallback(
                     domain["tokens"].detach().cpu().tolist(), skip_special_tokens=True
                 )
                 text = [[t.replace("<pad>", "")] for t in text]
-                logger.log_text(
-                    key=f"{self.log_key}_{mode}_str", columns=["text"], data=text
-                )
+                log_text(logger, f"{self.log_key}_{mode}_str", ["text"], text)
             elif domain_name == "attr":
                 assert isinstance(domain, list)
                 image = attribute_image_grid(
@@ -445,7 +471,7 @@ class LogText2AttrCallback(
                     image_size=self.image_size,
                     ncols=self.ncols,
                 )
-                logger.log_image(key=f"{self.log_key}_{mode}", images=[image])
+                log_image(logger, f"{self.log_key}_{mode}", image)
 
 
 def batch_to_device(
@@ -680,7 +706,7 @@ class LogGWImagesCallback(pl.Callback):
         mode: str,
     ) -> None:
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
-        logger.log_image(key=f"{self.log_key}/{mode}", images=[images])
+        log_image(logger, f"{self.log_key}/{mode}", images)
 
     def log_attribute_samples(
         self,
@@ -693,7 +719,7 @@ class LogGWImagesCallback(pl.Callback):
             image_size=self.image_size,
             ncols=self.ncols,
         )
-        logger.log_image(key=f"{self.log_key}/{mode}", images=[image])
+        log_image(logger, f"{self.log_key}/{mode}", image)
 
     def log_text_samples(
         self,
@@ -706,4 +732,4 @@ class LogGWImagesCallback(pl.Callback):
             samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
         )
         text = [[t.replace("<pad>", "")] for t in text]
-        logger.log_text(key=f"{self.log_key}/{mode}", columns=["text"], data=text)
+        log_text(logger, f"{self.log_key}/{mode}", ["text"], text)
