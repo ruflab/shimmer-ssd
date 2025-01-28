@@ -367,11 +367,6 @@ class LogVisualCallback(LogSamplesCallback[torch.Tensor]):
         return samples.to(device)
 
     def log_samples(self, logger: Logger, samples: torch.Tensor, mode: str) -> None:
-        if not isinstance(logger, WandbLogger):
-            LOGGER.warning("[VISUAL LOGGER] Only logging to wandb is supported")
-            return
-
-        LOGGER.debug("[VISUAL LOGGER] logging samples")
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
         log_image(logger, f"{self.log_key}_{mode}", images)
 
@@ -451,10 +446,6 @@ class LogText2AttrCallback(
         samples: Mapping[str, Mapping[str, torch.Tensor] | Sequence[torch.Tensor]],
         mode: str,
     ) -> None:
-        if not isinstance(logger, WandbLogger):
-            LOGGER.warning("Only logging to wandb is supported")
-            return
-
         for domain_name, domain in samples.items():
             if domain_name == "t":
                 assert self.tokenizer is not None
@@ -677,10 +668,6 @@ class LogGWImagesCallback(pl.Callback):
         domain: str,
         mode: str,
     ) -> None:
-        if not isinstance(logger, WandbLogger):
-            LOGGER.warning("Only logging to wandb is supported")
-            return
-
         match domain:
             case "v":
                 self.log_visual_samples(logger, samples, mode)
@@ -701,7 +688,7 @@ class LogGWImagesCallback(pl.Callback):
 
     def log_visual_samples(
         self,
-        logger: WandbLogger,
+        logger: Logger,
         samples: Any,
         mode: str,
     ) -> None:
@@ -710,7 +697,7 @@ class LogGWImagesCallback(pl.Callback):
 
     def log_attribute_samples(
         self,
-        logger: WandbLogger,
+        logger: Logger,
         samples: Any,
         mode: str,
     ) -> None:
@@ -723,7 +710,7 @@ class LogGWImagesCallback(pl.Callback):
 
     def log_text_samples(
         self,
-        logger: WandbLogger,
+        logger: Logger,
         samples: Any,
         mode: str,
     ) -> None:
