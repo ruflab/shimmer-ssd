@@ -50,7 +50,7 @@ def save_v_latents(
     latent_name = latent_name or (checkpoin_path.stem + ".npy")
     train_path = dataset_path / f"saved_latents/train/{latent_name}"
     if train_path.exists() and not force:
-        click.echo("Latent file already exists. Skipping")
+        click.echo("Latent file already exists. Skipping.")
         return
     elif train_path.exists():
         click.echo("Latent file already exists. Overriding.")
