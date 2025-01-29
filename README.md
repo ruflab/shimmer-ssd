@@ -22,44 +22,7 @@ poetry sync [--with dev]
 ```
 
 ## Config
-You first need to generate your local `config` folder with:
-```
-ssd config create
-```
-This will locally create a `config` folder for the project.
-Additional arguments:
-* `--path`, `-p`, where to save the config files (defaults to `./config`)
-* `--force`, `-f`, whether to override files if the destination of `--path` already
-exists.
-
-You can see all possible config values in the `shimmer_ssd/config.py` file.
-The root is the `Config` file, and all values from the yaml files are mapped to the
-corresponding values using [pydantic](https://docs.pydantic.dev/latest/).
-
-We also use some custom code to allow some interpolations, described here:
-[https://github.com/bdvllrs/cfg-tools](https://github.com/bdvllrs/cfg-tools).
-
-To load the config, we first try to load script related configs (the files given to
-`load_files` in `load_config`), then add `main.yaml`, `local.yaml`, 
-and finally `debug.yaml` if you start scripts in debug mode.
-
-When running each script, you can adapt the config with the cli by addind as an option.
-For example, if you want to run with a differend seed: `ssd train gw seed=5`.
-For nested values, use `.` as a separator: `ssd train gw "training.max_steps=20"`.
-
-Some particularly useful ones:
-```bash
-ssd train gw t="my-wandb-run-title" d="And an associated description"
-```
-
-> [!NOTE]
-> There is no "-" or "--" in front of the arguments. They exactly correspond to the
-> config values.
-> Also, you have to put "=" between the key and the value. This won't work:
-> `ssd train gw seed 5`
-
-You can change the location of the config folder (particularly useful if you installed
-this repository using pip) with `--config_path`.
+All details can be read in the [config docs](./docs/config_parameters.md).
 
 ## Training scripts
 

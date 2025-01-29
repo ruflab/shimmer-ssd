@@ -62,6 +62,7 @@ training:
   #  Number of devices (gpus) to use.
   devices: 1  # (type: int)
 
+  # See https://lightning.ai/docs/pytorch/stable/common/trainer.html#accelerator
   accelerator: "gpu"  # (type: str)
 
   # See https://lightning.ai/docs/pytorch/stable/common/trainer.html#fast-dev-run
@@ -81,14 +82,20 @@ training:
   float32_matmul_precision: "highest"  # (type: str)
 
   optim:
+    # learning rate for the optimizer
     lr: 5e-3  # (type: float)
-    max_lr: 5e-3  # (type: float)
-    start_lr: 5e-4  # (type: float)
-    end_lr: 5e-4  # (type: float)
-    pct_start: 0.2  # (type: float)
     weight_decay: 1e-5  # (type: float)
+    # max learning rate for the OneCycleScheduler
+    max_lr: 5e-3  # (type: float)
+    # starting learning rate for the OneCycleScheduler
+    start_lr: 5e-4  # (type: float)
+    # The ending learning rate for the OneCycleScheduler
+    end_lr: 5e-4  # (type: float)
+    # See pct_start here: https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.OneCycleLR.html#torch.optim.lr_scheduler.OneCycleLR
+    pct_start: 0.2  # (type: float)
 
 wandb:
+  # whether to use wandb logging
   enabled: false  # (type: bool)
 
   # Where to save the logs
@@ -106,6 +113,7 @@ logging:
   # The list is defined in individual train config (e.g. train_v.yaml, train_gw.yaml) to
   # only affect individual scripts.
   filter_images: null  # (type: Sequence[str] | None)
+  # Will log the images or text every x epochs
   log_train_medias_every_n_epochs: 10  # (type: int | None)
   log_val_medias_every_n_epochs: 10  # (type: int | None)
 
@@ -113,7 +121,7 @@ logging:
 # alias `t`
 title: null  # (type: str | None)
 
-# Add a description to your run
+# Add a description to your wandb run
 # alias `d`
 desc: null # (type: str | None)
 
@@ -128,6 +136,7 @@ domain_proportions: []  # (type: Sequence[DomainProportion])
 #     - domains: ["v", "attr"]
 #       proportion: 0.5
 
+# Configuration specific to the domain modules
 domain_modules:
   visual:
     # Num channels of image to configure the VAE
@@ -153,13 +162,15 @@ domain_modules:
     # Latent dim of the VAE
     latent_dim: 10  # (type: int)
 
-    # Hidden dim of the AE (encoders and decoders)
+    # Hidden dim of the AE (encoders and decoders)
     hidden_dim: 64  # (type: int)
 
     # For betaVAE
     beta: 0.05  # (type: float)
 
+    # Coefficients to use for the loss on the object categories
     coef_categories: 1  # (type: float)
+    # Coefficients to use for the loss on the attributes
     coef_attributes: 1  # (type: float)
 
   text:
@@ -170,6 +181,7 @@ domain_modules:
     # should be "bert-base-uncased" path to the vocab file
     latent_filename: "latent"  # (type: str)
 
+    # Path to the vocab.json path
     vocab_path: "./tokenizer/vocab.json"  # (type: str)
 
     # Path to the merge path
@@ -192,27 +204,19 @@ domain_modules:
 
 # Domain params for the active domains of the run.
 domains: []  # (type: Sequence[LoadedDomainConfig])
-```
-For example:
-```yaml
-domains:
-      # Path To the pretrained module.
-    - checkpoint_path: ./path/to/attr_checkpoint.ckpt
-      # Domain to select. For example:
-      domain_type: attr
-    - checkpoint_path: ./path/to/v_checkpoint.ckpt
-      domain_type: v
-```
-
-`LoadedDomainConfig`
-```yaml
- checkpoint_path: ./path/to/checkpoint.ckpt  # (type: Path)
- domain_type: attr # (type: DomainModuleVariant)
- args: {}  # (type: Mapping[str, Any])
+# For example:
+# domains:
+#       # Path To the pretrained module.
+#     - checkpoint_path: ./path/to/attr_checkpoint.ckpt # (type: Path)
+#       # Domain to select. For example:
+#       domain_type: attr  # (type: DomainModuleVariant)
+#       args: {}  # (type: Mapping[str, Any])
+#     - checkpoint_path: ./path/to/v_checkpoint.ckpt
+#       domain_type: v
 ```
 
- `DomainModuleVariant`
- Enum with values:
+Here are the available values for `domain_type`. It takes a value of the
+enum `DomainModuleVariant` which can be:
  * `attr`: attribute module using a VAE to encode the attribute vector.
  * `attr_legacy`: this is the module used in Devillers et al. paper. 
  There is no VAE and the attributes are used directly as the unimodal latent representations
@@ -232,9 +236,7 @@ domains:
 ```yaml
 # Data related args used by the dataloader
 domain_data_args: {}  # (type: Mapping[str, Mapping[str, Any]])
-```
 
-```yaml
 global_workspace:
   # Latent dim of the GW
   latent_dim: 12  # (type: int)
@@ -306,23 +308,35 @@ global_workspace:
 slurm: null  # (type: Slurm | None)
 ```
 
-Slurm config
+When using the slurm script, you can define the slurm value. The different
+parameters are defined as in
+[https://github.com/ruflab/auto-sbatch](https://github.com/ruflab/auto-sbatch).
+In details:
 ```yaml
 slurm:
+  # which script to run e.g. scripts/train_gw.py
   script: # (type: str)
+  # The work_directory folder will be copied to this folder
   run_workdir: # (type: str)
+  # path to python environment
   python_env: # (type: str)
+  # Command to run e.g. "python {script_name} {all_params}"
   command: # (type: str) 
+  # modules to load BEFORE script are batched
   pre_modules: []  # (type: Sequence[str])
+  # modules to load in the batch system
   run_modules: []  # (type: Sequence[str])
+  # slurm args. e.g. "-J", "-N", ...
   args: {}  # (type: Mapping[str, Any])
+  # grid search params
   grid_search: null  # (type: Mapping[str, Sequence[Any]] | None)
+  # grid search arguments to exclude
   grid_search_exclude: null  # (type: Sequence[Mapping[str, Any]] | None)
 ```
 
 ## Config formatting
 We also use some custom code to allow some interpolations, described here:
-[https://github.com/bdvllrs/cfg-tools](https://github.com/bdvllrs/cfg-tools).
+[https://github.com/ruflab/cfg-tools](https://github.com/ruflab/cfg-tools).
 
 ### Value interpolation
 You can use `#{other.key}` to put the value of `other.key` in its place.
