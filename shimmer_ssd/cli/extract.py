@@ -26,6 +26,7 @@ def save_v_latents(
     debug_mode: bool | None = None,
     log_config: bool = False,
     extra_config_files: list[str] | None = None,
+    force: bool = False,
     argv: list[str] | None = None,
 ):
     if debug_mode is None:
@@ -45,6 +46,14 @@ def save_v_latents(
 
     if dataset_path is None:
         dataset_path = config.dataset.path
+
+    latent_name = latent_name or (checkpoin_path.stem + ".npy")
+    train_path = dataset_path / f"saved_latents/train/{latent_name}"
+    if train_path.exists() and not force:
+        click.echo("Latent file already exists. Skipping")
+        return
+    elif train_path.exists():
+        click.echo("Latent file already exists. Overriding.")
 
     additional_transforms: dict[str, list[Callable[[Any], Any]]] = {}
     if config.domain_modules.visual.color_blind:
@@ -97,7 +106,6 @@ def save_v_latents(
 
         latent_vectors = np.concatenate(latents, axis=0)
 
-        latent_name = latent_name or (checkpoin_path.stem + ".npy")
         path = dataset_path / f"saved_latents/{split}/{latent_name}"
         print(f"Saving in {path}.")
         np.save(path, latent_vectors)
@@ -146,6 +154,13 @@ def save_v_latents(
         "By default `save_v_latents.yaml`"
     ),
 )
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    type=bool,
+    help="If the file already exist, his will override with a new file.",
+)
 @click.pass_context
 def save_v_latents_command(
     ctx: click.Context,
@@ -156,6 +171,7 @@ def save_v_latents_command(
     debug: bool | None,
     log_config: bool,
     extra_config_files: list[str],
+    force: bool = False,
 ):
     return save_v_latents(
         model_checkpoint,
@@ -165,5 +181,6 @@ def save_v_latents_command(
         debug,
         log_config,
         extra_config_files if len(extra_config_files) else None,
+        force,
         ctx.args,
     )
