@@ -92,6 +92,21 @@ class AttributeDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
     ):
+        """
+        Defines the Attribute domain module.
+
+        Args:
+            latent_dim (`int`): the latent dimension of the module
+            hidden_dim (`int`): hidden dimension of the VAE encoders and decoders
+            beta (`float`): for beta-VAE
+            coef_categories (`float`): loss coefficient attributed to the category
+                (Defaults to 1.0)
+            coef_attributes (`float`): loss coefficient attributed to the rest of the
+                attributes (Defaults to 1.0)
+            optim_lr (`float`): learning rate for the optimizer
+            optim_weight_decay (`float`): weight decay for the optimizer
+            scheduler_args (`SchedulerArgs | None`): Scheduler arguments
+        """
         super().__init__(latent_dim)
         self.save_hyperparameters()
 
@@ -121,7 +136,7 @@ class AttributeDomainModule(DomainModule):
         """
         x must contain 2 items:
         - the class
-        - the attibutes
+        - the attributes
         """
         assert (
             len(x) == 2
