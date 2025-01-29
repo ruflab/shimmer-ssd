@@ -20,6 +20,7 @@ from simple_shapes_dataset import (
 )
 from simple_shapes_dataset.cli import generate_image
 from tokenizers.implementations import ByteLevelBPETokenizer
+from torchvision.transforms.functional import to_tensor
 from torchvision.utils import make_grid
 
 from shimmer_ssd import LOGGER
@@ -37,7 +38,8 @@ def log_image(
     if isinstance(logger, WandbLogger):
         logger.log_image(key, [image], step)
     elif isinstance(logger, TensorBoardLogger):
-        logger.experiment.add_image(key, image, step)
+        torch_image = to_tensor(image) if isinstance(image, Image.Image) else image
+        logger.experiment.add_image(key, torch_image, step)
     else:
         LOGGER.warning(
             "[Sample Logger] Only logging to tensorboard or wandb is supported"
