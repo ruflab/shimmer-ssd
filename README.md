@@ -21,6 +21,11 @@ To install the project and dependencies:
 poetry sync [--with dev]
 ```
 
+## Tutorials
+See
+[https://github.com/ruflab/shimmer-tutorials](https://github.com/ruflab/shimmer-tutorials)
+for tutorials on `shimmer` and this repository.
+
 ## Config
 All details can be read in the [config docs](./docs/config_parameters.md).
 
