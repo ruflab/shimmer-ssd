@@ -90,9 +90,12 @@ def save_v_latents(
         "val": data_module.val_dataloader(),
         "test": data_module.test_dataloader(),
     }
+    (dataset_path / "saved_latents").mkdir(exist_ok=True)
 
     for split, dataloader in dataloaders.items():
         latents: list[np.ndarray] = []
+
+        (dataset_path / "saved_latents" / split).mkdir(exist_ok=True)
 
         print(f"Saving {split}.")
         for batch, _, _ in tqdm(iter(dataloader), total=len(dataloader)):
