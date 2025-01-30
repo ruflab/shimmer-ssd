@@ -64,7 +64,6 @@ def save_v_latents(
         get_default_domains(["v"]),
         {frozenset(["v"]): 1.0},
         batch_size=config.training.batch_size,
-        max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
         seed=config.seed,
         additional_transforms=additional_transforms,

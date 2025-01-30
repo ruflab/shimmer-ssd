@@ -50,11 +50,6 @@ dataset:
   # Path to the simple-shapes-dataset. Can be downloaded with `shapesd download`
   path: "./simple_shapes_dataset"  # (type: Path)
 
-  # Max number of unpaired examples used during training.
-  # This is here for legacy reasons. Prefer changing `domain_proportions`.
-  # The proportion is relative to this value.
-  max_train_size: 500_000  # (type: int | None)
-
 training:
   batch_size: 2056  # (type: int)
   num_workers: 16  # (type: int)
@@ -125,7 +120,7 @@ title: null  # (type: str | None)
 # alias `d`
 desc: null # (type: str | None)
 
-# Proportion of each domain in the dataset relative to `dataset.max_train_size`
+# Proportion of each domain in the dataset relative to the size of the dataset
 domain_proportions: []  # (type: Sequence[DomainProportion])
 # For example:
 # domain_proportions:

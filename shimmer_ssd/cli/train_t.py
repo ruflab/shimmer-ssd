@@ -52,7 +52,6 @@ def train_t_domain(
         get_default_domains(["t"]),
         {frozenset(["t"]): 1.0},
         batch_size=config.training.batch_size,
-        max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
         domain_args={
             "t": {"latent_filename": config.domain_modules.text.latent_filename}

@@ -35,7 +35,6 @@ def main():
         domain_classes,
         domain_proportion,
         batch_size=config.training.batch_size,
-        max_train_size=config.dataset.max_train_size,
         num_workers=config.training.num_workers,
         seed=config.seed,
         ood_seed=config.ood_seed,

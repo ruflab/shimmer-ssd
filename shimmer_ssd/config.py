@@ -230,9 +230,6 @@ class Dataset(BaseModel):
 
     # Path to the dataset obtainable on https://github.com/ruflab/simple-shapes-dataset
     path: Path
-    # Max number of unpaired examples used during training.
-    # Prefer changing `domain_proportions`. The proportion is relative to this value.
-    max_train_size: int | None = 500_000
 
 
 class VisualModule(BaseModel):
@@ -426,7 +423,7 @@ class Config(ParsedModel):
     title: str | None = Field(None, alias="t")
     # Add a description to your run
     desc: str | None = Field(None, alias="d")
-    # proportion of each domain in the dataset relative to `dataset.max_train_size`
+    # proportion of each domain in the dataset relative to the size of the dataset
     domain_proportions: Mapping[frozenset[str], float] = {}
     # Config of the different domain modules
     domain_modules: DomainModules = DomainModules()
