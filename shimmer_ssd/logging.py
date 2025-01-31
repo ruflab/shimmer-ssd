@@ -33,13 +33,16 @@ _T = TypeVar("_T")
 
 
 def log_image(
-    logger: Logger, key: str, image: torch.Tensor | Image.Image, step: int | None = None
+    logger: Logger,
+    key: str,
+    image: torch.Tensor | Image.Image,
+    tensorboard_step: int | None = None,
 ):
     if isinstance(logger, WandbLogger):
-        logger.log_image(key, [image], step)
+        logger.log_image(key, [image])
     elif isinstance(logger, TensorBoardLogger):
         torch_image = to_tensor(image) if isinstance(image, Image.Image) else image
-        logger.experiment.add_image(key, torch_image, step)
+        logger.experiment.add_image(key, torch_image, tensorboard_step)
     else:
         LOGGER.warning(
             "[Sample Logger] Only logging to tensorboard or wandb is supported"
@@ -52,14 +55,14 @@ def log_text(
     key: str,
     columns: list[str],
     data: list[list[str]],
-    step: int | None = None,
+    tensorboard_step: int | None = None,
 ):
     if isinstance(logger, WandbLogger):
-        logger.log_text(key, columns, data, step=step)
+        logger.log_text(key, columns, data)
     elif isinstance(logger, TensorBoardLogger):
         text = ", ".join(columns) + "\n"
         text += "\n".join([", ".join(d) for d in data])
-        logger.experiment.add_image(key, text, step)
+        logger.experiment.add_text(key, text, tensorboard_step)
     else:
         LOGGER.warning(
             "[Sample Logger] Only logging to tensorboard or wandb is supported"
@@ -80,6 +83,11 @@ class LogSamplesCallback(Generic[_T], ABC, pl.Callback):
         self.every_n_epochs = every_n_epochs
         self.log_key = log_key
         self.mode = mode
+        self._global_step = 0
+
+    def get_step(self) -> int:
+        self._global_step += 1
+        return self._global_step - 1
 
     def to(self, samples: _T, device: torch.device) -> _T:
         raise NotImplementedError
@@ -281,7 +289,7 @@ class LogAttributesCallback(LogSamplesCallback[Sequence[torch.Tensor]]):
         image = attribute_image_grid(
             samples, image_size=self.image_size, ncols=self.ncols
         )
-        log_image(logger, f"{self.log_key}_{mode}", image)
+        log_image(logger, f"{self.log_key}_{mode}", image, self.get_step())
 
 
 class LogTextCallback(LogSamplesCallback[Mapping[str, torch.Tensor]]):
@@ -350,7 +358,7 @@ class LogTextCallback(LogSamplesCallback[Mapping[str, torch.Tensor]]):
             samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
         )
         text = [[t.replace("<pad>", "")] for t in text]
-        log_text(logger, f"{self.log_key}_{mode}_str", ["text"], text)
+        log_text(logger, f"{self.log_key}_{mode}_str", ["text"], text, self.get_step())
 
 
 class LogVisualCallback(LogSamplesCallback[torch.Tensor]):
@@ -456,7 +464,13 @@ class LogText2AttrCallback(
                     domain["tokens"].detach().cpu().tolist(), skip_special_tokens=True
                 )
                 text = [[t.replace("<pad>", "")] for t in text]
-                log_text(logger, f"{self.log_key}_{mode}_str", ["text"], text)
+                log_text(
+                    logger,
+                    f"{self.log_key}_{mode}_str",
+                    ["text"],
+                    text,
+                    self.get_step(),
+                )
             elif domain_name == "attr":
                 assert isinstance(domain, list)
                 image = attribute_image_grid(
@@ -464,7 +478,7 @@ class LogText2AttrCallback(
                     image_size=self.image_size,
                     ncols=self.ncols,
                 )
-                log_image(logger, f"{self.log_key}_{mode}", image)
+                log_image(logger, f"{self.log_key}_{mode}", image, self.get_step())
 
 
 def batch_to_device(
@@ -522,6 +536,11 @@ class LogGWImagesCallback(pl.Callback):
         self.tokenizer = None
         if vocab is not None and merges is not None:
             self.tokenizer = ByteLevelBPETokenizer(vocab, merges)
+        self._global_step = 0
+
+    def get_step(self):
+        self._global_step += 1
+        return self._global_step - 1
 
     def to(
         self,
@@ -695,7 +714,7 @@ class LogGWImagesCallback(pl.Callback):
         mode: str,
     ) -> None:
         images = make_grid(samples, nrow=self.ncols, pad_value=1)
-        log_image(logger, f"{self.log_key}/{mode}", images)
+        log_image(logger, f"{self.log_key}/{mode}", images, self.get_step())
 
     def log_attribute_samples(
         self,
@@ -708,7 +727,7 @@ class LogGWImagesCallback(pl.Callback):
             image_size=self.image_size,
             ncols=self.ncols,
         )
-        log_image(logger, f"{self.log_key}/{mode}", image)
+        log_image(logger, f"{self.log_key}/{mode}", image, self.get_step())
 
     def log_text_samples(
         self,
@@ -721,4 +740,4 @@ class LogGWImagesCallback(pl.Callback):
             samples["tokens"].detach().cpu().tolist(), skip_special_tokens=True
         )
         text = [[t.replace("<pad>", "")] for t in text]
-        log_text(logger, f"{self.log_key}/{mode}", ["text"], text)
+        log_text(logger, f"{self.log_key}/{mode}", ["text"], text, self.get_step())
