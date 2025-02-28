@@ -2,6 +2,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from shimmer import DomainModule, GWDecoder, GWEncoder
+from shimmer.modules.gw_module import GWDecoder_legacy
+
 from torch.nn import Linear, Module
 
 from shimmer_ssd import PROJECT_DIR
@@ -149,12 +151,22 @@ def load_pretrained_domain(
         gw_encoder = Linear(module.latent_dim, workspace_dim, bias=bias)
         gw_decoder = Linear(workspace_dim, module.latent_dim, bias=bias)
     else:
-        gw_encoder = GWEncoder(
-            module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
-        )
-        gw_decoder = GWDecoder(
-            workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
-        )
+        match domain.domain_type:
+            case DomainModuleVariant.attr_legacy:
+                gw_encoder = GWEncoder(
+                    module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
+                )
+                gw_decoder = GWDecoder_legacy(
+                    workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
+                )
+            
+            case _:
+                gw_encoder = GWEncoder(
+                    module.latent_dim, encoder_hidden_dim, workspace_dim, encoder_n_layers
+                )
+                gw_decoder = GWDecoder(
+                    workspace_dim, decoder_hidden_dim, module.latent_dim, decoder_n_layers
+                )
 
     return module, gw_encoder, gw_decoder
 
