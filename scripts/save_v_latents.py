@@ -44,9 +44,9 @@ def main():
         if domain.domain_type == DomainModuleVariant.v:
             domain_checkpoint = domain
 
-    assert domain_checkpoint is not None, (
-        "Please add domain_checkpoint entry in the configuration"
-    )
+    assert (
+        domain_checkpoint is not None
+    ), "Please add domain_checkpoint entry in the configuration"
     assert domain_checkpoint.domain_type == DomainModuleVariant.v
 
     visual_domain = cast(
