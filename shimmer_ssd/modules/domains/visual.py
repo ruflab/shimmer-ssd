@@ -85,7 +85,7 @@ class VisualDomainModule(DomainModule):
 
     def validation_step(  # type: ignore
         self,
-        batch: Mapping[str, torch.Tensor],
+        batch: Mapping[frozenset[str], Mapping[str, torch.Tensor]],
         batch_idx: int,
     ) -> torch.Tensor:
         x = batch[frozenset(["v"])]["v"]

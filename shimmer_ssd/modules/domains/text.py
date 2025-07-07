@@ -425,7 +425,9 @@ class GRUTextDomainModule(DomainModule):
         return total_loss  # loss
 
     def validation_step(  # type: ignore
-        self, batch: Mapping[str, Mapping[str, torch.Tensor]], _
+        self,
+        batch: Mapping[frozenset[str], Mapping[str, Mapping[str, torch.Tensor]]],
+        _,
     ) -> torch.Tensor:
         x = batch[frozenset(["t"])]["t"]
         return self.generic_step(x, "val")
