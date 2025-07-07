@@ -292,13 +292,6 @@ class GRUTextDomainModule(DomainModule):
         self.reconstruction_coef = reconstruction_coef
         self.kl_coef = kl_coef
 
-        """self.projector = nn.Sequential(
-            nn.Linear(self.in_dim, self.hidden_dim),
-            nn.ReLU(),
-            nn.Linear(self.hidden_dim, self.latent_dim),
-            nn.Tanh(),
-        )"""
-
         self.projector = nn.Sequential(
             nn.Linear(self.in_dim, self.hidden_dim),
             nn.ReLU(),
@@ -341,21 +334,15 @@ class GRUTextDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        #with torch.no_grad():
-        #    text_token_loss, acc = self.text_token_loss(pred, raw_target)
+        mse_loss = (
+            torch.nn.functional.mse_loss(pred, target, reduction="sum")
+            / pred.numel()
+        )
 
-        # with torch.no_grad():
-        mse_loss = torch.nn.functional.mse_loss(pred, target, reduction="sum") / pred.numel()
-        # cosine_loss = (1 - F.cosine_similarity(pred, target)).mean()
-        # final_loss = mse_loss + 1.0 * (1 - F.cosine_similarity(pred, target).mean())
         return LossOutput(
             mse_loss,
-            {"mse_loss": mse_loss}, #{"loss_tokens": text_token_loss, "pred_t_acc": acc, "mse_loss": mse_loss},
+            {"mse_loss": mse_loss}
         )
-        """return LossOutput(
-            final_loss, #2 * text_token_loss,
-            {"loss_tokens": text_token_loss, "pred_t_acc": acc, "final_loss": final_loss},
-        )"""
 
     def compute_domain_loss(self, domain: Any) -> LossOutput:
         z = self.encode(domain)
@@ -364,7 +351,7 @@ class GRUTextDomainModule(DomainModule):
 
     def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
         z = self.projector(x["bert"])
-        return self.q_mean(z) #self.q_mean(z), self.q_logvar(z)
+        return self.q_mean(z)
 
     def encode_dist(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
         z = self.projector(x["bert"])
@@ -375,7 +362,7 @@ class GRUTextDomainModule(DomainModule):
         hidden = None
         outputs = []
 
-        for k in range(self.seq_length):
+        for _ in range(self.seq_length):
             out, hidden = self.decoder(context, hidden)
             token_dist = self.text_head(out)
             tokens = torch.argmax(token_dist, dim=-1)
@@ -431,7 +418,11 @@ class GRUTextDomainModule(DomainModule):
                 ).sum()
         kl_loss = kl_divergence_loss(mean, logvar)
 
-        total_loss = loss + self.reconstruction_coef * reconstruction_loss + self.kl_coef * kl_loss
+        total_loss = (
+            loss
+            + self.reconstruction_coef * reconstruction_loss
+            + self.kl_coef * kl_loss
+        )
 
         self.log(f"{mode}/kl_loss", kl_loss)
         self.log(f"{mode}/reconstruction_loss", reconstruction_loss)

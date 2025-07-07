@@ -2,7 +2,6 @@ from collections.abc import Mapping
 from typing import Any
 
 import torch
-import torch.nn.functional as F
 from shimmer import LossOutput
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
