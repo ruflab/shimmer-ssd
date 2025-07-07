@@ -349,7 +349,9 @@ class GRUTextDomainModule(DomainModule):
         z = self.projector(x["bert"])
         return self.q_mean(z)
 
-    def encode_dist(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
+    def encode_dist(
+        self, x: Mapping[str, torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         z = self.projector(x["bert"])
         return self.q_mean(z), self.q_logvar(z)
 
