@@ -54,7 +54,6 @@ class VisualDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        # return LossOutput((1 - F.cosine_similarity(pred, target)).mean())
         return LossOutput(mse_loss(pred, target, reduction="sum") / pred.numel())
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
