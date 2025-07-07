@@ -276,7 +276,7 @@ class GRUTextDomainModule(DomainModule):
         scheduler_args: SchedulerArgs | None = None,
         padding_token: int = 0,
         reconstruction_coef: float = 0.5,
-        kl_coef: float = 0.05
+        kl_coef: float = 0.05,
     ):
         super().__init__(latent_dim)
         self.is_frozen = False
@@ -335,14 +335,10 @@ class GRUTextDomainModule(DomainModule):
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
         mse_loss = (
-            torch.nn.functional.mse_loss(pred, target, reduction="sum")
-            / pred.numel()
+            torch.nn.functional.mse_loss(pred, target, reduction="sum") / pred.numel()
         )
 
-        return LossOutput(
-            mse_loss,
-            {"mse_loss": mse_loss}
-        )
+        return LossOutput(mse_loss, {"mse_loss": mse_loss})
 
     def compute_domain_loss(self, domain: Any) -> LossOutput:
         z = self.encode(domain)
@@ -387,7 +383,6 @@ class GRUTextDomainModule(DomainModule):
     def text_token_loss(
         self, z: torch.Tensor, target: Mapping[str, torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-
         context = z.unsqueeze(1)
         real_tokens = self.embeddings(target["tokens"][:, :-1])
         seq = torch.cat([context, real_tokens], dim=1)
@@ -407,15 +402,13 @@ class GRUTextDomainModule(DomainModule):
         self, x: Mapping[str, torch.Tensor], mode: str = "train"
     ) -> torch.Tensor:
         mean, logvar = self.encode_dist(x)
-        z = reparameterize(mean,logvar)
+        z = reparameterize(mean, logvar)
         noise = torch.randn_like(z) * 0.5
         z_text = z + noise
         loss, acc = self.text_token_loss(z_text, x)
 
         x_hat = self.projector_dec(z)
-        reconstruction_loss = gaussian_nll(
-                    x_hat, torch.tensor(0), x['bert']
-                ).sum()
+        reconstruction_loss = gaussian_nll(x_hat, torch.tensor(0), x["bert"]).sum()
         kl_loss = kl_divergence_loss(mean, logvar)
 
         total_loss = (
@@ -429,7 +422,7 @@ class GRUTextDomainModule(DomainModule):
         self.log(f"{mode}/total_loss", total_loss)
         self.log(f"{mode}/loss", loss)
         self.log(f"{mode}/acc", acc)
-        return total_loss #loss
+        return total_loss  # loss
 
     def validation_step(  # type: ignore
         self, batch: Mapping[str, Mapping[str, torch.Tensor]], _

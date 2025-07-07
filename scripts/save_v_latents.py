@@ -44,9 +44,9 @@ def main():
         if domain.domain_type == DomainModuleVariant.v:
             domain_checkpoint = domain
 
-    assert (
-        domain_checkpoint is not None
-    ), "Please add domain_checkpoint entry in the configuration"
+    assert domain_checkpoint is not None, (
+        "Please add domain_checkpoint entry in the configuration"
+    )
     assert domain_checkpoint.domain_type == DomainModuleVariant.v
 
     visual_domain = cast(
@@ -80,9 +80,9 @@ def main():
         latent_vectors = np.concatenate(latents, axis=0)
 
         presaved_path = config.domain_data_args["v_latents"]["presaved_path"]
-        Path(
-            f"{config.dataset.path}/saved_latents/{split}/"
-        ).mkdir(parents=True, exist_ok=True)
+        Path(f"{config.dataset.path}/saved_latents/{split}/").mkdir(
+            parents=True, exist_ok=True
+        )
         path = config.dataset.path / f"saved_latents/{split}/{presaved_path}"
         print(f"Saving in {path}.")
         np.save(path, latent_vectors)

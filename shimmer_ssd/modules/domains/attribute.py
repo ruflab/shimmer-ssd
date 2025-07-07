@@ -139,9 +139,9 @@ class AttributeDomainModule(DomainModule):
         - the class
         - the attributes
         """
-        assert (
-            len(x) == 2
-        ), "x must only contain 2 items (use attr_unpaired to add an unpaired value)"
+        assert len(x) == 2, (
+            "x must only contain 2 items (use attr_unpaired to add an unpaired value)"
+        )
         return self.vae.encode(x)
 
     def decode(self, z: torch.Tensor) -> list[torch.Tensor]:

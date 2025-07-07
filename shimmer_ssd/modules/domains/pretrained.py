@@ -86,9 +86,9 @@ def load_pretrained_module(domain: LoadedDomainConfig) -> DomainModule:
             # module.projector.requires_grad_(False)
 
         case DomainModuleVariant.t_attr:
-            assert (
-                "text_model_path" in domain.args
-            ), 'add "text_model_path" to the domain\'s args.'
+            assert "text_model_path" in domain.args, (
+                'add "text_model_path" to the domain\'s args.'
+            )
             text_model = GRUTextDomainModule.load_from_checkpoint(
                 domain.args["text_model_path"],
                 **domain.args.get("t_args", {}),
