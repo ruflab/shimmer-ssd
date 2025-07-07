@@ -78,6 +78,8 @@ def train_t_domain(
             "max_lr": config.training.optim.max_lr,
             "total_steps": config.training.max_steps,
         },
+        reconstruction_coef=config.domain_modules.text.reconstruction_coef,
+        kl_coef=config.domain_modules.text.kl_coef,
     )
 
     val_samples = data_module.get_samples("val", 32)[frozenset(["t"])]["t"]

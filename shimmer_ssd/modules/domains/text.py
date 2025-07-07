@@ -12,6 +12,7 @@ from shimmer.modules.vae import (
     VAEEncoder,
     gaussian_nll,
     kl_divergence_loss,
+    reparameterize,
 )
 from simple_shapes_dataset.text import composer
 from simple_shapes_dataset.text.utils import inspect_all_choices
@@ -274,6 +275,8 @@ class GRUTextDomainModule(DomainModule):
         optim_weight_decay: float = 0,
         scheduler_args: SchedulerArgs | None = None,
         padding_token: int = 0,
+        reconstruction_coef: float = 0.5,
+        kl_coef: float = 0.05
     ):
         super().__init__(latent_dim)
         self.is_frozen = False
@@ -286,11 +289,33 @@ class GRUTextDomainModule(DomainModule):
 
         self._padding_token = padding_token
 
-        self.projector = nn.Sequential(
+        self.reconstruction_coef = reconstruction_coef
+        self.kl_coef = kl_coef
+
+        """self.projector = nn.Sequential(
             nn.Linear(self.in_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, self.latent_dim),
             nn.Tanh(),
+        )"""
+
+        self.projector = nn.Sequential(
+            nn.Linear(self.in_dim, self.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(self.hidden_dim, self.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(self.hidden_dim, self.latent_dim),
+            nn.ReLU(),
+        )
+        self.q_mean = nn.Linear(self.latent_dim, self.latent_dim)
+        self.q_logvar = nn.Linear(self.latent_dim, self.latent_dim)
+
+        self.projector_dec = nn.Sequential(
+            nn.Linear(self.latent_dim, self.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(self.hidden_dim, self.hidden_dim),
+            nn.ReLU(),
+            nn.Linear(self.hidden_dim, self.in_dim),
         )
 
         self.embeddings = nn.Embedding(vocab_size, self.latent_dim)
@@ -316,12 +341,21 @@ class GRUTextDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        text_token_loss, acc = self.text_token_loss(pred, raw_target)
+        #with torch.no_grad():
+        #    text_token_loss, acc = self.text_token_loss(pred, raw_target)
 
+        # with torch.no_grad():
+        mse_loss = torch.nn.functional.mse_loss(pred, target, reduction="sum") / pred.numel()
+        # cosine_loss = (1 - F.cosine_similarity(pred, target)).mean()
+        # final_loss = mse_loss + 1.0 * (1 - F.cosine_similarity(pred, target).mean())
         return LossOutput(
-            2 * text_token_loss,
-            {"loss_tokens": text_token_loss, "pred_t_acc": acc},
+            mse_loss,
+            {"mse_loss": mse_loss}, #{"loss_tokens": text_token_loss, "pred_t_acc": acc, "mse_loss": mse_loss},
         )
+        """return LossOutput(
+            final_loss, #2 * text_token_loss,
+            {"loss_tokens": text_token_loss, "pred_t_acc": acc, "final_loss": final_loss},
+        )"""
 
     def compute_domain_loss(self, domain: Any) -> LossOutput:
         z = self.encode(domain)
@@ -329,20 +363,29 @@ class GRUTextDomainModule(DomainModule):
         return LossOutput(loss, {"acc": acc})
 
     def encode(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
-        return self.projector(x["bert"])
+        z = self.projector(x["bert"])
+        return self.q_mean(z) #self.q_mean(z), self.q_logvar(z)
+
+    def encode_dist(self, x: Mapping[str, torch.Tensor]) -> torch.Tensor:
+        z = self.projector(x["bert"])
+        return self.q_mean(z), self.q_logvar(z)
 
     def decode(self, z: torch.Tensor) -> dict[str, torch.Tensor]:
         context = z.unsqueeze(1)
-        pad_tokens = self.embeddings(
-            torch.zeros(
-                z.size(0), self.seq_length - 1, dtype=torch.long, device=z.device
-            )
-        )
-        seq = torch.cat([context, pad_tokens], dim=1)
-        for k in range(0, self.seq_length - 1):
-            out = self.decode_one(seq)
-            seq[:, k + 1] = self.embeddings(out["tokens"][:, k])
-        return self.decode_one(seq)
+        hidden = None
+        outputs = []
+
+        for k in range(self.seq_length):
+            out, hidden = self.decoder(context, hidden)
+            token_dist = self.text_head(out)
+            tokens = torch.argmax(token_dist, dim=-1)
+            outputs.append(token_dist)
+
+            context = self.embeddings(tokens)
+
+        token_dists = torch.cat(outputs, dim=1)
+        tokens = torch.argmax(token_dists, dim=-1)
+        return {"token_dist": token_dists, "tokens": tokens}
 
     def decode_one(self, z: torch.Tensor) -> dict[str, torch.Tensor]:
         out, _ = self.decoder(z)
@@ -351,16 +394,19 @@ class GRUTextDomainModule(DomainModule):
         return {"token_dist": tokens_dist, "tokens": tokens}
 
     def forward(self, x: Mapping[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        return self.decode(self.encode(x))
+        z, _ = self.encode_dist(x)
+        return self.decode(z)
 
     def text_token_loss(
         self, z: torch.Tensor, target: Mapping[str, torch.Tensor]
     ) -> tuple[torch.Tensor, torch.Tensor]:
+
         context = z.unsqueeze(1)
         real_tokens = self.embeddings(target["tokens"][:, :-1])
         seq = torch.cat([context, real_tokens], dim=1)
 
         out = self.decode_one(seq)
+
         loss = F.cross_entropy(out["token_dist"].transpose(1, 2), target["tokens"])
         padding_mask = target["tokens"] != self._padding_token
 
@@ -373,16 +419,31 @@ class GRUTextDomainModule(DomainModule):
     def generic_step(
         self, x: Mapping[str, torch.Tensor], mode: str = "train"
     ) -> torch.Tensor:
-        z = self.encode(x)
-        loss, acc = self.text_token_loss(z, x)
+        mean, logvar = self.encode_dist(x)
+        z = reparameterize(mean,logvar)
+        noise = torch.randn_like(z) * 0.5
+        z_text = z + noise
+        loss, acc = self.text_token_loss(z_text, x)
+
+        x_hat = self.projector_dec(z)
+        reconstruction_loss = gaussian_nll(
+                    x_hat, torch.tensor(0), x['bert']
+                ).sum()
+        kl_loss = kl_divergence_loss(mean, logvar)
+
+        total_loss = loss + self.reconstruction_coef * reconstruction_loss + self.kl_coef * kl_loss
+
+        self.log(f"{mode}/kl_loss", kl_loss)
+        self.log(f"{mode}/reconstruction_loss", reconstruction_loss)
+        self.log(f"{mode}/total_loss", total_loss)
         self.log(f"{mode}/loss", loss)
         self.log(f"{mode}/acc", acc)
-        return loss
+        return total_loss #loss
 
     def validation_step(  # type: ignore
         self, batch: Mapping[str, Mapping[str, torch.Tensor]], _
     ) -> torch.Tensor:
-        x = batch["t"]
+        x = batch[frozenset(["t"])]["t"]
         return self.generic_step(x, "val")
 
     def training_step(  # type: ignore

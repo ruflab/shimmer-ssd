@@ -2,6 +2,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import torch
+import torch.nn.functional as F
 from shimmer import LossOutput
 from shimmer.modules.domain import DomainModule
 from shimmer.modules.vae import VAE, gaussian_nll, kl_divergence_loss
@@ -54,7 +55,8 @@ class VisualDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        return LossOutput(mse_loss(pred, target, reduction="mean"))
+        # return LossOutput((1 - F.cosine_similarity(pred, target)).mean())
+        return LossOutput(mse_loss(pred, target, reduction="sum") / pred.numel())
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.vae.encode(x)
@@ -88,7 +90,7 @@ class VisualDomainModule(DomainModule):
         batch: Mapping[str, torch.Tensor],
         batch_idx: int,
     ) -> torch.Tensor:
-        x = batch["v"]
+        x = batch[frozenset(["v"])]["v"]
         return self.generic_step(x, "val")
 
     def training_step(  # type: ignore
@@ -132,7 +134,8 @@ class VisualLatentDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        return LossOutput(mse_loss(pred, target, reduction="mean"))
+        # return LossOutput((1 - F.cosine_similarity(pred, target)).mean())
+        return LossOutput(mse_loss(pred, target, reduction="sum") / pred.numel())
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
         LOGGER.debug(f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}")

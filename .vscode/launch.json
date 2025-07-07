@@ -64,6 +64,18 @@
         {
             "type": "python",
             "request": "launch",
+            "name": "Save v_latents",
+            "program": "${workspaceFolder}/scripts/save_v_latents.py",
+            "justMyCode": false,
+            "env": {
+                "DEBUG": "1",
+                "CUDA_VISIBLE_DEVICES": "1",
+                "CUDA_DEVICE_ORDER": "PCI_BUS_ID"
+            }
+        },
+        {
+            "type": "python",
+            "request": "launch",
             "name": "Exp cont var",
             "program": "${workspaceFolder}/scripts/exploration/contrastive_var.py",
             "justMyCode": false,

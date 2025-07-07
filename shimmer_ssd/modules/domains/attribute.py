@@ -130,7 +130,8 @@ class AttributeDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        return LossOutput(F.mse_loss(pred, target, reduction="mean"))
+        # return LossOutput((1 - F.cosine_similarity(pred, target)).mean())
+        return LossOutput(F.mse_loss(pred, target, reduction="sum") / pred.numel())
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         """
@@ -195,7 +196,7 @@ class AttributeDomainModule(DomainModule):
     def validation_step(  # type: ignore
         self, batch: Mapping[str, Sequence[torch.Tensor]], _
     ) -> torch.Tensor:
-        x = batch["attr"]
+        x = batch[frozenset(["attr"])]["attr"]
         return self.generic_step(x, "val")
 
     def training_step(  # type: ignore

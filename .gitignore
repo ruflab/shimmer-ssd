@@ -170,3 +170,5 @@ data/
 wandb/
 config/
 simple_shapes_dataset/
+scripts/explore_uni_latents.py
+scripts/umap_plot.py
