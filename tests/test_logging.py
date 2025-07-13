@@ -31,7 +31,7 @@ def test_attribute_figure_grid():
 def test_gw_logger():
     data_module = SimpleShapesDataModule(
         PROJECT_DIR / "sample_dataset",
-        get_default_domains(["attr"]),
+        get_default_domains(["attr", "v"]),
         domain_proportions={
             frozenset(["v", "attr"]): 0.5,
             frozenset(["v"]): 1.0,
@@ -85,7 +85,7 @@ def test_gw_logger():
     )
     wandb_logger = WandbLogger(mode="disabled")
 
-    val_samples = data_module.get_samples("val", 2)
+    val_samples = data_module.get_samples("val", 1)
     callback = LogGWImagesCallback(
         val_samples, log_key="test", mode="test", every_n_epochs=1
     )
