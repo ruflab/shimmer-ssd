@@ -33,7 +33,13 @@ def download_group():
     type=bool,
     help="If the file already exist, his will override with a new file.",
 )
-def download_dataset(path: Path, force: bool = False):
+@click.option(
+    "--ckpturl",
+    default=CHECKPOINTS_URL,
+    type=str,
+    help="From where downloading the checkpoints. Defaults to `https://zenodo.org/records/14747474/files/simple_shapes_checkpoints.tar.gz`",
+)
+def download_dataset(path: Path, force: bool = False, ckpturl: str = CHECKPOINTS_URL):
     click.echo(f"Downloading in {str(path)}.")
     if path.exists() and not force:
         click.echo("Checkpoint path already exists. Skipping.")
@@ -42,7 +48,7 @@ def download_dataset(path: Path, force: bool = False):
         click.echo("Checkpoint path already exists. Overriding.")
     path.mkdir(exist_ok=True)
     archive_path = path / "simple_shapes_checkpoints.tar.gz"
-    downlad_file(CHECKPOINTS_URL, archive_path)
+    downlad_file(ckpturl, archive_path)
     click.echo("Extracting archive...")
     with tarfile.open(archive_path, "r:gz") as archive:
         archive.extractall(path)
