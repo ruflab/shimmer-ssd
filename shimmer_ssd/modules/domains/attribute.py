@@ -130,7 +130,7 @@ class AttributeDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        return LossOutput(F.mse_loss(pred, target, reduction="sum") / pred.numel())
+        return LossOutput(F.mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: Sequence[torch.Tensor]) -> torch.Tensor:
         """

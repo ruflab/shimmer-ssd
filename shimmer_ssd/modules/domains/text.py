@@ -334,9 +334,7 @@ class GRUTextDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        mse_loss = (
-            torch.nn.functional.mse_loss(pred, target, reduction="sum") / pred.numel()
-        )
+        mse_loss = torch.nn.functional.mse_loss(pred, target, reduction="mean")
 
         return LossOutput(mse_loss, {"mse_loss": mse_loss})
 

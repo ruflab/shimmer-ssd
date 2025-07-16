@@ -54,7 +54,7 @@ class VisualDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
-        return LossOutput(mse_loss(pred, target, reduction="sum") / pred.numel())
+        return LossOutput(mse_loss(pred, target, reduction="mean"))
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         return self.vae.encode(x)
@@ -133,7 +133,7 @@ class VisualLatentDomainModule(DomainModule):
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
         # return LossOutput((1 - F.cosine_similarity(pred, target)).mean())
-        return LossOutput(mse_loss(pred, target, reduction="sum") / pred.numel())
+        return LossOutput(mse_loss(pred, target, reduction="mean"))
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:
         LOGGER.debug(f"VisualLatentDomainModule.decode_images: z.shape = {z.size()}")
