@@ -85,10 +85,10 @@ class VisualDomainModule(DomainModule):
 
     def validation_step(  # type: ignore
         self,
-        batch: Mapping[str, torch.Tensor],
+        batch: Mapping[frozenset[str], Mapping[str, torch.Tensor]],
         batch_idx: int,
     ) -> torch.Tensor:
-        x = batch["v"]
+        x = batch[frozenset(["v"])]["v"]
         return self.generic_step(x, "val")
 
     def training_step(  # type: ignore
@@ -132,6 +132,7 @@ class VisualLatentDomainModule(DomainModule):
     def compute_loss(
         self, pred: torch.Tensor, target: torch.Tensor, raw_target: Any
     ) -> LossOutput:
+        # return LossOutput((1 - F.cosine_similarity(pred, target)).mean())
         return LossOutput(mse_loss(pred, target, reduction="mean"))
 
     def decode_images(self, z: torch.Tensor) -> torch.Tensor:

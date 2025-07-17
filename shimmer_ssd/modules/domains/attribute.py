@@ -193,9 +193,9 @@ class AttributeDomainModule(DomainModule):
         return total_loss
 
     def validation_step(  # type: ignore
-        self, batch: Mapping[str, Sequence[torch.Tensor]], _
+        self, batch: Mapping[frozenset[str], Mapping[str, Sequence[torch.Tensor]]], _
     ) -> torch.Tensor:
-        x = batch["attr"]
+        x = batch[frozenset(["attr"])]["attr"]
         return self.generic_step(x, "val")
 
     def training_step(  # type: ignore

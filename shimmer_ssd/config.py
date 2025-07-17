@@ -287,6 +287,8 @@ class TextModule(BaseModel):
     latent_dim: int = 64
     hidden_dim: int = 256
     beta: float = 0.1
+    reconstruction_coef: float = 1.0
+    kl_coef: float = 0.1
 
 
 class DomainModules(BaseModel):
